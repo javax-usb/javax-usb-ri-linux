@@ -34,7 +34,7 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 	 * @param irp the ControlUsbIrpImp to use for this submission
      * @exception UsbException If any error occurrs.
 	 */
-	public void asyncSubmit( UsbIrpImp.ControlUsbIrpImp irp ) throws UsbException
+	public void asyncSubmit( ControlUsbIrpImp irp ) throws UsbException
 	{
 //FIXME - a check could be added here to verify claimed interface, if appropriate, as the kernel errors are generic
 

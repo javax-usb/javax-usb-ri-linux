@@ -44,11 +44,11 @@ class LinuxDcpRequest extends LinuxRequest
 	/** @param len the data buffer valid length */
 	public void setActualLength( int len ) { getControlUsbIrpImp().setActualLength(len); }
 
-	/** @return The UsbIrpImp.ControlUsbIrpImp */
-	public UsbIrpImp.ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
+	/** @return The ControlUsbIrpImp */
+	public ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
 
-	/** @param irp The UsbIrpImp.ControlUsbIrpImp. */
-	public void setControlUsbIrpImp(UsbIrpImp.ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
+	/** @param irp The ControlUsbIrpImp. */
+	public void setControlUsbIrpImp(ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
 
 	/** @return the address of the assocaited URB */
 	public int getUrbAddress() { return urbAddress; }
@@ -72,7 +72,7 @@ class LinuxDcpRequest extends LinuxRequest
 
 	private byte[] dataBuffer = null;
 
-	private UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp = null;
+	private ControlUsbIrpImp controlUsbIrpImp = null;
 
 	private int urbAddress = 0;
 

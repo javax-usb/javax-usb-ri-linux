@@ -63,7 +63,7 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
 
 	/** AsyncSubmit a ControlUsbIrpImp */
-	public void asyncSubmit( UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp ) throws UsbException
+	public void asyncSubmit( ControlUsbIrpImp controlUsbIrpImp ) throws UsbException
 	{
 		if (controlUsbIrpImp.isSetConfiguration())
 			submit(controlUsbIrpImpToLinuxSetConfigurationRequest(controlUsbIrpImp));
@@ -91,26 +91,26 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	// Protected methods
 
 	/** Convert a ControlUsbIrpImp to a LinuxSetConfigurationRequest */
-	protected LinuxSetConfigurationRequest controlUsbIrpImpToLinuxSetConfigurationRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
+	protected LinuxSetConfigurationRequest controlUsbIrpImpToLinuxSetConfigurationRequest(ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxSetConfigurationRequest configRequest = new LinuxSetConfigurationRequest();
-		configRequest.setConfiguration((byte)controlUsbIrpImp.getValue()); /* use only lower byte */
+		configRequest.setConfiguration((byte)controlUsbIrpImp.wValue()); /* use only lower byte */
 		configRequest.setControlUsbIrpImp(controlUsbIrpImp);
 		return configRequest;
 	}
 
 	/** Convert a ControlUsbIrpImp to a LinuxSetInterfaceRequest */
-	protected LinuxSetInterfaceRequest controlUsbIrpImpToLinuxSetInterfaceRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
+	protected LinuxSetInterfaceRequest controlUsbIrpImpToLinuxSetInterfaceRequest(ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxSetInterfaceRequest interfaceRequest = new LinuxSetInterfaceRequest();
-		interfaceRequest.setInterface(controlUsbIrpImp.getIndex());
-		interfaceRequest.setSetting(controlUsbIrpImp.getValue());
+		interfaceRequest.setInterface(controlUsbIrpImp.wIndex());
+		interfaceRequest.setSetting(controlUsbIrpImp.wValue());
 		interfaceRequest.setControlUsbIrpImp(controlUsbIrpImp);
 		return interfaceRequest;
 	}
 
 	/** Convert a ControlUsbIrpImp to a LinuxDcpRequest */
-	protected LinuxDcpRequest controlUsbIrpImpToLinuxDcpRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
+	protected LinuxDcpRequest controlUsbIrpImpToLinuxDcpRequest(ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
 		dcpRequest.setData(controlUsbIrpImp.getData());

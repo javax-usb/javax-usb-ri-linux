@@ -45,10 +45,10 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	public void setError(int error) { errorNumber = error; }
 
 	/** @return The ControlUsbIrpImp */
-	public UsbIrpImp.ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
+	public ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
 
 	/** @param irp The ControlUsbIrpImp. */
-	public void setControlUsbIrpImp(UsbIrpImp.ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
+	public void setControlUsbIrpImp(ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
 
 	/** @param c If this is completed. */
 	public void setCompleted(boolean c)
@@ -62,7 +62,7 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	//*************************************************************************
 	// Instance variables
 
-	private UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp = null;
+	private ControlUsbIrpImp controlUsbIrpImp = null;
 
 	private int interfaceNumber;
 	private int interfaceSetting;
