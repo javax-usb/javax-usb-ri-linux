@@ -21,6 +21,9 @@ static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interfa
 
 static inline void *get_descriptor( JNIEnv *env, int fd );
 
+static int select_bus(const struct dirent *entry);
+static int select_dev(const struct dirent *entry);
+
 /**
  * Update topology tree
  * @author Dan Streetman
@@ -29,54 +32,54 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 			( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, jobject connectedDevices, jobject disconnectedDevices )
 {
 	int busses, port, devices = 0;
-	struct dirent **buslist;
-	char *orig_dir = getcwd(NULL,0);
+	struct dirent **buslist = NULL;
 
 	jclass LinuxUsbServices = CheckedGetObjectClass( env, linuxUsbServices );
 	jmethodID getRootUsbHubImp = CheckedGetMethodID( env, LinuxUsbServices, "getRootUsbHubImp", "()Lcom/ibm/jusb/UsbHubImp;" );
 	jobject rootHub = CheckedCallObjectMethod( env, linuxUsbServices, getRootUsbHubImp );
 	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
-	if (chdir(USBDEVFS_PATH) || (0 > (busses = scandir(".", &buslist, select_dirent_dir, alphasort))) ) {
-		log( LOG_ERROR, "Could not access : %s", USBDEVFS_PATH );
-		return -1;
+	if (!rootHub) {
+		log( LOG_ERROR, "Could not get rootHub!\n");
+		return -EINVAL;
+	}
+
+	errno = 0;
+	if (0 > (busses = scandir(USBDEVFS_PATH, &buslist, select_bus, alphasort)) ) {
+		log( LOG_ERROR, "Could not access %s : %s", USBDEVFS_PATH, strerror(errno) );
+		return -errno;
 	}
 
 	for (port=0; port<busses; port++) {
-		if (chdir(buslist[port]->d_name)) {
-			log( LOG_ERROR, "Could not access %s/%s", USBDEVFS_PATH, buslist[port]->d_name );
+		struct dirent **devlist = NULL;
+		int bus, hcAddress, devs;
+		int busdir_len = strlen(USBDEVFS_PATH) + strlen(buslist[port]->d_name) + 2;
+		char busdir[busdir_len];
+
+		sprintf(busdir, "%s/%s", USBDEVFS_PATH, buslist[port]->d_name);
+		bus = atoi( buslist[port]->d_name );
+
+		errno = 0;
+		devs = scandir(busdir, &devlist, select_dev, alphasort);
+
+		if (0 > devs) {
+			log( LOG_ERROR, "Could not access device nodes in %s : %s", busdir, strerror(errno) );
+		} else if (!devs) {
+			log( LOG_ERROR, "No device nodes found in %s : %s", busdir, strerror(errno) );
 		} else {
-			struct dirent **devlist = NULL;
-			int bus, hcAddress, devs;
-
-			bus = atoi( buslist[port]->d_name );
-			devs = scandir(".", &devlist, select_dirent_reg, alphasort);
-
-			errno = 0;
-			if (0 > devs) {
-			  log( LOG_ERROR, "Could not access device nodes in %s/%s : %s", USBDEVFS_PATH, buslist[port]->d_name, strerror(errno) );
-			} else if (!devs) {
-				log( LOG_ERROR, "No device nodes found in %s/%s", USBDEVFS_PATH, buslist[port]->d_name );
-			} else {
-				/* Hopefully, the host controller has the lowest numbered address on this bus! */
-				hcAddress = atoi( devlist[0]->d_name );
-				devices += build_device( env, JavaxUsb, linuxUsbServices, bus, hcAddress, rootHub, port, connectedDevices, disconnectedDevices );
-			}
-
-			while (0 < devs) free(devlist[--devs]);
-			if (devlist) free(devlist);
+			/* Hopefully, the host controller has the lowest numbered address on this bus! */
+			hcAddress = atoi( devlist[0]->d_name );
+			devices += build_device( env, JavaxUsb, linuxUsbServices, bus, hcAddress, rootHub, port, connectedDevices, disconnectedDevices );
 		}
-		chdir(USBDEVFS_PATH);
+
+		while (0 < devs) free(devlist[--devs]);
+		if (devlist) free(devlist);
+
 		free(buslist[port]);
 	}
 	free(buslist);
 
 	if (rootHub) CheckedDeleteLocalRef( env, rootHub );
-
-	if (orig_dir) {
-		chdir(orig_dir);
-		free(orig_dir);
-	}
 
 	return 0;
 }
@@ -86,13 +89,12 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 {
 	int fd = 0, port, ncfg;
 	int devices = 0, speed = SPEED_UNKNOWN;
-	char node[4] = { 0, };
-	char *path = (char*)getcwd( NULL, 0 );
-	char *key = NULL;
 	struct usbdevfs_ioctl *usbioctl = NULL;
 	struct usbdevfs_hub_portinfo *portinfo = NULL;
 	struct usbdevfs_connectinfo *connectinfo = NULL;
 	struct jusb_device_descriptor *dev_desc = NULL;
+	int node_len = strlen(USBDEVFS_PATH) + 1 + 3 + 1 + 3 + 1;
+	char node[node_len];
 
 	jobject device = NULL, existingDevice = NULL;
 	jstring keyString = NULL;
@@ -104,21 +106,15 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	jmethodID checkUsbDeviceImp = CheckedGetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;ILcom/ibm/jusb/UsbDeviceImp;Ljava/util/List;Ljava/util/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
 	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
-	if (!path) {
-		log( LOG_ERROR, "Could not get current directory!" );
-		goto BUILD_DEVICE_EXIT;
-	}
+	sprintf(node, "%s/%03d/%03d", USBDEVFS_PATH, (0xff&bus), (0xff&dev));
 
-	key = malloc(strlen(path) + 5);
-	sprintf( key, "%s/%3.03d", path, dev );
-	keyString = CheckedNewStringUTF( env, key );
+	keyString = CheckedNewStringUTF( env, node );
 
-	log( LOG_HOTPLUG_DEVICE, "Building device %s", key );
+	log( LOG_HOTPLUG_DEVICE, "Building device %s", node );
 
-	sprintf( node, "%3.03d", dev );
 	fd = open( node, O_RDWR );
 	if ( 0 >= fd ) {
-		log( LOG_ERROR, "Could not access %s", key );
+		log( LOG_ERROR, "Could not access %s", node );
 		goto BUILD_DEVICE_EXIT;
 	}
 
@@ -198,8 +194,6 @@ BUILD_DEVICE_EXIT:
 	if (usbioctl) free(usbioctl);
 	if (portinfo) free(portinfo);
 	if (keyString) CheckedDeleteLocalRef( env, keyString );
-	if (path) free(path);
-	if (key) free(key);
 
 	return devices;
 }
@@ -344,4 +338,14 @@ GET_DESCRIPTOR_EXIT:
 	if (len) free(len);
 
 	return buffer;
+}
+
+static int select_bus(const struct dirent *entry)
+{
+	return strcmp(".",entry->d_name) && strcmp("..",entry->d_name) && S_ISDIR(DTTOIF(entry->d_type));
+}
+
+static int select_dev(const struct dirent *entry)
+{
+	return S_ISREG(DTTOIF(entry->d_type));
 }

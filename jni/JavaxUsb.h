@@ -241,28 +241,6 @@ static inline int get_devnum_from_name( const char *name )
 	else return node;
 }
 
-static inline int select_dirent( const struct dirent *dir_ent, unsigned char type ) 
-{
-	struct stat stbuf;
-	int n;
-
-	stat(dir_ent->d_name, &stbuf);
-	if ( 3 != strlen(dir_ent->d_name) || !(DTTOIF(type) & stbuf.st_mode) ) {
-		return 0;
-	}
-	errno = 0;
-	n = strtol( dir_ent->d_name, NULL, 10 );
-	if ( errno || n < 1 || n > 127 ) {
-		errno = 0;
-		return 0;
-	}
-	return 1;
-}
-
-static inline int select_dirent_dir( const struct dirent *dir ) { return select_dirent( dir, DT_DIR ); }
-
-static inline int select_dirent_reg( const struct dirent *reg ) { return select_dirent( reg, DT_REG ); }
-
 /**
  * Debug a URB.
  * @env The JNIEnv*.
