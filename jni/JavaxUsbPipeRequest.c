@@ -28,7 +28,8 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	struct usbdevfs_urb *urb;
 	int ret = 0, type, urbsize;
 
-	jclass LinuxPipeRequest, linuxPipeRequest = NULL;
+	jclass LinuxPipeRequest = NULL;
+	jobject linuxPipeRequest = NULL;
 	jmethodID setUrbAddress, getAcceptShortPacket, getEndpointAddress, getPipeType;
 	jboolean acceptShortPacket;
 
