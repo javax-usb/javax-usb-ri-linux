@@ -70,7 +70,13 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	{
 		LinuxControlRequest request = null;
 
-		checkUnclaimedInterface(usbControlIrpImp);
+		try {
+			checkUnclaimedInterface(usbControlIrpImp);
+		} catch ( UsbPlatformException upE ) {
+			usbControlIrpImp.setUsbException(upE);
+			usbControlIrpImp.complete();
+			throw upE;
+		}
 
 		if (usbControlIrpImp.isSetConfiguration())
 			request = new LinuxSetConfigurationRequest();
