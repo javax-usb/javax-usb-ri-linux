@@ -42,6 +42,13 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     /** @return The virtual USB root hub */
     public synchronized UsbHub getRootUsbHub() throws UsbException
 	{
+		synchronized (topologyLock) {
+			if (!firstUpdateDone) {
+				try { topologyLock.wait(MAX_FIRST_UPDATE_DELAY); }
+				catch ( InterruptedException iE ) { }
+			}
+		}
+
 		return getRootUsbHubImp();
 	}
 
@@ -204,6 +211,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		}
 
 		synchronized (topologyLock) {
+			firstUpdateDone = true;
 			topologyLock.notifyAll();
 		}
 	}
@@ -280,6 +288,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	private Thread topologyListener = null;
 	private Object topologyLock = new Object();
 
+	private boolean firstUpdateDone = false;
+
     private int topologyListenerError = 0;
 	private int topologyUpdateResult = 0;
 
@@ -289,6 +299,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 	//*************************************************************************
 	// Class constants
+
+	public static final int MAX_FIRST_UPDATE_DELAY = 10000; /* 10 seconds */
 
 	/* If not polling, this is the delay in ms after getting a connect/disconnect notification
 	 * before checking for device updates.  If polling, this is the number of ms between polls.
