@@ -13,13 +13,10 @@ package com.ibm.jusb.os.linux;
  * Request to claim or release an interface.
  * @author Dan Streetman
  */
-class LinuxInterfaceRequest extends LinuxRequest
+abstract class LinuxInterfaceRequest extends LinuxRequest
 {
 	//*************************************************************************
 	// Public methods
-
-	/** @return This request's type. */
-	public int getType() { return LinuxRequest.LINUX_INTERFACE_REQUEST; }
 
 	/** @return The interface number */
 	public int getInterfaceNumber() { return interfaceNumber; }
@@ -47,4 +44,17 @@ class LinuxInterfaceRequest extends LinuxRequest
 	private int errorNumber = 0;
 
 	private boolean claimed = false;
+
+	//*************************************************************************
+	// Inner classes
+
+	public static class LinuxClaimInterfaceRequest extends LinuxInterfaceRequest
+	{ public int getType() { return LinuxRequest.LINUX_CLAIM_INTERFACE_REQUEST; } }
+
+	public static class LinuxIsClaimedInterfaceRequest extends LinuxInterfaceRequest
+	{ public int getType() { return LinuxRequest.LINUX_IS_CLAIMED_INTERFACE_REQUEST; } }
+
+	public static class LinuxReleaseInterfaceRequest extends LinuxInterfaceRequest
+	{ public int getType() { return LinuxRequest.LINUX_RELEASE_INTERFACE_REQUEST; } }
+
 }

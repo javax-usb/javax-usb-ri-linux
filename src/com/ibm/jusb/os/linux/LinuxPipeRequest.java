@@ -63,8 +63,8 @@ class LinuxPipeRequest extends LinuxRequest
 		switch (getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getType()) {
 		case UsbInfoConst.ENDPOINT_TYPE_CONTROL: return PIPE_CONTROL;
 		case UsbInfoConst.ENDPOINT_TYPE_BULK: return PIPE_BULK;
-		case UsbInfoConst.ENDPOINT_TYPE_INTERRUPT: return PIPE_INTERRUPT;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOCHRONOUS: return PIPE_ISOCHRONOUS;
+		case UsbInfoConst.ENDPOINT_TYPE_INT: return PIPE_INTERRUPT;
+		case UsbInfoConst.ENDPOINT_TYPE_ISOC: return PIPE_ISOCHRONOUS;
 		default: /* log */ return 0;
 		}
 	}

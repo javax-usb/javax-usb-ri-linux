@@ -22,7 +22,7 @@ int dcp_request( JNIEnv *env, int fd, jobject linuxRequest )
 	struct usbdevfs_urb *urb;
 	int ret = 0;
 
-	jclass LinuxPipeRequest, linuxPipeRequest = NULL;
+	jclass LinuxDcpRequest, linuxDcpRequest = NULL;
 	jmethodID setUrbAddress, getData;
 	jbyteArray data = NULL;
 
@@ -33,7 +33,7 @@ int dcp_request( JNIEnv *env, int fd, jobject linuxRequest )
 	data = (*env)->CallObjectMethod( env, linuxDcpRequest, getData );
 	(*env)->DeleteLocalRef( env, LinuxDcpRequest );
 
-	if (!(urb = malloc(sizeof(*urb))) {
+	if (!(urb = malloc(sizeof(*urb)))) {
 		dbg( MSG_CRITICAL, "dcp_request : Out of memory!\n" );
 		ret = -ENOMEM;
 		goto end;
@@ -44,13 +44,13 @@ int dcp_request( JNIEnv *env, int fd, jobject linuxRequest )
 	urb->buffer = (*env)->GetByteArrayElements( env, data, NULL );
 	urb->buffer_length = (*env)->GetArrayLength( env, data );
 	urb->endpoint = 0; /* Default Control Pipe is endpoint 0 */
-	urb->usercontext = linuxPipeRequest;
+	urb->usercontext = linuxDcpRequest;
 	urb->flags |= USBDEVFS_URB_DISABLE_SPD;
 
 	dbg( MSG_DEBUG2, "dcp_request : Submitting URB\n" );
 	debug_urb( "dcp_request", urb );
 
-	ret = control_pipe_request( env, fd, linuxPipeRequest, urb );
+	ret = control_pipe_request( env, fd, linuxDcpRequest, urb );
 
 	if (ret) {
 		dbg( MSG_ERROR, "dcp_request : Could not submit URB (errno %d)\n", ret );
@@ -73,16 +73,16 @@ end:
 /**
  * Complete a dcp request.
  * @param env The JNIEnv.
- * @param linuxRequest The LinuxRequest.
+ * @param linuxDcpRequest The LinuxDcpRequest.
  * @return The error or 0.
  */
-int complete_dcp_request( JNIEnv *env, jobject linuxRequest )
+int complete_dcp_request( JNIEnv *env, jobject linuxDcpRequest )
 {
 	struct usbdevfs_urb *urb;
-	int ret = 0, type;
+	int ret = 0;
 
 	jclass LinuxDcpRequest;
-	jmethodID getData, getUrbAddress;
+	jmethodID getData, getUrbAddress, setDataLength;
 	jbyteArray data;
 
 	LinuxDcpRequest = (*env)->GetObjectClass( env, linuxDcpRequest );
@@ -124,7 +124,6 @@ int complete_dcp_request( JNIEnv *env, jobject linuxRequest )
 void cancel_dcp_request( JNIEnv *env, int fd, jobject linuxDcpRequest )
 {
 	struct usbdevfs_urb *urb;
-	int fd;
 
 	jclass LinuxDcpRequest;
 	jmethodID getUrbAddress;
@@ -151,10 +150,10 @@ void cancel_dcp_request( JNIEnv *env, int fd, jobject linuxDcpRequest )
  * Set a configuration.
  * @param env The JNIEnv.
  * @param fd The file descriptor.
- * @param linuxRequest The LinuxRequest.
+ * @param linuxSetConfigurationRequest The LinuxSetConfigurationRequest.
  * @return The error, or 0.
  */
-int set_configuration( JNIEnv *env, int fd, jobject linuxRequest )
+int set_configuration( JNIEnv *env, int fd, jobject linuxSetConfigurationRequest )
 {
 	unsigned int *configuration = NULL;
 	int ret = 0;
@@ -164,16 +163,16 @@ int set_configuration( JNIEnv *env, int fd, jobject linuxRequest )
 
 	LinuxSetConfigurationRequest = (*env)->GetObjectClass( env, linuxSetConfigurationRequest );
 	getConfiguration = (*env)->GetMethodID( env, LinuxSetConfigurationRequest, "getConfiguration", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxSetConfigurationRequest )
+	(*env)->DeleteLocalRef( env, LinuxSetConfigurationRequest );
 
 	if (!(configuration = malloc(sizeof(*configuration)))) {
 		dbg( MSG_CRITICAL, "set_configuration : Out of memory!\n" );
 		return -ENOMEM;
 	}
 
-	*configuration = (unsigned int)(*env)->CallIntMethod( env, linuxRequest, getConfiguration );
+	*configuration = (unsigned int)(*env)->CallIntMethod( env, linuxSetConfigurationRequest, getConfiguration );
 
-	dbg( MSG_DEBUG2, "set_configuration : Setting configuration to %d\n", *configuraton );
+	dbg( MSG_DEBUG2, "set_configuration : Setting configuration to %d\n", *configuration );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SETCONFIGURATION, configuration ))
@@ -193,10 +192,10 @@ int set_configuration( JNIEnv *env, int fd, jobject linuxRequest )
  * Set a interface setting.
  * @param env The JNIEnv.
  * @param fd The file descriptor.
- * @param linuxRequest The LinuxRequest.
+ * @param linuxSetInterfaceRequest The LinuxSetInterfaceRequest.
  * @return The error, or 0.
  */
-int set_interface( JNIEnv *env, int fd, jobject linuxRequest )
+int set_interface( JNIEnv *env, int fd, jobject linuxSetInterfaceRequest )
 {
 	struct usbdevfs_setinterface *interface = NULL;
 	int ret = 0;
@@ -204,7 +203,7 @@ int set_interface( JNIEnv *env, int fd, jobject linuxRequest )
 	jclass LinuxSetInterfaceRequest;
 	jmethodID getInterface, getSetting;
 
-	LinuxSetInterfaceRequest = (*env)->GetObjectClass( env, linuxRequest );
+	LinuxSetInterfaceRequest = (*env)->GetObjectClass( env, linuxSetInterfaceRequest );
 	getInterface = (*env)->GetMethodID( env, LinuxSetInterfaceRequest, "getInterface", "()I" );
 	getSetting = (*env)->GetMethodID( env, LinuxSetInterfaceRequest, "getSetting", "()I" );
 	(*env)->DeleteLocalRef( env, LinuxSetInterfaceRequest );
@@ -214,8 +213,8 @@ int set_interface( JNIEnv *env, int fd, jobject linuxRequest )
 		return -ENOMEM;
 	}
 
-	interface->interface = (unsigned int)(*env)->CallIntMethod( env, linuxRequest, getInterface );
-	interface->altsetting = (unsigned int)(*env)->CallIntMethod( env, linuxRequest, getSetting );
+	interface->interface = (unsigned int)(*env)->CallIntMethod( env, linuxSetInterfaceRequest, getInterface );
+	interface->altsetting = (unsigned int)(*env)->CallIntMethod( env, linuxSetInterfaceRequest, getSetting );
 
 	dbg( MSG_DEBUG2, "set_interface : Setting interface %d to setting %d\n", interface->interface, interface->altsetting );
 
@@ -224,7 +223,7 @@ int set_interface( JNIEnv *env, int fd, jobject linuxRequest )
 		ret = -errno;
 
 	if (ret)
-		dbg( MSG_ERROR, "set_interface : Could not set interface (errno %d)\n", result );
+		dbg( MSG_ERROR, "set_interface : Could not set interface (errno %d)\n", ret );
 	else
 		dbg( MSG_DEBUG2, "set_interface : Set interface\n" );
 

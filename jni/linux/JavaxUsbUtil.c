@@ -11,7 +11,6 @@
 #include "JavaxUsb.h"
 
 int msg_level = MSG_MIN;
-int exception_check_num = 1;
 
 JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetMsgLevel
 	(JNIEnv *env, jclass JavaxUsb, jint level)

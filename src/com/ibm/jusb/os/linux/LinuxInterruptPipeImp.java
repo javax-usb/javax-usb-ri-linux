@@ -10,6 +10,7 @@ package com.ibm.jusb.os.linux;
  */
 
 import com.ibm.jusb.*;
+import com.ibm.jusb.os.*;
 
 /**
  * LinuxPipeImp imeplementation for Interrupt pipe.

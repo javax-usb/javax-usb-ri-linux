@@ -161,7 +161,7 @@ return -ENOSYS;
  * @param fd The file descriptor.
  * @param linuxIsochronousRequest The LinuxIsochronousRequest.
  */
-void cancel_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
+void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 {
 //FIXME - implement
 }

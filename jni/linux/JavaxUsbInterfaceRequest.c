@@ -91,7 +91,7 @@ int is_claimed( JNIEnv *env, int fd, jobject linuxRequest )
 	if (ioctl( fd, USBDEVFS_GETDRIVER, gd )) {
 		ret = -errno;
 
-		if (-NODATA == ret)
+		if (-ENODATA == ret)
 			dbg( MSG_DEBUG3, "is_claimed : Interface %d is not claimed\n", gd->interface );
 		else
 			dbg( MSG_ERROR, "is_claimed : Could not determine if interface %d is claimed\n", gd->interface );

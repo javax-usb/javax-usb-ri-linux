@@ -13,6 +13,7 @@ import javax.usb.*;
 import javax.usb.util.*;
 
 import com.ibm.jusb.*;
+import com.ibm.jusb.os.*;
 
 /**
  * Control parameters to pass to native code

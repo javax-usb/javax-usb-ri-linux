@@ -10,17 +10,6 @@
 
 #include "JavaxUsb.h"
 
-/*
- * JavaxUsbDeviceProxy.c
- *
- * This manages I/O between a LinuxDeviceProxy and usbdevfs device node
- *
- */
-
-static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest );
-static void cancelRequest( JNIEnv *env, int fd, jobject linuxRequest );
-static void completeRequest( JNIEnv *env, jobject linuxRequest );
-
 /* These MUST match those defined in com/ibm/jusb/os/linux/LinuxRequest.java */
 #define LINUX_PIPE_REQUEST 1
 #define LINUX_DCP_REQUEST 2
@@ -30,6 +19,10 @@ static void completeRequest( JNIEnv *env, jobject linuxRequest );
 #define LINUX_IS_CLAIMED_INTERFACE_REQUEST 6
 #define LINUX_RELEASE_INTERFACE_REQUEST 7
 #define LINUX_ISOCHRONOUS_REQUEST 8
+
+static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest );
+static void cancelRequest( JNIEnv *env, int fd, jobject linuxRequest );
+static void completeRequest( JNIEnv *env, jobject linuxRequest );
 
 /*
  * Proxy for all I/O with a device
@@ -42,9 +35,9 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 	struct usbdevfs_urb *urb;
 	int loop_count = 0;
 
-	jclass LinuxDeviceProxy = NULL;
+	jclass LinuxDeviceProxy;
 	jobject linuxRequest;
-	jstring jkey = NULL;
+	jstring jkey;
 	jmethodID startCompleted, isRequestWaiting, getReadyRequest, getCancelRequest;
 	jmethodID getKey;
 
@@ -55,27 +48,30 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 	getCancelRequest = (*env)->GetMethodID( env, LinuxDeviceProxy, "getCancelRequest", "()Lcom/ibm/jusb/os/linux/LinuxRequest;" );
 	getKey = (*env)->GetMethodID( env, LinuxDeviceProxy, "getKey", "()Ljava/lang/String;" );
 	jkey = (*env)->CallObjectMethod( env, linuxDeviceProxy, getKey );
+	(*env)->DeleteLocalRef( env, LinuxDeviceProxy );
 
 	errno = 0;
-	if (0 > (fd = open_device( env, jkey, O_RDWR ))) {
+	fd = open_device( env, jkey, O_RDWR );
+	(*env)->DeleteLocalRef( env, jkey );
+
+	if (0 > fd) {
 		dbg( MSG_ERROR, "nativeDeviceProxy : Could not open node for device!\n" );
-		(*env)->CallVoidMethod( env, linuxDeviceProxy, startupCompleted, errno );
-		goto DEVICE_PROXY_CLEANUP;
+		(*env)->CallVoidMethod( env, linuxDeviceProxy, startCompleted, errno );
+		return;
 	}
 
-	(*env)->CallVoidMethod( env, linuxDeviceProxy, startupCompleted, 0 );
+	(*env)->CallVoidMethod( env, linuxDeviceProxy, startCompleted, 0 );
 
 	/* run forever...? */
 	while (1) {
-
 		/* FIXME - stop using polling! */
-		if ( loop_count > MAX_LOOP_COUNT ) {
+		if ( loop_count > 20 ) {
 			usleep( 0 );
 			loop_count = 0;
 		}
 		loop_count ++;
 
-		if (JNI_TRUE == (*env)->CallObjectMethod( env, linuxDeviceProxy, isRequestWaiting )) {
+		if (JNI_TRUE == (*env)->CallBooleanMethod( env, linuxDeviceProxy, isRequestWaiting )) {
 			if ((linuxRequest = (*env)->CallObjectMethod( env, linuxDeviceProxy, getReadyRequest ))) {
 				dbg( MSG_DEBUG1, "nativeDeviceProxy : Got Request\n" );
 				submitRequest( env, fd, linuxRequest );
@@ -102,14 +98,15 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 
 	dbg( MSG_ERROR, "nativeDeviceProxy : Proxy exiting!  ERROR!\n" );
 
-DEVICE_PROXY_CLEANUP:
-	if (0 < fd) close( fd );
-
-	if (LinuxDeviceProxy) (*env)->DeleteLocalRef( env, LinuxDeviceProxy );
-	if (LinuxRequest) (*env)->DeleteLocalRef( env, LinuxRequest );
-	if (jkey) (*env)->DeleteLocalRef( env, jkey );
+	close( fd );
 }
 
+/**
+ * Submit a LinuxRequest.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxRequest The LinuxRequest.
+ */
 static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest )
 {
 	int type, err, sync = 0;
@@ -156,7 +153,7 @@ static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest )
 		err = isochronous_request( env, fd, linuxRequest );
 		break;
 	default: /* ? */
-		dbg( MSR_ERROR, "submitRequest : Unknown Request type %d\n", type );
+		dbg( MSG_ERROR, "submitRequest : Unknown Request type %d\n", type );
 		err = -EINVAL;
 		break;
 	}
@@ -168,7 +165,13 @@ static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest )
 		(*env)->CallVoidMethod( env, linuxRequest, setCompleted, JNI_TRUE );
 }
 
-static void cancelRequest( int fd, jobject linuxRequest )
+/**
+ * Cancel a LinuxRequest.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxRequest The LinuxRequest.
+ */
+static void cancelRequest( JNIEnv *env, int fd, jobject linuxRequest )
 {
 	int type;
 
@@ -204,6 +207,11 @@ static void cancelRequest( int fd, jobject linuxRequest )
 	}	
 }
 
+/**
+ * Complete a LinuxRequest.
+ * @param env The JNIEnv.
+ * @param linuxRequest The LinuxRequest.
+ */
 static void completeRequest( JNIEnv *env, jobject linuxRequest )
 {
 	int type, err;
@@ -248,6 +256,11 @@ static void completeRequest( JNIEnv *env, jobject linuxRequest )
 	(*env)->CallVoidMethod( env, linuxRequest, setCompleted, JNI_TRUE );
 }
 
+/**
+ * Debug a URB.
+ * @param calling_method The name of the calling method.
+ * @param urb The usbdevfs_urb.
+ */
 inline void debug_urb( char *calling_method, struct usbdevfs_urb *urb )
 {
 	int i;

@@ -54,8 +54,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** Claim this interface. */
 	public void claim() throws UsbException
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
-		request.setClaimType( LinuxInterfaceRequest.INTERFACE_CLAIM );
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxClaimInterfaceRequest();
 		request.setInterfaceNumber(getInterfaceNumber());
 		submit(request);
 
@@ -68,8 +67,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** Release this interface. */
 	public void release()
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
-		request.setClaimType( LinuxInterfaceRequest.INTERFACE_RELEASE );
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxReleaseInterfaceRequest();
 		request.setInterfaceNumber(getInterfaceNumber());
 
 		try {
@@ -85,8 +83,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** @return if this interface is claimed. */
 	public boolean isClaimed()
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
-		request.setClaimType( LinuxInterfaceRequest.INTERFACE_IS_CLAIMED );
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxIsClaimedInterfaceRequest();
 		request.setInterfaceNumber(getInterfaceNumber());
 
 		try {

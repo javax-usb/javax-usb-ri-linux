@@ -13,6 +13,7 @@ import javax.usb.UsbException;
 import javax.usb.util.*;
 
 import com.ibm.jusb.*;
+import com.ibm.jusb.os.*;
 
 /**
  * LinuxPipeOsImp implementation for Isochronous pipe.

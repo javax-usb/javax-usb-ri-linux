@@ -43,6 +43,11 @@
 #define MSG_MIN MSG_OFF
 #define MSG_MAX MSG_DEBUG3
 
+// This will cause COMPLETE JVM EXIT when any JNI exception happens.
+// Kinda extreme, but when you realize JVM crash is the likely alternative,
+// you might as well exit cleanly, since you know exactly what the problem/exception is.
+#define EXIT_ON_EXCEPTION
+
 #ifdef NO_DEBUG
 #	define dbg(lvl, args...)		do { } while(0)
 #else
@@ -129,9 +134,9 @@ void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
 void cancel_dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
 void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxRequest );
 
-void complete_pipe_request( JNIEnv *env, jobject linuxRequest );
-void complete_dcp_request( JNIEnv *env, jobject linuxRequest );
-void complete_isochronous_request( JNIEnv *env, jobject linuxRequest );
+int complete_pipe_request( JNIEnv *env, jobject linuxRequest );
+int complete_dcp_request( JNIEnv *env, jobject linuxRequest );
+int complete_isochronous_request( JNIEnv *env, jobject linuxRequest );
 
 int set_configuration( JNIEnv *env, int fd, jobject linuxRequest );
 int set_interface( JNIEnv *env, int fd, jobject linuxRequest );
@@ -165,14 +170,15 @@ int select_dirent( const struct dirent *dir_ent, unsigned char type );
 
 void debug_urb( char *calling_method, struct usbdevfs_urb *urb );
 
-void check_for_exception( JNIEnv *env ) 
+static inline void check_for_exception( JNIEnv *env ) 
 {
 	jthrowable e;
 
-	printf("Checking for exception (call number %d)\n", exception_check_num++);
 	if (!(e = (*env)->ExceptionOccurred( env ))) return;
 	dbg( MSG_CRITICAL, "Exception occured!\n" );
+#ifdef EXIT_ON_EXCEPTION
 	exit(1);
+#endif
 }
 
 #endif /* _JAVAUSBUTIL_H */

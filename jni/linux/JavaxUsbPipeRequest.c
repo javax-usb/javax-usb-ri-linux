@@ -151,7 +151,6 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest )
 {
 	struct usbdevfs_urb *urb;
-	int fd;
 
 	jclass LinuxPipeRequest;
 	jmethodID getUrbAddress;
