@@ -51,9 +51,11 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 			}
 		}
 
-        if ( 0 > totalDevices ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM );
+        if ( 0 != topologyListenerError ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM, topologyListenerError );
 
-        return JavaxUsb.getRootHub();
+		if ( 0 != topologyUpdateResult ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM, topologyUpdateResult );
+
+		return usbRootHubImp;
 	}
 
 	/** @return The minimum API version this supports. */
@@ -87,6 +89,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		topologyListener.setDaemon(true);
 		topologyListener.setName("javax.usb Linux implementation Topology Listener");
+
+		topologyListenerError = 0;
 		topologyListener.start();
 	}
 
@@ -97,6 +101,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	private void topologyListenerExit(int error)
 	{
 //FIXME - disconnet all devices
+
+		topologyListenerError = error;
 
 		synchronized (topologyLock) {
 			topologyLock.notifyAll();
@@ -114,39 +120,55 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		topologyUpdateManager.add(r);
 	}
 
+	/**
+	 * Fill the List with all devices.
+	 * @param device The device to add.
+	 * @param list The list to add to.
+	 */
+	private void fillDeviceList( UsbDeviceImp device, List list )
+	{
+		list.add(device);
+
+		if (device.isUsbHub()) {
+			UsbHubImp hub = (UsbHubImp)device;
+
+			UsbInfoListIterator iterator = hub.getAttachedUsbDevices();
+			while (iterator.hasNext())
+				fillDeviceList( (UsbDeviceImp)iterator.nextUsbInfo(), list );
+		}
+	}
+
 	/** Update the topology and fire connect/disconnect events */
 	private void updateTopology()
 	{
-		totalDevices = JavaxUsb.nativeTopologyUpdater( topologyUpdater );
+		List connectedDevices = new ArrayList();
+		List disconnectedDevices = new ArrayList();
 
-			Enumeration oldKeys = JavaxUsb.getUsbDeviceKeyEnumeration();
+		fillDeviceList(usbRootHubImp, disconnectedDevices);
+		disconnectedDevices.remove(usbRootHubImp);
 
-			while (oldKeys.hasMoreElements()) {
-				String key = (String)oldKeys.nextElement();
+		topologyUpdateResult = JavaxUsb.nativeTopologyUpdater( this, connectedDevices, disconnectedDevices );
 
-				if (allDeviceKeys.contains(key)) continue;
+		for (int i=0; i<disconnectedDevices.size(); i++)
+			((UsbDeviceImp)disconnectedDevices.get(i)).disconnect();
 
-				UsbDeviceImp device = JavaxUsb.getUsbDeviceImp( key );
-				JavaxUsb.removeUsbDeviceImp( device );
-				JavaxUsb.disconnectUsbDeviceImp( device );
-				disconnectedDevices.addUsbInfo( device );
-			}
-
-			allDeviceKeys.removeAllElements();
-		if ( !connectedDevices.isEmpty() ) {
-			UsbInfoList usbInfoList = new DefaultUsbInfoList();
-			for (int i=0; i<connectedDevices.size(); i++)
-				usbInfoList.addUsbInfo((UsbInfo)connectedDevices.get(i));
-			connectedDevices.clear();
-			fireUsbDeviceAttachedEvent( usbInfoList );
+		for (int i=0; i<connectedDevices.size(); i++) {
+			UsbDeviceImp device = (UsbDeviceImp)connectedDevices.get(i);
+			device.getUsbPortImp().attachUsbDeviceImp(device);
 		}
 
 		if ( !disconnectedDevices.isEmpty() ) {
 			UsbInfoList usbInfoList = new DefaultUsbInfoList();
 			for (int i=0; i<disconnectedDevices.size(); i++)
 				usbInfoList.addUsbInfo((UsbInfo)disconnectedDevices.get(i));
-			disconnectedDevices.clear();
 			fireUsbDeviceDetachedEvent( usbInfoList );
+		}
+
+		if ( !connectedDevices.isEmpty() ) {
+			UsbInfoList usbInfoList = new DefaultUsbInfoList();
+			for (int i=0; i<connectedDevices.size(); i++)
+				usbInfoList.addUsbInfo((UsbInfo)connectedDevices.get(i));
+			fireUsbDeviceAttachedEvent( usbInfoList );
 		}
 
 		synchronized (topologyLock) {
@@ -155,19 +177,45 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	}
 
 	/**
-	 * Check if a UsbDeviceImp already exists.
-	 * @param device The UsbDeviceImp to check.
+	 * Check a device.
+	 * <p>
+	 * If the device exists, the existing device is removed from the disconnected list and returned.
+	 * If the device is new, it is added to the connected list and returned.  If the new device replaces
+	 * an existing device, the old device is retained in the disconnected list, and the new device is returned.
+	 * @param hub The parent UsbHubImp.
+	 * @param port The parent port number.
+	 * @param device The UsbDeviceImp to add.
+	 * @param disconnected The List of disconnected devices.
+	 * @param connected The List of connected devices.
 	 * @return The new UsbDeviceImp or existing UsbDeviceImp.
 	 */
-	private UsbDeviceImp checkUsbDeviceImp(UsbDeviceImp device)
+	private UsbDeviceImp checkUsbDeviceImp( UsbHubImp hub, byte port, UsbDeviceImp device, List disconnected, List connected )
 	{
-		allDeviceKeys.addElement( key );
-		UsbDeviceImp oldDevice = JavaxUsb.getUsbDeviceImp( key );
-		if ( null != oldDevice) return oldDevice;
+		UsbPortImp usbPortImp = null;
 
-		connectedDevices.addUsbInfo( device );
-		JavaxUsb.addUsbDeviceImp( device, key );
-		return device;		
+		try {
+			usbPortImp = hub.getUsbPortImp(port);
+		} catch ( UsbRuntimeException urE ) {
+			hub.resize(port);
+			usbPortImp = hub.getUsbPortImp(port);
+		}
+
+		if (!usbPortImp.isUsbDeviceAttached()) {
+			connected.add(device);
+			device.setUsbPortImp(usbPortImp);
+			return device;
+		}
+
+		UsbDeviceImp existingDevice = usbPortImp.getUsbDeviceImp();
+
+		if (existingDevice.equals(device)) {
+			disconnected.remove(existingDevice);
+			return existingDevice;
+		} else {
+			connected.add(device);
+			device.setUsbPortImp(usbPortImp);
+			return device;
+		}
 	}
 
     /**
@@ -193,15 +241,15 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     //*************************************************************************
     // Instance variables
 
-	private RunnableManager topologyUpdateManager = new RunnableManager();
+	private UsbRootHubImp usbRootHubImp = new VirtualUsbRootHubImp();
 
-	private List connectedDevices = new ArrayList();
-	private List disconnectedDevices = new ArrayList();
+	private RunnableManager topologyUpdateManager = new RunnableManager();
 
 	private Thread topologyListener = null;
 	private Object topologyLock = new Object();
 
-    private int totalDevices = 0;
+    private int topologyListenerError = 0;
+	private int topologyUpdateResult = 0;
 
 	//*************************************************************************
 	// Class constants
@@ -228,40 +276,4 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		+"\n"+"\n"
 		;
 
-
-	//*************************************************************************
-	// Inner interfaces
-
-	/**
-	 * Linux topology updater
-	 * @author Dan Streetman
-	 * @version 0.0.1 (JDK 1.1.x)
-	 */
-	public class LinuxTopologyUpdater
-	{
-
-		/**
-		 * Try to add a UsbDevice
-		 * @param device the UsbDevice to all
-		 * @param key the device's key
-		 * @return the device already in the topology, or the newly added device (param 1)
-		 */
-		private UsbDeviceImp addUsbDeviceImp( UsbDeviceImp device, String key )
-		{
-		}
-
-		/**
-		 * Update the topology by comparing the device table to the newly created vector and
-		 * removing any disconnected devices
-		 */
-		private void updateTopology()
-		{
-		}
-
-		private Vector allDeviceKeys = new Vector();
-
-	}
-
 }
-
-

@@ -63,9 +63,6 @@ class JavaxUsb {
 			throw new UsbException( INVALID_MSG_LEVEL + " : " + level );
 	}
 
-	/** Get the virtual root hub */
-	public static UsbRootHub getRootHub() { return rootHub; }
-
 	//*************************************************************************
 	// Native methods
 
@@ -78,11 +75,13 @@ class JavaxUsb {
 		// JavaxUsbTopologyUpdater methods
 
 	/**
-	 * Call the native function that updates the topology
-	 * @param updater A LinuxUsbServices.LinuxTopologyUpdater object
-	 * @return The number of devices connected (positive) / disconnected (negative)
+	 * Call the native function that updates the topology.
+	 * @param services The LinuxUsbServices instance.
+	 * @param list The List to fill with newly connected devices.
+	 * @param list The List of currently connected devices, which still connected devices will be removed from.
+	 * @return The error number if one occurred.
 	 */
-	static synchronized native int nativeTopologyUpdater( LinuxUsbServices.LinuxTopologyUpdater updater );
+	static native int nativeTopologyUpdater( LinuxUsbServices services, List connected, List disconnected );
 
 		//*********************************
 		// JavaxUsbTopologyListener methods
@@ -240,82 +239,50 @@ class JavaxUsb {
 	static native void nativeCompleteIsochronousRequest( LinuxIsochronousRequest request );
 
 	//*************************************************************************
-	// Device key methods
-
-	/**
-	 * Add UsbDevice to device table/map
-	 * @param device The UsbDevice to add
-	 * @param key The key to associate the UsbDevice with
-	 */
-	static void addUsbDeviceImp( UsbDeviceImp device, String key )
-	{
-		usbDeviceTable.put( key, device );
-		usbDeviceKeyTable.put( device, key );
-	}
-
-	/**
-	 * Remove UsbDevice to device table/map
-	 * @param device The UsbDevice to remove
-	 */
-	static void removeUsbDeviceImp( UsbDeviceImp device )
-	{
-		if (!usbDeviceKeyTable.containsKey( device )) return;
-
-		usbDeviceTable.remove( (String)usbDeviceKeyTable.get( device ) );
-		usbDeviceKeyTable.remove( device );
-	}
-
-	/**
-	 * Get a UsbDevice from the table
-	 * @param key The key of the UsbDevice to get
-	 * @return The UsbDevice associated with the key, or null if not in table
-	 */
-	static UsbDeviceImp getUsbDeviceImp( String key )
-	{
-		return (UsbDeviceImp)usbDeviceTable.get( key );
-	}
-
-	/**
-	 * Get a key for a UsbDevice from the table
-	 * @param usbDevice The UsbDevice for the key to get
-	 * @return The key associated with the UsbDevice, or null if not in table
-	 */
-	static String getUsbDeviceKey( UsbDevice usbDevice )
-	{
-		return (String)usbDeviceKeyTable.get( usbDevice );
-	}
-
-	/** @return an Enumeration of all device keys */
-	static Enumeration getUsbDeviceKeyEnumeration()
-	{
-		return usbDeviceTable.keys();
-	}
-
-	//*************************************************************************
 	// Creation methods
 
 	/** @return A new UsbRootHubImp */
-	private static UsbRootHubImp createUsbRootHubImp()
+	private static UsbRootHubImp createUsbRootHubImp( String key )
 	{
-		return new UsbRootHubImp( null, null );
+		UsbRootHubImp hub = new UsbRootHubImp( null, null );
+
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
+
+		return hub;
 	}
 
 	/** @return A new UsbRootHubImp with max ports */
-	private static UsbRootHubImp createUsbRootHubImp( int maxPorts )
+	private static UsbRootHubImp createUsbRootHubImp( String key, int maxPorts )
 	{
-		return new UsbRootHubImp( maxPorts, null, null );
+		UsbRootHubImp hub = new UsbRootHubImp( maxPorts, null, null );
+
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
+
+		return hub;
 	}
 
 	/** @return A new UsbHubImp with max ports */
-	private static UsbHubImp createUsbHubImp( int maxPorts )
+	private static UsbHubImp createUsbHubImp( String key, int maxPorts )
 	{
-		return new UsbHubImp( maxPorts, null, null );
+		UsbHubImp hub = new UsbHubImp( maxPorts, null, null );
+
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
+
+		return hub;
 	}
 
 	/** @return A new UsbDeviceImp */
-	private static UsbDeviceImp createUsbDeviceImp( )
+	private static UsbDeviceImp createUsbDeviceImp( String key )
 	{
-		return new UsbDeviceImp( null, null );
+		UsbDeviceImp device = new UsbDeviceImp( null, null );
+
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( device, new LinuxDeviceProxy(), key );
+		device.setUsbDeviceOsImp( linuxDeviceOsImp );
+
+		return device;
 	}
 
 	/** @return A new UsbConfigImp */
@@ -327,13 +294,42 @@ class JavaxUsb {
 	/** @return A new UsbInterfaceImp */
 	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigImp config )
 	{
-		return new UsbInterfaceImp( config, null, null );
+		UsbInterfaceImp iface = new UsbInterfaceImp( config, null, null );
+
+		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbDeviceImp().getUsbDeviceOsImp();
+		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );
+		iface.setUsbInterfaceOsImp( linuxInterfaceOsImp );
+
+		return iface;
 	}
 
 	/** @return A new UsbEndpointImp */
 	private static UsbEndpointImp createUsbEndpointImp( UsbInterfaceImp iface )
 	{
-		return new UsbEndpointImp( iface, null, null );
+		UsbEndpointImp endpoint = new UsbEndpointImp( iface, null, null );
+
+		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)endpoint.getUsbInterfaceImp().getUsbInterfaceOsImp();
+		LinuxPipeOsImp linuxPipeOsImp = null;
+		switch (endpoint.getType()) {
+		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
+			linuxPipeOsImp = new LinuxControlPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_BULK:
+			linuxPipeOsImp = new LinuxBulkPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_INT:
+			linuxPipeOsImp = new LinuxInterruptPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
+			linuxPipeOsImp = new LinuxIsochronousPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		default:
+//FIXME - ?
+		}
+		UsbPipeImp usbPipeImp = new UsbPipeImp( endpoint, linuxPipeOsImp );
+		endpoint.setUsbPipeImp( usbPipeImp );
+
+		return endpoint;
 	}
 
 	//*************************************************************************
@@ -370,9 +366,6 @@ class JavaxUsb {
 
 		targetDevice.setDeviceDescriptor(desc);
 		targetDevice.setSpeedString(speedString);
-
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( targetDevice, new LinuxDeviceProxy() );
-		targetDevice.setUsbDeviceOsImp( linuxDeviceOsImp );
 	}
 
 	private static void configureUsbConfigImp( UsbConfigImp targetConfig,
@@ -422,10 +415,6 @@ class JavaxUsb {
 			interfaceProtocol, interfaceIndex );
 
 		targetInterface.setInterfaceDescriptor(desc);
-
-		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)targetInterface.getUsbDeviceImp().getUsbDeviceOsImp();
-		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( targetInterface, linuxDeviceOsImp );
-		targetInterface.setUsbInterfaceOsImp( linuxInterfaceOsImp );
 	}
 
 	private static void configureUsbEndpointImp( UsbEndpointImp targetEndpoint,
@@ -445,94 +434,10 @@ class JavaxUsb {
 			endpointAddress, attributes, interval, maxPacketSize );
 
 		targetEndpoint.setEndpointDescriptor(desc);
-
-		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)targetEndpoint.getUsbInterfaceImp().getUsbInterfaceOsImp();
-		LinuxPipeOsImp linuxPipeOsImp = null;
-		switch (targetEndpoint.getType()) {
-		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
-			linuxPipeOsImp = new LinuxControlPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_BULK:
-			linuxPipeOsImp = new LinuxBulkPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_INT:
-			linuxPipeOsImp = new LinuxInterruptPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
-			linuxPipeOsImp = new LinuxIsochronousPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		default:
-//FIXME - ?
-		}
-		UsbPipeImp usbPipeImp = new UsbPipeImp( targetEndpoint, linuxPipeOsImp );
-		targetEndpoint.setUsbPipeImp( usbPipeImp );
-	}
-
-	private static void configureStringDescriptorImp( UsbDeviceImp device,
-		byte length, byte type,
-		byte index, String newString )
-	{
-		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
-		/* Email ddstreet@ieee.org for more info */
-		length += 0;
-		type += 0;
-		index += 0;
-
-		StringDescriptorImp desc = new StringDescriptorImp( length, type, newString );
-
-		device.setStringDescriptor(index,desc);
-	}
-
-	//*************************************************************************
-	// Topology updating methods
-
-	/**
-	 * Connect a UsbDeviceImp to its parent UsbHubImp.
-	 * @param device the UsbDeviceImp to connect.
-	 * @param hub the parent UsbHubImp.
-	 * @param port the port the UsbDeviceImp is connected on.
-	 */
-	static void connectUsbDeviceImp( UsbDeviceImp device, UsbHubImp hub, byte port )
-	{
-		try {
-			device.connect( hub, port );
-		} catch ( UsbException uE ) {
-//FIXME - add error handling!
-throw new UsbRuntimeException("Could not attach UsbDeviceImp to parent UsbHubImp : " + uE.getMessage());
-		}
-	}
-
-	/**
-	 * Disconnect a UsbDeviceImp.
-	 * @param device the UsbDeviceImp to disconnect.
-	 */
-	static void disconnectUsbDeviceImp( UsbDeviceImp device )
-	{
-		device.disconnect();
-	}
-
-	//*************************************************************************
-	// Private methods
-
-	/** Set the virtual root hub */
-	private static void setRootHubImp( UsbRootHubImp hub ) { rootHub = hub; }
-
-	/**
-	 * Get a virtual root hub
-	 */
-	private static UsbRootHubImp getVirtualRootHubImp()
-	{
-		return virtualRootHub;
 	}
 
 	//*************************************************************************
 	// Class variables
-
-	private static UsbRootHubImp rootHub = null;
-	private static UsbRootHubImp virtualRootHub = new VirtualUsbRootHubImp();
-
-	private static Hashtable usbDeviceTable = new Hashtable();
-	private static Hashtable usbDeviceKeyTable = new Hashtable();
 
 	private static boolean libraryLoaded = false;
 
