@@ -48,6 +48,13 @@
 // you might as well exit cleanly, since you know exactly what the problem/exception is.
 #define EXIT_ON_EXCEPTION
 
+// Pick a way to determine active config.  The devices file generates bus traffic, which is BAD
+// when using non-queueing (up to 2.5.44) UHCI Host Controller Driver.
+// All or none may be used, attempts are in order, failure moves to the next one.
+// If none are defined (or all fail) then the result will be no configs active.
+#undef CONFIG_USE_DEVICES_FILE
+#define CONFIG_ALWAYS_ACTIVE
+
 #ifdef NO_DEBUG
 #	define dbg(lvl, args...)		do { } while(0)
 #else

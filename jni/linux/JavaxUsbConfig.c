@@ -13,22 +13,37 @@
 
 #include "JavaxUsb.h"
 
-static jboolean use_devices_file( unsigned char bus, unsigned char dev, unsigned char config );
+#ifdef CONFIG_USE_DEVICES_FILE
+static int use_devices_file( unsigned char bus, unsigned char dev, unsigned char config );
+#endif /* CONFIG_USE_DEVICES_FILE */
 
 jboolean isConfigActive( int fd, unsigned char bus, unsigned char dev, unsigned char config )
 {
-	dbg( MSG_DEBUG2, "isConfigActive : Checking config using devices file\n" );
-	return use_devices_file( bus, dev, config );
+	int ret = -1; /* -1 = failure, 0 = active, 1 = inactive */
+#ifdef CONFIG_USE_DEVICES_FILE
+	if (0 > ret) {
+		dbg( MSG_DEBUG2, "isConfigActive : Checking config using devices file.\n" );
+		ret = use_devices_file( bus, dev, config );
+	}
+#endif /* CONFIG_USE_DEVICES_FILE */
+#ifdef CONFIG_ALWAYS_ACTIVE
+	if (0 > ret) {
+		dbg( MSG_DEBUG2, "isConfigActive : All configs set to active; no checking.\n" );
+		ret = 0;
+	}
+#endif /* CONFIG_ALWAYS_ACTIVE */
+	return (!ret ? JNI_TRUE : JNI_FALSE);
 }
 
-static jboolean use_devices_file( unsigned char bus, unsigned char dev, unsigned char config )
+#ifdef CONFIG_USE_DEVICES_FILE
+static int use_devices_file( unsigned char bus, unsigned char dev, unsigned char config )
 {
 	FILE *file = NULL;
 #define LINELEN 1024
 	size_t linelen, len;
 	char *line = NULL, busstr[32], devstr[32], cfgstr[32];
 	int in_dev = 0;
-	jboolean active = JNI_FALSE;
+	int ret = -1;
 
 	if (!(line = malloc(LINELEN))) {
 		dbg( MSG_CRITICAL, "use_devices_file : Out of memory!\n" );
@@ -78,7 +93,7 @@ static jboolean use_devices_file( unsigned char bus, unsigned char dev, unsigned
 
 		if (in_dev) {
 			if (strstr(line, cfgstr)) {
-				active = strstr(line, "C:*") ? JNI_TRUE : JNI_FALSE;
+				ret = strstr(line, "C:*") ? 0 : 1;
 				break;
 			}
 		}
@@ -88,5 +103,6 @@ end:
 	if (line) free(line);
 	if (file) fclose(file);
 
-	return active;
+	return ret;
 }
+#endif /* CONFIG_USE_DEVICES_FILE */
