@@ -136,7 +136,7 @@
 	<target name="mrproper" depends="clean">
 		<echo message="Cleaning everything."/>
 		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" failonerror="false">
-			<fileset dir="${jsr80.linux.jarfile.dir}" includes="${jsr80.linux.class.jarfile}"/>
+			<fileset dir="${jsr80.linux.jarfile.dir}" includes="${jsr80.linux.jarfile}"/>
 			<fileset dir="${jsr80.linux.jni.dest.dir}" includes="${jsr80.linux.jni.library}"/>
 		</delete>
 
