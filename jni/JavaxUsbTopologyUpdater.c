@@ -54,7 +54,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 
 			errno = 0;
 			if (0 > devs) {
-				dbg( MSG_ERROR, "nativeTopologyUpdater : Could not access device nodes in %s/%s : %s\n", USBDEVFS_PATH, buslist[port]->d_name, strerror(errno) );
+			  dbg( MSG_ERROR, "nativeTopologyUpdater : Could not access device nodes in %s/%s : %s\n", USBDEVFS_PATH, buslist[port]->d_name, strerror(errno) );
 			} else if (!devs) {
 				dbg( MSG_ERROR, "nativeTopologyUpdater : No device nodes found in %s/%s\n", USBDEVFS_PATH, buslist[port]->d_name );
 			} else {
@@ -217,7 +217,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 	unsigned short wTotalLength;
 	unsigned int pos;
 	jobject config = NULL, interface = NULL;
-	jmethodID createUsbConfigImp;
+	jmethodID createUsbConfigurationImp;
 	jboolean isActive = JNI_FALSE;
 
 	if (!(cfg_desc = get_descriptor( fd ))) {
@@ -225,7 +225,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 		goto BUILD_CONFIG_EXIT;
 	}
 
-	createUsbConfigImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbConfigImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBSBBBBBZ)Lcom/ibm/jusb/UsbConfigImp;" );
+	createUsbConfigurationImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbConfigurationImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBSBBBBBZ)Lcom/ibm/jusb/UsbConfigurationImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_config : Building config %d\n", cfg_desc->bConfigurationValue );
 
@@ -233,7 +233,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 	pos = cfg_desc->bLength;
 
 	isActive = isConfigActive( fd, bus, dev, cfg_desc->bConfigurationValue );
-	config = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbConfigImp, device,
+	config = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbConfigurationImp, device,
 		cfg_desc->bLength, cfg_desc->bDescriptorType, wTotalLength,
 		cfg_desc->bNumInterfaces, cfg_desc->bConfigurationValue, cfg_desc->iConfiguration,
 		cfg_desc->bmAttributes, cfg_desc->bMaxPower, isActive );
@@ -287,7 +287,7 @@ static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, job
 	jobject interface;
 	jboolean isActive;
 
-	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigImp;BBBBBBBBBZ)Lcom/ibm/jusb/UsbInterfaceImp;" );
+	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigurationImp;BBBBBBBBBZ)Lcom/ibm/jusb/UsbInterfaceImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_interface : Building interface %d\n", if_desc->bInterfaceNumber );
 
