@@ -43,7 +43,7 @@ public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,
 	/** @return The UsbPipeImp for this */
 	public UsbPipeImp getUsbPipeImp() { return usbPipeImp; }
 
-	/** @param usbPipeImp The UsbPipeImp for this */
+	/** @param pipe The UsbPipeImp for this */
 	public void setUsbPipeImp( UsbPipeImp pipe ) { usbPipeImp = pipe; }
 
 	/** @return The LinuxInterfaceOsImp */

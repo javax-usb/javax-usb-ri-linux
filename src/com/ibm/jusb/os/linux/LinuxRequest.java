@@ -84,7 +84,7 @@ abstract class LinuxRequest
 		catch ( Exception e ) { /* log? */ }
 	}
 
-	/** @param The Completion. */
+	/** @param c The Completion. */
 	public void setCompletion(LinuxRequest.Completion c) { completion = c; }
 
 	/** @return The Completion */
