@@ -1,0 +1,63 @@
+package com.ibm.jusb.os.linux;
+
+/**
+ * Copyright (c) 1999 - 2001, International Business Machines Corporation.
+ * All Rights Reserved.
+ *
+ * This software is provided and licensed under the terms and conditions
+ * of the Common Public License:
+ * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
+ */
+
+import javax.usb.*;
+
+import com.ibm.jusb.*;
+import com.ibm.jusb.util.*;
+
+/**
+ * LinuxRequest for use on control pipes.
+ * @author Dan Streetman
+ */
+class LinuxControlRequest extends LinuxPipeRequest
+{
+	public LinuxControlRequest() { super(UsbConst.ENDPOINT_TYPE_CONTROL,(byte)0x00); }
+
+	/** @return This request's type. */
+	public int getType() { return LinuxRequest.LINUX_CONTROL_REQUEST; }
+
+	/** @param irp The (Control)UsbIrpImp */
+	public void setUsbIrpImp( UsbIrpImp irp ) { setUsbIrpImp((ControlUsbIrpImp)irp); }
+
+	/** @param irp The ControlUsbIrpImp */
+	public void setUsbIrpImp( ControlUsbIrpImp irp )
+	{
+		super.setUsbIrpImp(irp);
+
+		bmRequestType = irp.bmRequestType();
+		bRequest = irp.bRequest();
+		wValue = irp.wValue();
+		wIndex = irp.wIndex();
+		setupPacket = irp.getSetupPacket();
+	}
+
+	/** @return The bmRequestType */
+	public byte bmRequestType() { return bmRequestType; }
+
+	/** @return The bRequest */
+	public byte bRequest() { return bRequest; }
+
+	/** @return The wValue */
+	public short wValue() { return wValue; }
+
+	/** @return The wIndex */
+	public short wIndex() { return wIndex; }
+
+	/** @return The setup packet */
+	public byte[] getSetupPacket() { return setupPacket; }
+
+	private byte bmRequestType = 0;
+	private byte bRequest = 0;
+	private short wValue = 0;
+	private short wIndex = 0;
+	private byte[] setupPacket = null;
+}
