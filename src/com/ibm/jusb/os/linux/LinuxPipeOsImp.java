@@ -31,7 +31,7 @@ import com.ibm.jusb.util.*;
  * </ul>
  * @author Dan Streetman
  */
-public abstract class LinuxPipeOsImp implements UsbPipeOsImp
+public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp
 {
 	/** Constructor */
 	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface )
@@ -68,40 +68,6 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	}
 
 	/**
-	 * Close this pipe
-	 */
-	public void close() { }
-
-	/** @return Not to accept byte[]s */
-	public boolean passBytes() { return false; }
-
-	/** @return Not to accept Lists */
-	public boolean passLists() { return false; }
-
-	/**
-	 * Synchonously submits this byte[] array to the UsbPipe
-	 * @param data the byte[] data
-	 * @return The result of the submission
-	 * @exception javax.usb.UsbException if error occurs
-	 */
-	public int syncSubmit( byte[] data ) throws UsbException
-	{
-//FIXME - do not implement
-throw new UsbException("Not implemented");
-	}
-
-	/**
-	 * Synchronous submission using a UsbIrpImp.
-	 * @param irp the UsbIrpImp to use for this submission
-     * @exception javax.usb.UsbException if error occurs
-	 */
-    public void syncSubmit( UsbIrpImp irp ) throws UsbException
-	{
-//FIXME - implement in UsbPipeImp
-throw new UsbException("Not implemented");
-	}
-
-	/**
 	 * Asynchronous submission using a UsbIrpImp.
 	 * @param irp the UsbIrpImp to use for this submission
      * @exception javax.usb.UsbException if error occurs
@@ -115,29 +81,6 @@ throw new UsbException("Not implemented");
 		synchronized(inProgressList) {
 			inProgressList.add(request);
 		}
-	}
-
-	/**
-	 * Synchronous submission using a UsbCompositeIrpImp.
-	 * @param irp the UsbCompositeIrpImp to use for this submission
-     * @exception javax.usb.UsbException if error occurs
-	 */
-    public void syncSubmit( List list ) throws UsbException
-	{
-		for (int i=0; i<list.size(); i++)
-			syncSubmit((UsbIrpImp)list.get(i));
-	}
-
-	/**
-	 * Asynchronous submission using a UsbCompositeIrpImp.
-	 * @param irp the UsbCompositeIrpImp to use for this submission
-     * @exception javax.usb.UsbException if error occurs
-	 */
-    public void asyncSubmit( List list ) throws UsbException
-	{
-//FIXME - this needs work...may die in middle?
-		for (int i=0; i<list.size(); i++)
-			asyncSubmit((UsbIrpImp)list.get(i));
 	}
 
 	/**
