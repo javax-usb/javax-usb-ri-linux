@@ -97,8 +97,7 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 	int ret = 0, type;
 
 	jclass LinuxPipeRequest;
-	jmethodID getData, getPipeType, getUrbAddress;
-	jbyteArray data;
+	jmethodID getPipeType, getUrbAddress;
 
 	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
 	getPipeType = (*env)->GetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
