@@ -45,7 +45,6 @@ int dcp_request( JNIEnv *env, int fd, jobject linuxRequest )
 	urb->buffer_length = (*env)->GetArrayLength( env, data );
 	urb->endpoint = 0; /* Default Control Pipe is endpoint 0 */
 	urb->usercontext = linuxDcpRequest;
-	urb->flags |= USBDEVFS_URB_DISABLE_SPD;
 
 	dbg( MSG_DEBUG2, "dcp_request : Submitting URB\n" );
 	debug_urb( "dcp_request", urb );

@@ -41,8 +41,8 @@ class LinuxDcpRequest extends LinuxRequest
 	/** @return this request's data buffer valid length */
 	public int getDataLength() { return getRequestImp().getDataLength(); }
 
-	/** @param len the data buffer valid length */
-	public void setDataLength( int len ) { getRequestImp().setDataLength(len); }
+	/** @param len the data buffer valid length (minus 8 for setup packet) */
+	public void setDataLength( int len ) { getRequestImp().setDataLength(len - 8); }
 
 	/** @return The RequestImp */
 	public RequestImp getRequestImp() { return requestImp; }
@@ -60,7 +60,7 @@ class LinuxDcpRequest extends LinuxRequest
 	public void setCompleted(boolean c)
 	{
 		if (c) {
-			System.arraycopy(dataBuffer, 7, getData(), 0, getDataLength());
+			System.arraycopy(dataBuffer, 8, getRequestImp().getData(), 0, getDataLength());
 			getRequestImp().complete();
 		}
 
