@@ -17,6 +17,16 @@ import javax.usb.*;
  */
 class LinuxDeviceProxy extends LinuxRequestProxy
 {
+	/**
+	 * Constructor.
+	 * @param k The native key.  The key cannot be changed.
+	 */
+	public LinuxDeviceProxy(String k)
+	{
+		super();
+		key = k;
+	}
+
 	//*************************************************************************
 	// Public methods
 
@@ -50,6 +60,9 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 	//*************************************************************************
 	// JNI methods
 
+	/** @return The native device key. */
+	private String getKey() { return key; }
+
 	/**
 	 * Signal startup completed.
 	 * @param error The error number if startup failed, or 0 if startup succeeded.
@@ -63,11 +76,11 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 		}
 	}
 
-
 	//*************************************************************************
 	// Instance variables
 
 	private Thread thread = null;
+	private String key = null;
 
 	private Runnable proxyRunnable = new Runnable() {
 		public void run()

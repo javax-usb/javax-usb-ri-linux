@@ -51,7 +51,7 @@ abstract class LinuxRequestProxy
 	 * If there are any requests waiting.
 	 * @return If there are any requests waiting.
 	 */
-	private boolean isRequestsWaiting()
+	private boolean isRequestWaiting()
 	{
 		return !readyList.isEmpty() || !cancelList.isEmpty();
 	}

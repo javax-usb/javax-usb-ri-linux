@@ -25,18 +25,16 @@ import com.ibm.jusb.os.*;
  *     either in the constructor or by its {@link #setUsbDeviceImp(UsbDeviceImp) setter}.</li>
  * <li>The {@link #getLinuxDeviceProxy() LinuxDeviceProxy} must be set
  *     either in the constructor or by its {@link #setLinuxDeviceProxy(LinuxDeviceProxy) setter}.</li>
- * <li>The {@link #getKey() key} must be set in the constructor.  The key cannot be changed.</li>
  * </ul>
  * @author Dan Streetman
  */
 class LinuxDeviceOsImp implements UsbDeviceOsImp
 {
 	/** Constructor */
-	public LinuxDeviceOsImp( UsbDeviceImp device, LinuxDeviceProxy proxy, String key )
+	public LinuxDeviceOsImp( UsbDeviceImp device, LinuxDeviceProxy proxy )
 	{
 		setUsbDeviceImp(device);
 		setLinuxDeviceProxy(proxy);
-		this.key = key;
 	}
 
 	/** @return The UsbDeviceImp for this */
@@ -44,9 +42,6 @@ class LinuxDeviceOsImp implements UsbDeviceOsImp
 
 	/** @param device The UsbDeviceImp for this */
 	public void setUsbDeviceImp( UsbDeviceImp device ) { usbDeviceImp = device; }
-
-	/** @return The key. */
-	public String getKey() { return key; }
 
 	/**
 	 * Get the LinuxDeviceProxy.
@@ -109,5 +104,4 @@ throw new UsbException("STUB");
 
 	private LinuxDeviceProxy linuxDeviceProxy = null;
 
-	private String key = null;
 }

@@ -16,6 +16,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#include <sys/time.h>
 #include <sys/dir.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -28,28 +29,6 @@
 #include <errno.h>
 #include <linux/usbdevice_fs.h>
 #include <linux/usb.h>
-
-/**
- * Sigsuspend isn't working for me.  Maybe I don't understand it right...
- * but until I can get it to correctly function, this uses a 1 jiffy (10ms on x86) delay busy wait.
- * Define SIGSUSPEND_WORKS to use sigsuspend instead.
- */
-#undef SIGSUSPEND_WORKS
-/* And this is included for the 1 ms delay busy wait. */
-#include<sys/time.h>
-
-#ifndef USBDEVFS_URB_QUEUE_BULK
-#error *******************************************************************
-#error *******************************************************************
-#error ** Cannot find USBDEVFS_URB_QUEUE_BULK in your kernel headers.   **
-#error ** The Linux 2.4.0-test9 or later kernel headers must be located **
-#error ** or linked to under /usr/include/linux.                        **
-#error ** To do this you can install linux in /usr/src/linux            **
-#error ** and link /usr/include/linux to /usr/src/linux/include/linux   **
-#error ** Questions : ddstreet@us.ibm.com or ddstreet@ieee.org          **
-#error *******************************************************************
-#error *******************************************************************
-#endif
 
 #define MSG_OFF -1
 #define MSG_CRITICAL 0

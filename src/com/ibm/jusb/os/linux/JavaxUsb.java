@@ -246,7 +246,7 @@ class JavaxUsb {
 	{
 		UsbRootHubImp hub = new UsbRootHubImp( null, null );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(key) );
 		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
 
 		return hub;
@@ -257,7 +257,7 @@ class JavaxUsb {
 	{
 		UsbRootHubImp hub = new UsbRootHubImp( maxPorts, null, null );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(key) );
 		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
 
 		return hub;
@@ -268,7 +268,7 @@ class JavaxUsb {
 	{
 		UsbHubImp hub = new UsbHubImp( maxPorts, null, null );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(), key );
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(key) );
 		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
 
 		return hub;
@@ -279,7 +279,7 @@ class JavaxUsb {
 	{
 		UsbDeviceImp device = new UsbDeviceImp( null, null );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( device, new LinuxDeviceProxy(), key );
+		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( device, new LinuxDeviceProxy(key) );
 		device.setUsbDeviceOsImp( linuxDeviceOsImp );
 
 		return device;
