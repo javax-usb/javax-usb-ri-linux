@@ -52,8 +52,10 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	 */
 	public LinuxDeviceProxy getLinuxDeviceProxy() throws UsbException
 	{
-		if (!linuxDeviceProxy.isRunning()) {
-			synchronized(linuxDeviceProxy) { linuxDeviceProxy.start(); }
+		synchronized(linuxDeviceProxy) {
+			if (!linuxDeviceProxy.isRunning()) {
+ 				linuxDeviceProxy.start();
+			}
 		}
 
 		return linuxDeviceProxy;
