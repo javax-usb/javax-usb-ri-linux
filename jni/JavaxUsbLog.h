@@ -15,56 +15,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int trace_data;
+extern jboolean tracing;
+extern jboolean trace_default;
+extern jboolean trace_hotplug;
+extern jboolean trace_xfer;
+extern jboolean trace_urb;
+extern int trace_level;
 
-/* need to get away from tracing calls to Java - too expensive. */
-#define trace_urb_data(x...) printf(x)
-
-/*
- * Log to Java.
- *
- * This allows logging to Java.
- * This automatically redirects xfer and hotplug logging
- * to that logger, otherwise the default logger is used.
- * The JNIEnv* must be available in the variable "env".
- * @level The log level.
- * @args... The sprintf() format string and replacement parameters.
- */
+/* Log, currently only to stderr. */
 #define log(level,args...) do { \
-  if (LOG_XFER_FLAG&level) log_xfer(level,args); else \
-  if (LOG_HOTPLUG_FLAG&level) log_hotplug(level,args); else \
-  log_named(level,"default",args); \
+  if (!tracing || (trace_level < LOG_LEVEL(level))) break; \
+  if (LOG_XFER_FLAG&level) log_xfer(level,args); \
+  else if (LOG_HOTPLUG_FLAG&level) log_hotplug(level,args); \
+  else if (LOG_URB_FLAG&level) log_urb(level,args); \
+  else log_default(level,args); \
 } while(0)
 
+#define LOG_LEVEL(level) (LOG_LEVEL_MASK&level)
+#define LOG_TYPE(type) (LOG_FLAG_MASK&level)
+
 #define LOG_LEVEL_MASK    0x00ff
+#define LOG_LEVEL_MIN     0x0000
+#define LOG_LEVEL_MAX     0x00ff
 #define LOG_FLAG_MASK     0x0f00
 #define LOG_XFER_FLAG     0x0100
 #define LOG_HOTPLUG_FLAG  0x0200
+#define LOG_URB_FLAG      0x0400
 
 /* Logging levels: */
 #define LOG_CRITICAL  0x00 /* critical messages, this is the default */
 #define LOG_ERROR     0x01 /* error messages */
-#define LOG_FUNC      0x02 /* function entry/exit */
-#define LOG_INFO      0x03 /* function internal */
+#define LOG_INFO      0x02 /* function internal */
+#define LOG_FUNC      0x03 /* function entry/exit */
 #define LOG_DEBUG     0x04 /* debugging */
 #define LOG_OTHER     0x05 /* all other logging */
 
 /* Log data transfers */
-#define log_xfer(level,args...) log_named(level,"xfer",args)
+#define log_xfer(level,args...) do { if (trace_xfer) log_named(level,"xfer",args); } while(0)
 #define LOG_XFER_CRITICAL  (LOG_XFER_FLAG | 0x00) /* critical xfers errors */
 #define LOG_XFER_ERROR     (LOG_XFER_FLAG | 0x01) /* xfer errors */
-#define LOG_XFER_DATA      (LOG_XFER_FLAG | 0x02) /* raw data only */
+#define LOG_XFER_REQUEST   (LOG_XFER_FLAG | 0x02) /* request received or completed */
 #define LOG_XFER_META      (LOG_XFER_FLAG | 0x03) /* metadata (device, endpoint, setup, etc) */
-#define LOG_XFER_REQUEST   (LOG_XFER_FLAG | 0x04) /* request received or completed */
+#define LOG_XFER_DATA      (LOG_XFER_FLAG | 0x04) /* raw data only */
 #define LOG_XFER_OTHER     (LOG_XFER_FLAG | 0x05) /* all other transfer logging */
 
 /* Log hotplug / initialization */
-#define log_hotplug(level,args...) log_named(level,"hotplug",args)
+#define log_hotplug(level,args...) do { if (trace_hotplug) log_named(level,"hotplug",args); } while(0)
 #define LOG_HOTPLUG_CRITICAL (LOG_HOTPLUG_FLAG | 0x00) /* critical hotplug errors */
 #define LOG_HOTPLUG_ERROR    (LOG_HOTPLUG_FLAG | 0x01) /* hotplug errors */
 #define LOG_HOTPLUG_CHANGE   (LOG_HOTPLUG_FLAG | 0x02) /* connect/disconnect notices */
 #define LOG_HOTPLUG_DEVICE   (LOG_HOTPLUG_FLAG | 0x03) /* device information */
 #define LOG_HOTPLUG_OTHER    (LOG_HOTPLUG_FLAG | 0x04) /* all other logging */
+
+/* Log urb data */
+#define log_urb(level,args...) do { if (trace_urb) log_named(level,"urb",args); } while(0)
+#define LOG_URB_METADATA (LOG_URB_FLAG | 0x00) /* URB fields */
+#define LOG_URB_DATA     (LOG_URB_FLAG | 0x01) /* Actual URB data */
+
+#define log_default(level,args...) do { if (trace_default) log_named(level,"default",args); } while(0)
 
 /* log_named() should not be directly used */
 static char *log_oom = "Out of memory while logging!";
@@ -85,12 +93,11 @@ do { \
       buffer[((real_len < full_len-1 && 0 <= real_len) ? real_len : full_len-1)] = 0; \
     } \
   } \
-  java_log(env,logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
+  stderr_log(logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
   if (buf2) free(buf2); \
 } while (0)
 
-/* Do not use this, use log() */
-extern void java_log(JNIEnv *env, char *logname, int level, char *file, char *func, int line, char *msg);
+extern void stderr_log(char *logname, int level, char *file, char *func, int line, char *msg);
 
 #endif /* _JAVAXUSBLOG_H */
 

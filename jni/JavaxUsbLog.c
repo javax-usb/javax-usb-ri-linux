@@ -14,15 +14,43 @@
 
 static int fatalLogError = 0;
 
-int trace_data = 0;
+jboolean tracing = JNI_TRUE;
+jboolean trace_default = JNI_TRUE;
+jboolean trace_hotplug = JNI_TRUE;
+jboolean trace_xfer = JNI_TRUE;
+jboolean trace_urb = JNI_FALSE;
+int trace_level = LOG_ERROR;
 
 JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceData
 (JNIEnv *env, jclass JavaxUsb, jboolean enable)
 {
-	if (JNI_TRUE == enable)
-		trace_data = 1;
+	tracing = enable;
+}
+
+JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceType
+(JNIEnv *env, jclass JavaxUsb, jboolean setting, jstring jname)
+{
+	const char *name = (*env)->GetStringUTFChars( env, jname, NULL );
+	if (!strcmp("default", name))
+		trace_default = setting;
+	else if (!strcmp("hotplug", name))
+		trace_hotplug = setting;
+	else if (!strcmp("xfer", name))
+		trace_xfer = setting;
+	else if (!strcmp("urb", name))
+		trace_urb = setting;
 	else
-		trace_data = 0;
+		log( LOG_ERROR, "No match for log type %s", name );
+	(*env)->ReleaseStringUTFChars( env, jname, name );
+}
+
+JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceLevel
+(JNIEnv *env, jclass JavaxUsb, jint level)
+{
+	if (LOG_LEVEL_MIN > level || LOG_LEVEL_MAX < level)
+		log( LOG_ERROR, "Invalid trace level %d", level );
+	else
+		trace_level = level;
 }
 
 static inline void log_fatal(char *msg)
@@ -33,46 +61,8 @@ static inline void log_fatal(char *msg)
 	}
 }
 
-void java_log(JNIEnv *env, char *logname, int level, char *file, char *func, int line, char *msg)
+void stderr_log(char *logname, int level, char *file, char *func, int line, char *msg)
 {
-	jclass JavaxUsb = NULL;
-	jstring jlogname = NULL, jfile = NULL, jfunc = NULL, jmsg = NULL;
-	jmethodID log;
-	jboolean existingException;
-
-	if (fatalLogError)
-		return;
-
-	if (JNI_TRUE == (existingException = (*env)->ExceptionCheck(env)))
-		(*env)->ExceptionClear(env);
-
-	JavaxUsb = (*env)->FindClass( env, JAVAXUSB_CLASSNAME );
-
-	if (!JavaxUsb || (JNI_TRUE == (*env)->ExceptionCheck(env))) {
-		log_fatal("Could not find JavaxUsb class.");
-		return;
-	}
-
-	log = (*env)->GetStaticMethodID( env, JavaxUsb, "log", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;ILjava/lang/String;)V" );
-
-	if (JNI_TRUE == (*env)->ExceptionCheck(env)) {
-		(*env)->ExceptionClear(env);
-		log_fatal("JavaxUsb class has no log method.");
-		(*env)->DeleteLocalRef( env, JavaxUsb );
-		return;
-	}
-
-//FIXME - check for OOM error?
-	jlogname = (*env)->NewStringUTF( env, logname );
-	jfile = (*env)->NewStringUTF( env, file );
-	jfunc = (*env)->NewStringUTF( env, func );
-	jmsg = (*env)->NewStringUTF( env, msg );
-
-	(*env)->CallStaticVoidMethod( env, JavaxUsb, log, jlogname, level, jfile, jfunc, line, jmsg );
-
-	if (JavaxUsb) (*env)->DeleteLocalRef( env, JavaxUsb );
-	if (jlogname) (*env)->DeleteLocalRef( env, jlogname );
-	if (jfile) (*env)->DeleteLocalRef( env, jfile );
-	if (jfunc) (*env)->DeleteLocalRef( env, jfunc );
-	if (jmsg) (*env)->DeleteLocalRef( env, jmsg );
+	fprintf(stderr, "[%s](%d) %s.%s[%d] %s\n",logname,level,file,func,line,msg);
 }
+

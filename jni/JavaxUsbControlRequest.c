@@ -51,7 +51,8 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	/* Add 8 for the setup packet */
 	urb->buffer_length += 8;
 
-	urb->type = USBDEVFS_URB_TYPE_CONTROL;
+	urb->type = getControlType();
+	urb->flags |= getControlFlags();
 
 	debug_urb( env, "control_pipe_request", urb );
 

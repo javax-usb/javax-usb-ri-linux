@@ -14,26 +14,25 @@
 //******************************************************************************
 // Kernel-specific
 
+#include <sys/utsname.h>
 #include <linux/usbdevice_fs.h>
 #include <linux/usb.h>
 
-#if defined (USBDEVFS_URB_DISABLE_SPD)
-#define NO_ACCEPT_SHORT_PACKET USBDEVFS_URB_DISABLE_SPD
-#elif defined (USBDEVFS_URB_SHORT_NOT_OK)
-#define NO_ACCEPT_SHORT_PACKET USBDEVFS_URB_SHORT_NOT_OK
-#else
-#error Could not find definition for disabling short packets
+// This is defined only in later kernel versions
+#ifndef USBDEVFS_DISCONNECT
+#define USBDEVFS_DISCONNECT        _IO('U', 22)
 #endif
 
-/* check kernel version */
-#define INTERRUPT_USES_BULK
+int getShortPacketFlag(int accept);
 
-#if defined (USBDEVFS_URB_QUEUE_BULK)
-#define QUEUE_BULK USBDEVFS_URB_QUEUE_BULK
-#endif
+int getIsochronousFlags(void);
+int getInterruptFlags(void);
+int getControlFlags(void);
+int getBulkFlags(void);
 
-#if defined (USBDEVFS_GETCONFIGURATION) && defined (USBDEVFS_GETINTERFACE)
-# define CAN_USE_GET_IOCTLS
-#endif
+int getIsochronousType(void);
+int getInterruptType(void);
+int getControlType(void);
+int getBulkType(void);
 
 #endif /* _JAVAX_USB_KERNEL_H */

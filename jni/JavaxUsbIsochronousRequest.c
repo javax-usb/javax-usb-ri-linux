@@ -43,8 +43,8 @@ int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, str
 
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
-	urb->type = USBDEVFS_URB_TYPE_ISO;
-	urb->flags |= USBDEVFS_URB_ISO_ASAP;
+	urb->type = getIsochronousType();
+	urb->flags |= getIsochronousFlags();
 	urb->number_of_packets = 1;
 	urb->iso_frame_desc[0].length = urb->buffer_length;
 
@@ -152,10 +152,10 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	if ((ret = create_iso_buffer( env, linuxIsochronousRequest, urb )))
 		goto ISOCHRONOUS_REQUEST_END;
 
-	urb->type = USBDEVFS_URB_TYPE_ISO;
+	urb->type = getIsochronousType();
 	urb->usercontext = CheckedNewGlobalRef( env, linuxIsochronousRequest );
 	urb->endpoint = (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getEndpointAddress );
-	urb->flags |= USBDEVFS_URB_ISO_ASAP;
+	urb->flags |= getIsochronousFlags();
 
 	log( LOG_XFER_OTHER, "Submitting URB" );
 	debug_urb( env, "isochronous_request", urb );

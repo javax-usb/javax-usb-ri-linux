@@ -17,8 +17,6 @@
  *
  */
 
-#ifdef USBDEVFS_DISCONNECT
-
 /**
  * Disconnect the driver from the specified interface.
  * @param end The JNIEnv.
@@ -42,6 +40,8 @@ void disconnect_interface_driver(JNIEnv *env, int fd, int interface)
 	if (ioctl( fd, USBDEVFS_IOCTL, disc_ioctl )) {
 		if (ENODATA == errno)
 			log( LOG_ERROR, "No driver associated with interface %d.", interface );
+		else if (ENOSYS == errno)
+			log( LOG_ERROR, "This kernel does not support driver disconnection via USBDEVFS_DISCONNECT." );
 		else
 			log( LOG_ERROR, "Could not disconnect driver from interface %d : %s", interface, strerror(errno) );
 	} else {
@@ -50,8 +50,6 @@ void disconnect_interface_driver(JNIEnv *env, int fd, int interface)
 
 	free(disc_ioctl);
 }
-
-#endif /* USBDEVFS_DISCONNECT */
 
 /**
  * Claim or release a specified interface.
@@ -99,13 +97,7 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 
 		if (ret && claim && !triedDisconnect && (JNI_TRUE == forceClaim)) {
 			triedDisconnect = 1;
-#ifdef USBDEVFS_DISCONNECT
 			disconnect_interface_driver(env, fd, *interface);
-#else
-#warning This kernel has no USBDEVFS_DISCONNECT support, compiling WITHOUT disconnect ability!
-			log( LOG_ERROR, "This was compiled without driver-disconnection ability!" );
-			break;
-#endif
 		} else
 			break;
 	}

@@ -249,15 +249,12 @@ static inline int get_devnum_from_name( const char *name )
  */
 static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs_urb *urb )
 {
-	if (!trace_data)
+	if (!tracing)
 		return;
 
 //FIXME - add device number and/or other dev info
-	trace_urb_data( "%s : URB endpoint = %x\n", calling_method, urb->endpoint );
-	trace_urb_data( "%s : URB status = %d\n", calling_method, urb->status );
-	trace_urb_data( "%s : URB signal = %d\n", calling_method, urb->signr );
-	trace_urb_data( "%s : URB buffer length = %d\n", calling_method, urb->buffer_length );
-	trace_urb_data( "%s : URB actual length = %d\n", calling_method, urb->actual_length );
+	log( LOG_URB_METADATA, "%s : URB endpoint = %x status = %d signal = %x", calling_method, urb->endpoint, urb->status, urb->signr );
+	log( LOG_URB_METADATA, "%s : URB buffer length = %d actual length = %d", calling_method, urb->buffer_length, urb->actual_length );
 
 	if (urb->buffer && (0 < urb->buffer_length)) {
 		static const char hex[] = "0123456789abcdef";
@@ -271,9 +268,9 @@ static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs
 			*bufp++ = ' ';
 		}
 		logbuf[loglen-1] = 0; // null terminate string
-		trace_urb_data( "%s : URB data = %s\n", calling_method, logbuf );
+		log( LOG_URB_DATA, "%s : URB data = %s", calling_method, logbuf );
  	} else {
- 		trace_urb_data( "%s : URB data empty\n", calling_method );
+ 		log( LOG_URB_DATA, "%s : URB data empty", calling_method );
  	}
 }
 

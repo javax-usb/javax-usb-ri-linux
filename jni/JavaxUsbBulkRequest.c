@@ -41,10 +41,8 @@ int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usb
 
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
-	urb->type = USBDEVFS_URB_TYPE_BULK;
-#ifdef QUEUE_BULK
-	urb->flags |= QUEUE_BULK;
-#endif
+	urb->type = getBulkType();
+	urb->flags |= getBulkFlags();
 
 	debug_urb( env, "bulk_pipe_request", urb );
 

@@ -87,8 +87,34 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		} catch ( Exception e ) { }
 
 		try {
-			if (p.containsKey(TRACE_DATA))
-				JavaxUsb.nativeSetTraceData(Boolean.valueOf(p.getProperty(TRACE_DATA)).booleanValue());
+			if (p.containsKey(TRACING))
+				JavaxUsb.nativeSetTracing(Boolean.valueOf(p.getProperty(TRACING)).booleanValue());
+		} catch ( Exception e ) { }
+
+//FIXME - the names of the tracers should be more generically processed
+		try {
+			if (p.containsKey(TRACE_DEFAULT))
+				JavaxUsb.nativeSetTraceType(Boolean.valueOf(p.getProperty(TRACE_DEFAULT)).booleanValue(), "default");
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TRACE_HOTPLUG))
+				JavaxUsb.nativeSetTraceType(Boolean.valueOf(p.getProperty(TRACE_HOTPLUG)).booleanValue(), "hotplug");
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TRACE_XFER))
+				JavaxUsb.nativeSetTraceType(Boolean.valueOf(p.getProperty(TRACE_XFER)).booleanValue(), "xfer");
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TRACE_URB))
+				JavaxUsb.nativeSetTraceType(Boolean.valueOf(p.getProperty(TRACE_URB)).booleanValue(), "urb");
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TRACE_LEVEL))
+				JavaxUsb.nativeSetTraceLevel(Integer.decode(p.getProperty(TRACE_LEVEL)).intValue());
 		} catch ( Exception e ) { }
 	}
 
@@ -318,7 +344,12 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = true;
 	public static final String TOPOLOGY_UPDATE_USE_POLLING_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateUsePolling";
 
-	/* This enables (or disables) JNI tracing of data. */
-	public static final String TRACE_DATA = "com.ibm.jusb.os.linux.LinuxUsbServices.trace_data";
+	/* These enables (or disables) JNI tracing of data. */
+	public static final String TRACING = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.tracing";
+	public static final String TRACE_LEVEL = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_level";
+	public static final String TRACE_DEFAULT = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_default";
+	public static final String TRACE_HOTPLUG = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_hotplug";
+	public static final String TRACE_XFER = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_xfer";
+	public static final String TRACE_URB = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_urb";
 
 }

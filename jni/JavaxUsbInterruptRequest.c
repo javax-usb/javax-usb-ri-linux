@@ -41,14 +41,8 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
-#ifdef INTERRUPT_USES_BULK
-	urb->type = USBDEVFS_URB_TYPE_BULK;
-#ifdef QUEUE_BULK
-	urb->flags |= QUEUE_BULK;
-#endif
-#else
-	urb->type = USBDEVFS_URB_TYPE_INTERRUPT;
-#endif
+	urb->type = getInterruptType();
+	urb->flags |= getInterruptFlags();
 
 	debug_urb( env, "interrupt_pipe_request", urb );
 

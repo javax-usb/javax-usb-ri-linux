@@ -27,21 +27,6 @@ class JavaxUsb
 	//*************************************************************************
 	// Public methods
 
-	/**
-	 * Log.
-	 * @param logname The logger name.
-	 * @param level The log level.
-	 * @param file The filename.
-	 * @param func The function.
-	 * @param line The line number.
-	 * @param msg The log message.
-	 */
-	public static void log(String logname, int level, String file, String func, int line, String msg)
-	{
-//FIXME - implement logging
-if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:["+logname+"]("+level+") "+file+"."+func+"["+line+"] "+msg);
-	}
-
 	/** Load native library */
 	public static void loadLibrary() throws UsbException
 	{
@@ -96,10 +81,23 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 		// Tracing/Logging methods
 
 	/**
-	 * Enable (or disable) tracing of data.
+	 * Enable (or disable) tracing.
 	 * @param enable If tracing of data should be enabled.
 	 */
-	static native void nativeSetTraceData(boolean enable);
+	static native void nativeSetTracing(boolean enable);
+
+	/**
+	 * Enable (or disable) tracing of a certain type of data.
+	 * @param enable If tracing of data should be enabled.
+	 * @param type The type of data.
+	 */
+	static native void nativeSetTraceType(boolean enable, String type);
+
+	/**
+	 * Set the level of tracing.
+	 * @param level The level of tracing.
+	 */
+	static native void nativeSetTraceLevel(int level);
 
 		//*********************************
 		// JavaxUsbTopologyUpdater methods

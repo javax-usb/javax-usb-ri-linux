@@ -57,8 +57,7 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 
 	urb->endpoint = (unsigned char)CheckedCallByteMethod( env, linuxPipeRequest, getEndpointAddress );
 	urb->usercontext = linuxPipeRequest;
-	if (JNI_FALSE == acceptShortPacket)
-		urb->flags |= NO_ACCEPT_SHORT_PACKET;
+	urb->flags |= getShortPacketFlag(acceptShortPacket);
 
 	log( LOG_XFER_REQUEST, "Submitting URB" );
 
