@@ -111,6 +111,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	/** Enqueue an update topology request */
 	private void topologyChange()
 	{
+		try { Thread.sleep(TOPOLOGY_UPDATE_DELAY); } catch ( InterruptedException iE ) { }
+
 		Runnable r = new Runnable() {
 				public void run()
 				{ updateTopology(); }
@@ -245,6 +247,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 	//*************************************************************************
 	// Class constants
+
+	private static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
