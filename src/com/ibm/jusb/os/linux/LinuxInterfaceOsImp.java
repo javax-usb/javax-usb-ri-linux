@@ -81,6 +81,21 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 
 	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceNumber(); }
 
+	//**************************************************************************
+	// Package methods
+
+	/**
+	 * Submit a Request.
+	 * @param request The LinuxRequest.
+	 */
+	void submit(LinuxRequest request) { getLinuxDeviceOsImp().submit(request); }
+
+	/**
+	 * Cancel a Request.
+	 * @param request The LinuxRequest.
+	 */
+	void cancel(LinuxRequest request) { getLinuxDeviceOsImp().cancel(request); }
+
 	//*************************************************************************
 	// Instance variables
 

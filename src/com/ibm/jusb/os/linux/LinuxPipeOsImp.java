@@ -26,18 +26,18 @@ import com.ibm.jusb.util.*;
  * <ul>
  * <li>The {@link #getUsbPipeImp() UsbPipeImp} must be set
  *     either in the constructor or by its {@link #setUsbPipeImp(UsbPipeImp) setter}.</li>
- * <li>The {@link #getLinuxDeviceProxy() LinuxDeviceProxy} must be set
- *     either in the constructor or by its {@link #setLinuxDeviceProxy(LinuxDeviceProxy) setter}.</li>
+ * <li>The {@link #getLinuxInterfaceOsImp() LinuxInterfaceOsImp} must be set
+ *     either in the constructor or by its {@link #setLinuxInterfaceOsImp(LinuxInterfaceOsImp) setter}.</li>
  * </ul>
  * @author Dan Streetman
  */
 public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 {
 	/** Constructor */
-	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxDeviceProxy proxy )
+	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface )
 	{
 		setUsbPipeImp(pipe);
-		setLinuxDeviceProxy(proxy);
+		setLinuxInterfaceOsImp(iface);
 	}
 
     //*************************************************************************
@@ -49,11 +49,11 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	/** @param usbPipeImp The UsbPipeImp for this */
 	public void setUsbPipeImp( UsbPipeImp pipe ) { usbPipeImp = pipe; }
 
-	/** @return The LinuxDeviceProxy in use */
-	public LinuxDeviceProxy getLinuxDeviceProxy() { return linuxDeviceProxy; }
+	/** @return The LinuxInterfaceOsImp */
+	public LinuxInterfaceOsImp getLinuxInterfaceOsImp() { return linuxInterfaceOsImp; }
 
-	/** @param proxy The LinuxDeviceProxy to use */
-	public void setLinuxDeviceProxy( LinuxDeviceProxy proxy ) { linuxDeviceProxy = proxy; }
+	/** @param iface The LinuxInterfaceOsImp */
+	public void setLinuxInterfaceOsImp(LinuxInterfaceOsImp iface) { linuxInterfaceOsImp = iface; }
 
 	/**
 	 * Open this pipe
@@ -61,7 +61,10 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
 	public void open() throws UsbException
 	{
-/* Check for pipe in error state */
+		if (!getLinuxInterfaceOsImp().isClaimed())
+			throw new UsbException("Interface must be claimed before opening pipe");
+
+//FIXME - use open/closed states?
 	}
 
 	/**
@@ -77,16 +80,8 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
 	public int syncSubmit( byte[] data ) throws UsbException
 	{
-		UsbIrpImp irp = usbIrpImpFactory.createUsbIrpImp();
-		irp.setData( data );
-
-		syncSubmit( irp );
-
-		int result = irp.getDataLength();
-
-		irp.recycle();
-
-		return result;
+//FIXME - do not implement
+throw new UsbException("Not implemented");
 	}
 
 	/**
@@ -96,12 +91,8 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
     public void syncSubmit( UsbIrpImp irp ) throws UsbException
 	{
-		internalAsyncSubmit( irp );
-
-		irp.waitUntilCompleted();
-
-		if (irp.isInUsbException())
-			throw irp.getUsbException();
+//FIXME - implement in UsbPipeImp
+throw new UsbException("Not implemented");
 	}
 
 	/**
@@ -111,7 +102,13 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
 	public void asyncSubmit( UsbIrpImp irp ) throws UsbException
 	{
-		internalAsyncSubmit( irp );
+		LinuxRequest request = usbIrpImpToLinuxRequest(irp);
+
+		getInterfaceOsImp().submit(request);
+
+		synchronized(inProgressList) {
+			inProgressList.add(request);
+		}
 	}
 
 	/**
@@ -121,7 +118,8 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
     public void syncSubmit( List list ) throws UsbException
 	{
-throw new UsbException("STUB");
+		for (int i=0; i<list.size(); i++)
+			syncSubmit((UsbIrpImp)list.get(i));
 	}
 
 	/**
@@ -131,16 +129,9 @@ throw new UsbException("STUB");
 	 */
     public void asyncSubmit( List list ) throws UsbException
 	{
-throw new UsbException("STUB");
-	}
-
-	/**
-	 * Stop a submission in progress
-	 * @param the UsbIrpImp to stop
-	 */
-	public void abortSubmission( UsbIrpImp irp )
-	{
-//FIXME - implement
+//FIXME - this needs work...may die in middle?
+		for (int i=0; i<list.size(); i++)
+			asyncSubmit((UsbIrpImp)list.get(i));
 	}
 
 	/**
@@ -148,7 +139,18 @@ throw new UsbException("STUB");
 	 */
 	public void abortAllSubmissions()
 	{
-//FIXME - implement
+		LinuxRequest[] requests = null;
+
+		synchronized(inProgressList) {
+			requests = (LinuxRequest[])inProgressList.toArray();
+			inProgressList.clear();
+		}
+
+		for (int i=0; i<requests.length; i++)
+			getLinuxInterfaceOsImp().cancel(requests[i]);
+
+		for (int i=0; i<requests.length; i++)
+			requests[i].getUsbIrpImp().waitUntilCompleted();
 	}
 
 	/** Submit a request natively */
@@ -167,56 +169,31 @@ throw new UsbException("STUB");
     // Protected methods
 
 	/**
-	 * Async-submit the specified UsbIrpImp; the pre and post Tasks should already
-	 * be set up.
+	 * Create and submit a LinuxRequest.
 	 * @param irp the UsbIrpImp to submit.
 	 */
 	protected void internalAsyncSubmit( UsbIrpImp irp ) throws UsbException
 	{
 		LinuxPipeRequest request = createLinuxPipeRequest( irp );
 
-		try {
-			enqueueLinuxRequest( request );
-		} catch ( UsbException uE ) {
-			request.recycle();
-
-			throw uE;
-		}
+		getLinuxInterfaceOsImp().submit(request);
 	}
 
 	/**
-	 * Create a LinuxPipeRequest for the specified UsbIrpImp.
-	 * @param irp the UsbIrpImp to create a LinuxPipeRequest for.
-	 * @return a LinuxPipeRequest for the specified UsbIrpImp.
+	 * Create a LinuxRequest to wrap a UsbIrpImp.
+	 * @param usbIrpImp The UsbIrpImp.
+	 * @return A LinuxRequest for a UsbIrpImp.
 	 */
-	protected LinuxPipeRequest createLinuxPipeRequest( UsbIrpImp irp )
+	protected LinuxRequest usbIrpImpToLinuxRequest(UsbIrpImp usbIrpImp)
 	{
-//FIXME - implament
-
-		//request.setLinuxPipeOsImp( this );
-		//request.setUsbIrpImp( irp );
-		//request.setData( irp.getData() );
-
-return null;
-	}
-
-	/**
-	 * Enqueue the specified LinuxRequest to be submitted.
-	 * @param request the LinuxRequest to enqueue.
-	 * @throws javax.usb.UsbException if the request could not be enqueued or submitted.
-	 */
-	protected void enqueueLinuxRequest( LinuxPipeRequest request ) throws UsbException
-	{
-		getLinuxDeviceProxy().submitRequest( request );
-		if ( request.isActive() ) {
-//getLinuxRequestTable().put( request.getUsbIrpImp(), request );
-		}
+		LinuxRequest request = new 
 	}
 
     //*************************************************************************
     // Instance variables
 
 	private UsbPipeImp usbPipeImp = null;
-	private LinuxDeviceProxy linuxDeviceProxy = null;
-	private UsbIrpImpFactory usbIrpImpFactory = new UsbIrpImpFactory();
+	private LinuxInterfaceOsImp linuxInterfaceOsImp = null;
+
+	private List inProgressList = new LinkedList();
 }

@@ -68,6 +68,21 @@ throw new UsbException("STUB");
 	}
 
 	//**************************************************************************
+	// Package methods
+
+	/**
+	 * Submit a Request.
+	 * @param request The LinuxRequest.
+	 */
+	void submit(LinuxRequest request) { getLinuxDeviceProxy().submit(request); }
+
+	/**
+	 * Cancel a Request.
+	 * @param request The LinuxRequest.
+	 */
+	void cancel(LinuxRequest request) { getLinuxDeviceProxy().cancel(request); }
+
+	//**************************************************************************
 	// Instance variables
 
 	private UsbDeviceImp usbDeviceImp = null;

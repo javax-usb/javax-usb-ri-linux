@@ -10,284 +10,96 @@ package com.ibm.jusb.os.linux;
  */
 
 import java.util.*;
-import java.lang.reflect.*;
-
-import javax.usb.*;
-import javax.usb.event.*;
-
-import com.ibm.jusb.*;
-import com.ibm.jusb.util.*;
 
 /**
- * Proxy for requests on a pipe
+ * Abstract proxy which manages requests to JNI.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-abstract class LinuxRequestProxy {
-
+abstract class LinuxRequestProxy
+{
 	//*************************************************************************
 	// Public methods
 
 	/**
-	 * Submit the data on the specified pipe
-	 * @param request the LinuxRequest object representing this submission
-	 * @exception javax.usb.UsbException if could not submit
+	 * Submit the Request.
+	 * <p>
+	 * No checking of the Request is done.
+	 * @param request The LinuxRequest.
 	 */
-	public void submitRequest( LinuxRequest request ) throws UsbException
+	public void submit( LinuxRequest request )
 	{
-		/* First user pays the price... */
-		if (!isRunning())
-			start();
-
-		checkRequest( request );
-
-		request.setLinuxRequestProxy( this );
-
-		requestVector.addElement( request );
-		notifyProxyThread();
-		request.waitUntilSubmitCompleted();
-
-		if (request.isActive() && 0 != request.getSubmissionStatus()) {
-			int error = request.getSubmissionStatus();
-/* execute post-task? */
-
-			throw new UsbException( "Error in submission : " + JavaxUsb.nativeGetErrorMessage(error), error );
+		synchronized(readyList) {
+			readyList.add(request);
 		}
 	}
 
 	/**
-	 * Cancel a request in progress
-	 * @param request the request to cancel
+	 * Cancel the Request.
+	 * @param request The LinuxRequest.
 	 */
-	public void cancelRequest( LinuxRequest request )
+	public void cancel( LinuxRequest request )
 	{
-		if (request.isActive() && pendingVector.contains(request) && !cancelVector.contains(request)) {
-			cancelVector.add( request );
-			notifyProxyThread();
+		synchronized(cancelList) {
+			cancelList.add(request);
 		}
-	}
-
-	/** Empty the queue, returning an error on all outstanding */
-	public void dequeueAllRequests()
-	{
-		LinuxRequest request;
-
-		/* Cancel all requests that the proxy hasn't grabbed yet */
-		synchronized ( requestVector ) {
-			while (!requestVector.isEmpty()) {
-				request = (LinuxRequest)requestVector.remove(0);
-				request.setSubmissionStatus( RESULT_CANCELED );
-				request.setSubmitCompleted( true );
-			}
-		}
-
-		/* cancel all pending requests */
-		while (!pendingVector.isEmpty()) {
-			synchronized ( pendingVector ) {
-				if (pendingVector.isEmpty()) break;
-				else request = (LinuxRequest)pendingVector.elementAt(0);
-			}
-			if (request.isActive() && !request.isRequestCompleted()) {
-				cancelRequest(request);
-				request.waitUntilRequestCompleted();
-			}
-		}
-
 	}
 
 	//*************************************************************************
-	// Protected methods
+	// JNI methods
 
 	/**
-	 * Start the proxy thread
-	 * <p>
-	 * This only starts the thread if it's not already alive.
-	 * The caller should handle any callback/notification of
-	 * sucessful startup.  This just creates and starts the
-	 * Thread that runs the provided runnable.  The Thread's
-	 * name is set to the provided name, and daemon status is set to true.
-	 * The Runnable should monitor isRunning as a flag to exit and die.
-	 * @see #getProxyRunnable()
-	 * @see #getProxyName()
-	 * @see #isRunning
+	 * If there are any requests waiting.
+	 * @return If there are any requests waiting.
 	 */
-	protected void start() throws UsbException
+	private boolean isRequestsWaiting()
 	{
-		if (null != proxyThread && proxyThread.isAlive())
-			return;
-
-		taskManager.start();
-
-		proxyThread = new LinuxProxyThread( getProxyRunnable() );
-
-		proxyThread.setName( getProxyName() );
-		proxyThread.setDaemon( true );
-		isRunning = true;
-		proxyThread.start();
+		return !readyList.isEmpty() || !cancelList.isEmpty();
 	}
 
 	/**
-	 * Tell the proxy thread to stop
-	 * <p>
-	 * This only stops the Thread if it is alive.
-	 * This sets isRunning to false and notifies the Thread.
-	 * Any request dequeueing should be done first.
-	 * @see #isRunning
-	 * @see #dequeueAllRequests()
-	 * @see #notifyProxyThread()
+	 * Get the next ready Request.
+	 * @return The next ready Request.
 	 */
-	protected void stop()
+	private LinuxRequest getReadyRequest()
 	{
-		if (null == proxyThread || !proxyThread.isAlive()) return;
+		LinuxRequest request = null;
 
-		isRunning = false;
-		notifyProxyThread();
-	}
-
-	/** Notify the proxy thread that there is data enqueued */
-	protected void notifyProxyThread()
-	{
-		JavaxUsb.nativeSignalPID( proxyThread.getPID(), proxyThread.getSignal() );
-	}
-
-	/**
-	 * @return the Runnable that the proxy thread will do when started
-	 * @see #start()
-	 * @see #stop()
-	 * @see #isRunning
-	 */
-	protected abstract Runnable getProxyRunnable();
-
-	/** @return the Name for this proxyThread */
-	protected abstract String getProxyName();
-
-	/**
-	 * Called from native thread when a request is completed
-	 * @param request the LinuxRequest that completed
-	 * @param requestResult the result of the request (errno or bytes xferred)
-	 */
-	protected void requestCompleted( LinuxRequest request )
-	{
-//FIXME
-	}
-
-	/**
-	 * Proxy Thread flag that notifies the Thread when to exit.
-	 * <p>
-	 * This is a flag that should be monitored by the provided
-	 * Runnable.  The Runnable (Thread) should cleanup and exit
-	 * when this is changed to false.
-	 */
-	protected boolean isRunning() { return isRunning; }
-
-	//*************************************************************************
-	// Private methods
-
-	/** Get the file descriptor */
-	private int getFileDescriptor() { return fileDescriptor; }
-
-	/** Set the file descriptor */
-	private void setFileDescriptor( int fd ) { fileDescriptor = fd; }
-
-	/** @return a LinuxProxyThread object */
-	private Thread getLinuxProxyThread() { return proxyThread; }
-
-	/**
-	 * Move the next LinuxRequest from the requestVector to the pendingVector and return it.
-	 * @return the 0-th element of the requestVector, or null
-	 */
-	private LinuxRequest dequeueRequestVector()
-	{
-		LinuxRequest request;
-
-		/* synchronize so the changeover is atomic */
-		synchronized ( requestVector ) {
-			synchronized ( pendingVector ) {
-				try {
-					request = (LinuxRequest)requestVector.remove(0);
-				} catch ( ArrayIndexOutOfBoundsException aioobE ) {
-					return null;
-				}
-
-				pendingVector.add( request );
+		synchronized(readyList) {
+			request = (LinuxRequest)readyList.remove(0);
+			synchronized(inProgressList) {
+				inProgressList.add(request);
 			}
 		}
 
-		return request;		
+		return request;
 	}
 
 	/**
-	 * Get the next LinuxRequest from the cancelVector
-	 * @return the 0-th element of the cancelVector, or null
+	 * Get the next cancel Request.
+	 * @return The next cancel Request.
 	 */
-	private LinuxRequest dequeueCancelVector()
+	private LinuxRequest getCancelRequest()
 	{
-		try {
-			return (LinuxRequest)cancelVector.remove(0);
-		} catch ( ArrayIndexOutOfBoundsException aioobE ) {
-			return null;
+		synchronized(cancelList) {
+			return (LinuxRequest)cancelList.remove(0);
 		}
 	}
 
 	/**
-	 * Remove the specified LinuxRequest from the pendingVector
-	 * @param request the LinuxRequest to remove
+	 * Complete a Request.
+	 * @param request The LinuxRequest.
 	 */
-	private void removePendingVector( LinuxRequest request )
+	private void completeRequest(LinuxRequest request)
 	{
-		pendingVector.remove( request );
-	}
-
-	/** Check if the request is ok to submit */
-	private void checkRequest( LinuxRequest request ) throws UsbException
-	{
-		if (requestVector.contains(request))
-			throw new UsbException( "Submission already queued" );
-
-		if (pendingVector.contains(request))
-			throw new UsbException( "Submission already in progress" );
+		synchronized(inProgressList) {
+			inProgressList.remove(request);
+		}
 	}
 
 	//*************************************************************************
 	// Instance variables
 
-	private TaskScheduler taskManager = new FifoScheduler();
-
-	private Vector requestVector = new Vector();
-	private Vector pendingVector = new Vector();
-	private Vector cancelVector = new Vector();
-
-	private LinuxProxyThread proxyThread = null;
-
-	private boolean isRunning = false;
-
-	private int fileDescriptor = -1;
-
-	//*************************************************************************
-	// Class constants
-
-	private static final String NOT_RUNNING = "Proxy not running";
-
-//FIXME define and use better errorcode.
-	private static final int RESULT_CANCELED = -6900;
-
-	//*************************************************************************
-	// Inner classes
-
-	public class LinuxProxyThread extends Thread
-	{
-		/** Constructor */
-		public LinuxProxyThread( Runnable r ) { super( r ); }
-		/** @return Process (Thread) ID */
-		public int getPID() { return pid; }
-		/** @reutrn signal to 'notify' this */
-		public int getSignal() { return signal; }
-		/** @param Process ID of this thread */
-		protected void setPID( int pid ) { this.pid = pid; }
-		/** @param signal to use to 'notify' this */
-		protected void setSignal( int signal ) { this.signal = signal; }
-
-		private int pid = 0, signal = 0;
-	}
-
+	private List readyList = new LinkedList();
+	private List cancelList = new LinkedList();
+	private List inProgressList = new LinkedList();
 }

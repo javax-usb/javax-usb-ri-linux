@@ -16,80 +16,31 @@ import com.ibm.jusb.util.*;
 /**
  * Interface for interface-changing Requests.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-public class LinuxSetInterfaceRequest extends DefaultLinuxRequest implements LinuxRequest
+public class LinuxSetInterfaceRequest extends LinuxRequest
 {
-	/** Constructor */
-	public LinuxSetInterfaceRequest( LinuxRequestFactory factory ) { super(factory); }
-
 	//*************************************************************************
 	// Public methods
 
-	/**
-	 * Native submit method.
-	 */
-	public void submitNative() { JavaxUsb.nativeSetInterface( this ); }
+	/** @return This request's type. */
+	public int getType() { return LinuxRequest.LINUX_SET_INTERFACE_REQUEST; }
 
-	/**
-	 * Native abort method.
-	 */
-	public void abortNative() { /* Submission is synchronous, cannot abort */ }
-
-	/**
-	 * Native complete method.
-	 */
-	public void completeNative() { /* Submission is synchronous, completion handled there */ }
-
-	/**
-	 * Get the interface number to change the setting of.
-	 * <p>
-	 * Note that this returns an unsigned int if the number has been set;
-	 * if it has not been set this returns -1.
-	 * @return the interface number to change the setting of.
-	 */
+	/** @return The interface number */
 	public int getInterface() { return interfaceNumber; }
 
-	/**
-	 * Get the interface setting to change to.
-	 * <p>
-	 * Note that this returns an unsigned int if the setting has been set;
-	 * if it has not been set this returns -1.
-	 * @return the interface setting to change to.
-	 */
+	/** @return The interface setting */
 	public int getSetting() { return interfaceSetting; }
 
-	/**
-	 * Set the interface number to change the setting of.
-	 * <p>
-	 * This is converted to an unsigned int.
-	 * @param number the interface number to change the setting of.
-	 */
+	/** @param number The interface number */
 	public void setInterface( byte number ) { interfaceNumber = UsbUtil.unsignedInt(number); }
 
-	/**
-	 * Set the interface setting to change to.
-	 * <p>
-	 * This is converted to an unsigned int.
-	 * @param setting the interface setting to change to.
-	 */
+	/** @param setting The interface setting */
 	public void setSetting( byte setting ) { interfaceSetting = UsbUtil.unsignedInt(setting); }
-
-	//*************************************************************************
-	// Recyclable methods
-
-	/** Clean this object */
-	public void clean()
-	{
-		super.clean();
-		interfaceNumber = -1;
-		interfaceSetting = -1;
-	}
 
 	//*************************************************************************
 	// Instance variables
 
-	private int interfaceNumber = -1;
-	private int interfaceSetting = -1;
+	private int interfaceNumber;
+	private int interfaceSetting;
 
 }

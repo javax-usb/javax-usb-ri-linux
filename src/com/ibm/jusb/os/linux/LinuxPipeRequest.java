@@ -18,28 +18,16 @@ import com.ibm.jusb.util.*;
  * LinuxRequest for use on pipes.
  * @author Dan Streetman
  */
-class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
+class LinuxPipeRequest extends LinuxRequest
 {
-	/** Constructor */
-	public LinuxPipeRequest( LinuxRequestFactory factory ) { super( factory ); }
-
 	//*************************************************************************
 	// Public methods
 
-	/** Native submit method */
-	public void submitNative() { getLinuxPipeOsImp().submitNative( this ); }
-
-	/** Native abort method */
-	public void abortNative() { JavaxUsb.nativeAbortPipeRequest( this ); }
-
-	/** Native complete method */
-	public void completeNative() { getLinuxPipeOsImp().completeNative( this ); }
+	/** @return This request's type. */
+	public int getType() { return LinuxRequest.LINUX_PIPE_REQUEST; }
 
 	/** @return this request's data buffer */
-	public byte[] getData() { return dataBuffer; }
-
-	/** @param data the data buffer to use */
-	public void setData( byte[] data ) { dataBuffer = data; }
+	public byte[] getData() { return getUsbIrpImp.getData(); }
 
 	/** @return if Short Packet Detection should be enabled */
 	public boolean getAcceptShortPacket() { return getUsbIrpImp().getAcceptShortPacket(); }
@@ -63,22 +51,7 @@ class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
 	public void setUrbAddress( int address ) { urbAddress = address; }
 
 	//*************************************************************************
-	// Recyclable methods
-
-	/** Clean this object */
-	public void clean()
-	{
-		super.clean();
-		dataBuffer = null;
-		usbIrpImp = null;
-		linuxPipeImp = null;
-		urbAddress = 0;
-	}
-
-	//*************************************************************************
 	// Instance variables
-
-	private byte[] dataBuffer = null;
 
 	private UsbIrpImp usbIrpImp = null;
 

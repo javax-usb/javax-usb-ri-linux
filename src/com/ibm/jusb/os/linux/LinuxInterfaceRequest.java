@@ -10,57 +10,33 @@ package com.ibm.jusb.os.linux;
  */
 
 /**
- * LinuxRequest for use in claiming/releasing interfaces.
+ * Request to claim or release an interface.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-class LinuxInterfaceRequest extends DefaultLinuxRequest implements LinuxRequest
+class LinuxInterfaceRequest extends LinuxRequest
 {
-	/** Constructor */
-	public LinuxInterfaceRequest( LinuxRequestFactory factory ) { super( factory ); }
-
 	//*************************************************************************
 	// Public methods
 
-	/** Native submit method */
-	public void submitNative() { JavaxUsb.nativeSubmitInterfaceRequest( this ); }
+	/** @return This request's type. */
+	public int getType() { return LinuxRequest.LINUX_INTERFACE_REQUEST; }
 
-	/** Native abort method */
-	public void abortNative() { }
-
-	/** Native complete method */
-	public void completeNative() { }
-
-	/**
-	 * Get the interface number
-	 * @return the interface number
-	 */
+	/** @return The interface number */
 	public byte getInterfaceNumber() { return interfaceNumber; }
 
-	/**
-	 * Set the interface number
-	 * @param number the interface number
-	 */
+	/** @param number The interface number */
 	public void setInterfaceNumber( byte number ) { interfaceNumber = number; }
 
-	/**
-	 * If this request is to claim the interface
-	 * @return true if this request is to claim the interface, false if the request is to release
-	 */
+	/** @return If this is a claim request (true) or release request (false) */
 	public boolean isClaimRequest() { return claimRequest; }
 
-	/**
-	 * Set if this request is to claim the interface
-	 * @param claim if this request is to claim the interface
-	 */
+	/** @param claim If this is a claim request (true) or release request (false) */
 	public void setClaimRequest( boolean claim ) { claimRequest = claim; }
 
 	//*************************************************************************
 	// Instance variables
 
-	/** This will be unsigned in JNI, so -1 is 255 */
-	private byte interfaceNumber = -1;
+	private byte interfaceNumber;
 
-	private boolean claimRequest = false;
-
+	private boolean claimRequest;
 }

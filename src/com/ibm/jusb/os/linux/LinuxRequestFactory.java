@@ -17,22 +17,11 @@ import com.ibm.jusb.util.*;
  */
 abstract class LinuxRequestFactory
 {
-	/** Constructor */
-	public LinuxRequestFactory() { }
-
-	//*************************************************************************
-	// Public methods
-
-	/** @return a 'clean' LinuxRequest ready for use */
-	public LinuxRequest takeLinuxRequest()
-	{
-return null;
-	}
-
-	/** @param the LinuxRequest that is done with (which will be recycled) */
-	public void returnLinuxRequest( LinuxRequest request )
+	/** @return A LinuxRequest */
+	public LinuxRequest createLinuxRequest()
 	{
 //FIXME
+return null;
 	}
 
 }

@@ -9,135 +9,36 @@ package com.ibm.jusb.os.linux;
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
-import javax.usb.util.*;
-
-import com.ibm.jusb.util.*;
-
 /**
- * Interface for Linux Requests
+ * Abstract class for Linux requests.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-interface LinuxRequest extends Recyclable
+class LinuxRequest
 {
-	//*************************************************************************
-	// Public methods
+	/**
+	 * Get the type of this request.
+	 * @return The type of this request.
+	 */
+	public abstract int getType();
 
 	/**
-	 * Native submit method.
+	 * Get the LinuxRequestProxy.
+	 * @return The LinuxRequestProxy.
 	 */
-	public void submitNative();
+	public LinuxRequestProxy getLinuxRequestProxy() { return linuxRequestProxy; }
 
 	/**
-	 * Native abort method.
+	 * Set the LinuxRequestProxy.
+	 * @param proxy The LinuxRequestProxy.
 	 */
-	public void abortNative();
+	public void setLinuxRequestProxy(LinuxRequestProxy proxy) { linuxRequestProxy = proxy; }
 
-	/**
-	 * Native complete method.
-	 */
-	public void completeNative();
+	private LinuxRequestProxy linuxRequestProxy = null;
 
-	/**
-	 * Wait until the request is submitted.
-	 * <p>
-	 * This returns when isSubmitCompleted() becomes true
-	 * or isActive() becomes false.
-	 */
-	public void waitUntilSubmitCompleted();
-
-	/**
-	 * Wait until the request is completed.
-	 * <p>
-	 * This returns when isRequestCompleted() becomes true
-	 * or isActive() becomes false.
-	 */
-	public void waitUntilRequestCompleted();
-
-	//*************************************************************************
-	// Getters
-
-	/**
-	 * If this request is active
-	 * @return if this is active
-	 */
-	public boolean isActive();
-
-	/**
-	 * If this request has been submitted (or submission failed).
-	 * @return if this request has been submitted
-	 */
-	public boolean isSubmitCompleted();
-
-	/**
-	 * Get the submission status of this request
-	 * <p>
-	 * This is only valid if isSubmitCompleted() is true.
-	 * @return the submission status
-	 */
-	public int getSubmissionStatus();
-
-	/**
-	 * If the request is completed.
-	 * @return if this request has completed
-	 */
-	public boolean isRequestCompleted();
-
-	/**
-	 * Get the completion status of this request
-	 * <p>
-	 * This is only valid if isRequestCompleted() is true.
-	 * @return the competion status
-	 */
-	public int getCompletionStatus();
-
-	/**
-	 * Get the LinuxRequestProxy this request is active on.
-	 * @return this request's LinuxRequestProxy.
-	 */
-	public LinuxRequestProxy getLinuxRequestProxy();
-
-	//*************************************************************************
-	// Setters
-
-	/**
-	 * Set this request active.
-	 * @param active if this request is active
-	 */
-	public void setActive( boolean active );
-
-	/**
-	 * Set if this request has been submitted (or submission failed).
-	 * @param completed if this request has been submitted
-	 */
-	public void setSubmitCompleted( boolean completed );
-
-	/**
-	 * Set the submission status of this request
-	 * <p>
-	 * This should be set before setSubmitCompleted( true ).
-	 * @param status the submission status
-	 */
-	public void setSubmissionStatus( int status );
-
-	/**
-	 * Set if the request is completed.
-	 * @param completed if this request has completed
-	 */
-	public void setRequestCompleted( boolean completed );
-
-	/**
-	 * Set the completion status of this request
-	 * <p>
-	 * This should be set before setRequestCompleted( true ).
-	 * @param status the competion status
-	 */
-	public void setCompletionStatus( int status );
-
-	/**
-	 * Set the LinuxRequestProxy this request is active on.
-	 * @param proxy this request's LinuxequestProxy.
-	 */
-	public void setLinuxRequestProxy( LinuxRequestProxy proxy );
-
+	public static final int LINUX_PIPE_REQUEST = 1;
+	public static final int LINUX_DCP_REQUEST = 2;
+	public static final int LINUX_SET_INTERFACE_REQUEST = 3;
+	public static final int LINUX_SET_CONFIGURATION_REQUEST = 4;
+	public static final int LINUX_INTERFACE_REQUEST = 5;
+	public static final int LINUX_ISOCHRONOUS_REQUEST = 6;
 }

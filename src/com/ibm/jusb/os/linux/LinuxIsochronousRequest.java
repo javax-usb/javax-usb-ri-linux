@@ -15,67 +15,68 @@ import com.ibm.jusb.*;
 import com.ibm.jusb.util.*;
 
 /**
- * LinuxRequest for use on isochronous pipes
+ * Special request for use on Isochronous pipes.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-class LinuxIsochronousRequest extends LinuxPipeRequest implements LinuxRequest
+class LinuxIsochronousRequest extends LinuxRequest
 {
-	/** Constructor */
-	public LinuxIsochronousRequest( LinuxRequestFactory factory ) { super( factory ); }
-
 	//*************************************************************************
 	// Public methods
 
-	/** Native submit method */
-	public void submitNative() { getLinuxPipeOsImp().submitNative( this ); }
-
-	/** Native abort method */
-	public void abortNative() { JavaxUsb.nativeAbortPipeRequest( this ); }
-
-	/** Native complete method */
-	public void completeNative() { getLinuxPipeOsImp().completeNative( this ); }
+	/** @return This request's type. */
+	public int getType() { return LinuxRequest.LINUX_ISOCHRONOUS_REQUEST; }
 
 	/**
-	 * Get specified data buffer.
-	 * <p>
-	 * The only valid index is 0.
-	 * @param index 0 is the only valid index.
-	 * @throws javax.usb.IndexOutOfBoundsException if the index is not zero.
+	 * Get the data buffer at the specified index.
+	 * @return The data buffer for the specified index.
 	 */
-	private byte[] getDataBuffer( int index )
-	{
-		if (0 != index)
-			throw new IndexOutOfBoundsException( "Index must be 0 for UsbIrp" );
-
-		return getUsbIrpImp().getData();
-	}
+	public byte[] getData( int index ) { return getUsbIrpImp(index).getData(); }   
 
 	/**
-	 * Set the status at the specified index.
-	 * <p>
-	 * The only valid index is 0.
-	 * @param index the only valid index is zero.
-	 * @param status the status.
-	 * @throws javax.usb.IndexOutOfBoundsException if the index is not zero.
+	 * Set the data length of the data at the specified index.
+	 * @param index The index of the data.
+	 * @param len The data length of the specified indexed data.
 	 */
-	private void setStatus( int index, int status )
-	{
-		if (0 != index)
-			throw new IndexOutOfBoundsException( "Index must be 0 for UsbIrp" );
+	public void setStatus( int index, int len ) { getUsbIrpImp(index).setDataLength(len); }
 
-		if (0 > status) {
-			UsbException exception = new UsbException( JavaxUsb.nativeGetErrorMessage( status ), status );
-			getUsbIrpImp().setUsbException( exception );
-		} else {
-			getUsbIrpImp().setDataLength( status );
-		}
+	/**
+	 * Set the error of the data at the specified index.
+	 * @param index The index of the data.
+	 * @param err The number of the error that occurred.
+	 */
+	public void setError( int index, int error )
+	{
+//FIXME - improve message and/or set correct error number?
+		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMesage(error),error));
 	}
 
-	/** @return the number of 'packets' */
-	public int getNumberOfPackets() { return 1; }
+	/** @return The number of 'packets' */
+	public int getNumberOfPackets() { return size; }
 
-	/** @return the size of the data buffer */
-	public int getBufferSize() { return getUsbIrpImp().getData().length; }
+	/** @return The UsbIrpImp of */
+	public UsbIrpImp getUsbIrpImp( int index ) { return (UsbIrpImp)usbIrpImps.get(index); }
 
+	/** @param list The List of UsbIrpImps */
+	public void setUsbIrpImps( List list ) { usbIrpImps = list; }
+
+	/** @return the assocaited LinuxPipeOsImp */
+	public LinuxPipeOsImp getLinuxPipeOsImp() { return linuxPipeImp; }
+
+	/** @param pipe the assocaited LinuxPipeOsImp */
+	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
+
+	/** @return the address of the assocaited URB */
+	public int getUrbAddress() { return urbAddress; }
+
+	/** @param address the address of the assocaited URB */
+	public void setUrbAddress( int address ) { urbAddress = address; }
+
+	//*************************************************************************
+	// Instance variables
+
+	private List usbIrpImps = null;
+
+	private LinuxPipeOsImp linuxPipeImp = null;
+
+	private int urbAddress = 0;
 }
