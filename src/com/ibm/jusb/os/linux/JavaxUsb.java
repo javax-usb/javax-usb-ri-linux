@@ -286,15 +286,55 @@ class JavaxUsb {
 	}
 
 	/** @return A new UsbConfigImp */
-	private static UsbConfigImp createUsbConfigImp( UsbDeviceImp device )
+	private static UsbConfigImp createUsbConfigImp( UsbDeviceImp device,
+		byte length, byte type, short totalLen,
+		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
+		byte maxPowerNeeded, boolean active )
 	{
-		return new UsbConfigImp( device, null );
+		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
+		/* Email ddstreet@ieee.org for more info */
+		length += 0;
+		type += 0;
+		numInterfaces += 0;
+		configValue += 0;
+		configIndex += 0;
+		attributes += 0;
+		maxPowerNeeded += 0;
+
+		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type, totalLen,
+			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
+
+		UsbConfigImp config = new UsbConfigImp( device, desc );
+
+		if (active)
+			device.setActiveUsbConfigNumber(configValue);
+
+		return config;
 	}
 
 	/** @return A new UsbInterfaceImp */
-	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigImp config )
+	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigImp config,
+		byte length, byte type,
+		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
+		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex )
 	{
-		UsbInterfaceImp iface = new UsbInterfaceImp( config, null, null );
+		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
+		/* Email ddstreet@ieee.org for more info */
+		length += 0;
+		type += 0;
+		interfaceNumber += 0;
+		alternateNumber += 0;
+		numEndpoints += 0;
+		interfaceClass += 0;
+		interfaceSubClass += 0;
+		interfaceProtocol += 0;
+		interfaceIndex += 0;
+
+		InterfaceDescriptorImp desc = new InterfaceDescriptorImp( length, type,
+			interfaceNumber, alternateNumber, numEndpoints, interfaceClass, interfaceSubClass,
+			interfaceProtocol, interfaceIndex );
+
+		UsbInterfaceImp iface = new UsbInterfaceImp( config, desc );
 
 		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbDeviceImp().getUsbDeviceOsImp();
 		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );
@@ -304,9 +344,45 @@ class JavaxUsb {
 	}
 
 	/** @return A new UsbEndpointImp */
-	private static UsbEndpointImp createUsbEndpointImp( UsbInterfaceImp iface )
+	private static UsbEndpointImp createUsbEndpointImp( UsbInterfaceImp iface,
+		byte length, byte type,
+		byte endpointAddress, byte attributes, byte interval, short maxPacketSize )
 	{
-		return new UsbEndpointImp( iface, null, null );
+		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
+		/* Email ddstreet@ieee.org for more info */
+		length += 0;
+		type += 0;
+		endpointAddress += 0;
+		attributes += 0;
+		interval += 0;
+		maxPacketSize += 0;
+
+		EndpointDescriptorImp desc = new EndpointDescriptorImp( length, type,
+			endpointAddress, attributes, interval, maxPacketSize );
+
+		UsbEndpointImp ep = new UsbEndpointImp( iface, desc );
+		UsbPipeImp pipe = new UsbPipeImp( ep, null );
+
+		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)iface.getUsbInterfaceOsImp();
+		switch (ep.getType()) {
+		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
+			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( pipe, linuxInterfaceOsImp ) );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_BULK:
+			pipe.setUsbPipeOsImp( new LinuxBulkPipeImp( pipe, linuxInterfaceOsImp ) );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_INT:
+			pipe.setUsbPipeOsImp( new LinuxInterruptPipeImp( pipe, linuxInterfaceOsImp ) );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
+			pipe.setUsbPipeOsImp( new LinuxIsochronousPipeImp( pipe, linuxInterfaceOsImp ) );
+			break;
+		default:
+//FIXME - log?
+			throw new RuntimeException("Invalid UsbEndpoint type " + ep.getType());
+		}
+
+		return ep;
 	}
 
 	//*************************************************************************
@@ -343,94 +419,6 @@ class JavaxUsb {
 
 		targetDevice.setDeviceDescriptor(desc);
 		targetDevice.setSpeedString(speedString);
-	}
-
-	private static void configureUsbConfigImp( UsbConfigImp targetConfig,
-		byte length, byte type, short totalLen,
-		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
-		byte maxPowerNeeded, boolean active )
-	{
-		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
-		/* Email ddstreet@ieee.org for more info */
-		length += 0;
-		type += 0;
-		numInterfaces += 0;
-		configValue += 0;
-		configIndex += 0;
-		attributes += 0;
-		maxPowerNeeded += 0;
-
-		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type, totalLen,
-			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
-
-		targetConfig.setConfigDescriptor(desc);
-
-		if (active)
-			targetConfig.getUsbDeviceImp().setActiveUsbConfigNumber(configValue);
-	}
-
-	private static void configureUsbInterfaceImp( UsbInterfaceImp targetInterface,
-		byte length, byte type,
-		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
-		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex )
-	{
-		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
-		/* Email ddstreet@ieee.org for more info */
-		length += 0;
-		type += 0;
-		interfaceNumber += 0;
-		alternateNumber += 0;
-		numEndpoints += 0;
-		interfaceClass += 0;
-		interfaceSubClass += 0;
-		interfaceProtocol += 0;
-		interfaceIndex += 0;
-
-		InterfaceDescriptorImp desc = new InterfaceDescriptorImp( length, type,
-			interfaceNumber, alternateNumber, numEndpoints, interfaceClass, interfaceSubClass,
-			interfaceProtocol, interfaceIndex );
-
-		targetInterface.setInterfaceDescriptor(desc);
-	}
-
-	private static void configureUsbEndpointImp( UsbEndpointImp targetEndpoint,
-		byte length, byte type,
-		byte endpointAddress, byte attributes, byte interval, short maxPacketSize )
-	{
-		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
-		/* Email ddstreet@ieee.org for more info */
-		length += 0;
-		type += 0;
-		endpointAddress += 0;
-		attributes += 0;
-		interval += 0;
-		maxPacketSize += 0;
-
-		EndpointDescriptorImp desc = new EndpointDescriptorImp( length, type,
-			endpointAddress, attributes, interval, maxPacketSize );
-
-		targetEndpoint.setEndpointDescriptor(desc);
-
-		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)targetEndpoint.getUsbInterfaceImp().getUsbInterfaceOsImp();
-		LinuxPipeOsImp linuxPipeOsImp = null;
-		switch (targetEndpoint.getType()) {
-		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
-			linuxPipeOsImp = new LinuxControlPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_BULK:
-			linuxPipeOsImp = new LinuxBulkPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_INT:
-			linuxPipeOsImp = new LinuxInterruptPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
-			linuxPipeOsImp = new LinuxIsochronousPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		default:
-//FIXME - log
-		}
-		UsbPipeImp usbPipeImp = new UsbPipeImp( targetEndpoint, linuxPipeOsImp );
-		targetEndpoint.setUsbPipeImp( usbPipeImp );
 	}
 
 	//*************************************************************************

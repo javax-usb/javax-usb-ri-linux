@@ -214,7 +214,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 	unsigned short wTotalLength;
 	unsigned int pos;
 	jobject config = NULL, interface = NULL;
-	jmethodID createUsbConfigImp, configureUsbConfigImp;
+	jmethodID createUsbConfigImp;
 	jboolean isActive = JNI_FALSE;
 
 	if (!(cfg_desc = get_descriptor( fd ))) {
@@ -222,18 +222,16 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 		goto BUILD_CONFIG_EXIT;
 	}
 
-	createUsbConfigImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbConfigImp", "(Lcom/ibm/jusb/UsbDeviceImp;)Lcom/ibm/jusb/UsbConfigImp;" );
-	configureUsbConfigImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbConfigImp", "(Lcom/ibm/jusb/UsbConfigImp;BBSBBBBBZ)V" );
+	createUsbConfigImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbConfigImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBSBBBBBZ)Lcom/ibm/jusb/UsbConfigImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_config : Building config %d\n", cfg_desc->bConfigurationValue );
 
 	wTotalLength = cfg_desc->wTotalLength;
 	pos = cfg_desc->bLength;
 
-	config = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbConfigImp, device );
 //FIXME - find if active
 	isActive = ( 1 == cfg_desc->bConfigurationValue ? JNI_TRUE : JNI_FALSE );
-	(*env)->CallStaticVoidMethod( env, JavaxUsb, configureUsbConfigImp, config,
+	config = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbConfigImp, device,
 		cfg_desc->bLength, cfg_desc->bDescriptorType, wTotalLength,
 		cfg_desc->bNumInterfaces, cfg_desc->bConfigurationValue, cfg_desc->iConfiguration,
 		cfg_desc->bmAttributes, cfg_desc->bMaxPower, isActive );
@@ -286,13 +284,11 @@ static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject con
 {
 	jobject interface;
 
-	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigImp;)Lcom/ibm/jusb/UsbInterfaceImp;" );
-	jmethodID configureUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbInterfaceImp", "(Lcom/ibm/jusb/UsbInterfaceImp;BBBBBBBBB)V" );
+	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigImp;BBBBBBBBB)Lcom/ibm/jusb/UsbInterfaceImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_interface : Building interface %d\n", if_desc->bInterfaceNumber );
 
-	interface = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbInterfaceImp, config );
-	(*env)->CallStaticVoidMethod( env, JavaxUsb, configureUsbInterfaceImp, interface,
+	interface = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbInterfaceImp, config,
 		if_desc->bLength, if_desc->bDescriptorType,
 		if_desc->bInterfaceNumber, if_desc->bAlternateSetting, if_desc->bNumEndpoints, if_desc->bInterfaceClass,
 		if_desc->bInterfaceSubClass, if_desc->bInterfaceProtocol, if_desc->iInterface );
@@ -302,10 +298,7 @@ static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject con
 
 static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc )
 {
-	jobject endpoint;
-
-	jmethodID createUsbEndpointImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbEndpointImp", "(Lcom/ibm/jusb/UsbInterfaceImp;)Lcom/ibm/jusb/UsbEndpointImp;" );
-	jmethodID configureUsbEndpointImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbEndpointImp", "(Lcom/ibm/jusb/UsbEndpointImp;BBBBBS)V" );
+	jmethodID createUsbEndpointImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbEndpointImp", "(Lcom/ibm/jusb/UsbInterfaceImp;BBBBBS)Lcom/ibm/jusb/UsbEndpointImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_endpoint : Building endpoint 0x%2.02x\n", ep_desc->bEndpointAddress );
 
@@ -314,12 +307,9 @@ static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interfa
 		return;
 	}
 
-	endpoint = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbEndpointImp, interface );
-	(*env)->CallStaticVoidMethod( env, JavaxUsb, configureUsbEndpointImp, endpoint,
+	(*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbEndpointImp, interface,
 		ep_desc->bLength, ep_desc->bDescriptorType,
 		ep_desc->bEndpointAddress, ep_desc->bmAttributes, ep_desc->bInterval, ep_desc->wMaxPacketSize );
-
-	(*env)->DeleteLocalRef( env, endpoint );
 }
 
 static inline void *get_descriptor( int fd )
