@@ -23,7 +23,7 @@ public class Version
 		System.out.println(LINUX_IMP_DESCRIPTION);
 	}
 
-	public static final String LINUX_API_VERSION = "0.10.1";
+	public static final String LINUX_API_VERSION = "0.10.2";
 	public static final String LINUX_IMP_VERSION = "0.10.5";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "JSR80 : javax.usb"
