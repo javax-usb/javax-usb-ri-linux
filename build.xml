@@ -12,7 +12,7 @@
 	<property name="Jsr80Env.JSR80_LINUX_SRC_DIR" value="src"/>
 	<property name="Jsr80Env.JSR80_LINUX_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_SRC_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_LIB_DIR" value="lib"/>
-	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="jni/linux"/>
+	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="jni"/>
 	<property name="Jsr80Env.JSR80_LINUX_JNI_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JARFILE_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="docs/jdoc"/>
