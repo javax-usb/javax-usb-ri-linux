@@ -63,7 +63,7 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 		else
 			request = new LinuxControlRequest();
 
-		request.getEndpointAddress(getEndpointAddress());
+		request.setEndpointAddress(getEndpointAddress());
 		request.setUsbIrpImp(usbControlIrpImp);
 		request.setCompletion(this);
 		return request;
