@@ -15,6 +15,7 @@
 	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="jni"/>
 	<property name="Jsr80Env.JSR80_LINUX_JNI_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JARFILE_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
+	<property name="Jsr80Env.JSR80_LINUX_PROPERTIES_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="docs/jdoc"/>
 
 	<property name="Jsr80Env.JSR80_LINUX_DEBUG" value="yes"/>
@@ -48,6 +49,8 @@
 	<property name="jsr80.linux.jni.src.dir" value="${Jsr80Env.JSR80_LINUX_JNI_SRC_DIR}"/>
 	<property name="jsr80.linux.jni.dest.dir" value="${Jsr80Env.JSR80_LINUX_JNI_DEST_DIR}"/>
 	<property name="jsr80.linux.jni.library" value="libJavaxUsb.so"/>
+	<property name="jsr80.linux.properties" value="jsr80.properties"/>
+	<property name="jsr80.linux.properties.dir" value="${Jsr80Env.JSR80_LINUX_PROPERTIES_DIR}"/>
 	<property name="jsr80.linux.jarfile" value="${Jsr80Env.JSR80_LINUX_JARFILE}"/>
 	<property name="jsr80.linux.jarfile.dir" value="${Jsr80Env.JSR80_LINUX_JARFILE_DIR}"/>
 
@@ -116,11 +119,10 @@
 	<target name="jars" depends="compile">
 		<echo message="Creating JAR files."/>
 		<mkdir dir="${jsr80.linux.jarfile.dir}"/>
-		<jar
-			jarfile="${jsr80.linux.jarfile.dir}/${jsr80.linux.jarfile}"
-			basedir="${jsr80.linux.dest.dir}"
-			compress="${jsr80.linux.compress}"
-			includes="javax/usb/res/jusb.properties,**/*.class"/>
+		<jar jarfile="${jsr80.linux.jarfile.dir}/${jsr80.linux.jarfile}" compress="${jsr80.linux.compress}">
+			<fileset dir="${jsr80.linux.dest.dir}" includes="**/*.class"/>
+			<fileset dir="${jsr80.linux.properties.dir}" includes="${jsr80.linux.properties}"/>
+		</jar>
 
 		<mkdir dir="${jsr80.linux.lib.dir}"/>
 		<copy
