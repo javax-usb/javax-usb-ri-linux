@@ -31,7 +31,7 @@ import com.ibm.jusb.util.*;
  * </ul>
  * @author Dan Streetman
  */
-public class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp,LinuxRequest.Completion
+public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,LinuxRequest.Completion
 {
 	/** Constructor */
 	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface )

@@ -28,7 +28,7 @@ import com.ibm.jusb.os.*;
  * </ul>
  * @author Dan Streetman
  */
-class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
+class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 {
 	/** Constructor */
 	public LinuxDeviceOsImp( UsbDeviceImp device, LinuxDeviceProxy proxy )
