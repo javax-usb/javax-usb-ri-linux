@@ -32,27 +32,27 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 	jclass LinuxRequest = NULL;
 	jmethodID getInterfaceNumber;
 
-	LinuxRequest = (*env)->GetObjectClass( env, linuxRequest );
-	getInterfaceNumber = (*env)->GetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxRequest );
+	LinuxRequest = CheckedGetObjectClass( env, linuxRequest );
+	getInterfaceNumber = CheckedGetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
+	CheckedDeleteLocalRef( env, LinuxRequest );
 
 	if (!(interface = malloc(sizeof(*interface)))) {
-		dbg( MSG_CRITICAL, "claim_interface : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		return -ENOMEM;
 	}
 
-	*interface = (*env)->CallIntMethod( env, linuxRequest, getInterfaceNumber );
+	*interface = CheckedCallIntMethod( env, linuxRequest, getInterfaceNumber );
 
-	dbg( MSG_DEBUG2, "claim_interface : %s interface %d\n", claim ? "Claiming" : "Releasing", *interface );
+	log( LOG_FUNC, "%s interface %d", claim ? "Claiming" : "Releasing", *interface );
 
 	errno = 0;
 	if (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
 		ret = -errno;
 
 	if (ret)
-		dbg( MSG_ERROR, "claim_interface : Could not %s interface %d : errno %d\n", claim ? "claim" : "release", *interface, ret );
+		log( LOG_ERROR, "Could not %s interface %d : errno %d", claim ? "claim" : "release", *interface, ret );
 	else
-		dbg( MSG_DEBUG2, "claim_interface : %s interface %d\n", claim ? "Claimed" : "Released", *interface );
+		log( LOG_FUNC, "%s interface %d", claim ? "Claimed" : "Released", *interface );
 
 	free(interface);
 
@@ -73,33 +73,33 @@ int is_claimed( JNIEnv *env, int fd, jobject linuxRequest )
 	jclass LinuxRequest;
 	jmethodID getInterfaceNumber, setClaimed;
 
-	LinuxRequest = (*env)->GetObjectClass( env, linuxRequest );
-	getInterfaceNumber = (*env)->GetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
-	setClaimed = (*env)->GetMethodID( env, LinuxRequest, "setClaimed", "(Z)V" );
-	(*env)->DeleteLocalRef( env, LinuxRequest );
+	LinuxRequest = CheckedGetObjectClass( env, linuxRequest );
+	getInterfaceNumber = CheckedGetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
+	setClaimed = CheckedGetMethodID( env, LinuxRequest, "setClaimed", "(Z)V" );
+	CheckedDeleteLocalRef( env, LinuxRequest );
 
 	if (!(gd = malloc(sizeof(*gd)))) {
-		dbg(MSG_CRITICAL, "is_claimed : Out of memory!\n");
+		log( LOG_CRITICAL, "Out of memory!");
 		return -ENOMEM;
 	}
 
 	memset(gd, 0, sizeof(*gd));
 
-	gd->interface = (*env)->CallIntMethod( env, linuxRequest, getInterfaceNumber );
+	gd->interface = CheckedCallIntMethod( env, linuxRequest, getInterfaceNumber );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_GETDRIVER, gd )) {
 		ret = -errno;
 
 		if (-ENODATA == ret)
-			dbg( MSG_DEBUG3, "is_claimed : Interface %d is not claimed\n", gd->interface );
+			log( LOG_INFO, "Interface %d is not claimed.", gd->interface );
 		else
-			dbg( MSG_ERROR, "is_claimed : Could not determine if interface %d is claimed\n", gd->interface );
+			log( LOG_ERROR, "Could not determine if interface %d is claimed.", gd->interface );
 	} else {
-		dbg( MSG_DEBUG3, "is_claimed : Interface %d is claimed by driver %s\n", gd->interface, gd->driver );
+		log( LOG_INFO, "Interface %d is claimed by driver %s.", gd->interface, gd->driver );
 	}
 
-	(*env)->CallVoidMethod( env, linuxRequest, setClaimed, (ret ? JNI_FALSE : JNI_TRUE) );
+	CheckedCallVoidMethod( env, linuxRequest, setClaimed, (ret ? JNI_FALSE : JNI_TRUE) );
 
 	free(gd);
 

@@ -25,30 +25,30 @@ int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, str
 	int offset = 0;
 	int ret = 0;
 
-	jclass LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	jclass LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	jmethodID getData = CheckedGetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
+	jmethodID getOffset = CheckedGetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
+	jmethodID getLength = CheckedGetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
+	jbyteArray data = CheckedCallObjectMethod( env, linuxPipeRequest, getData );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
-	offset = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getOffset );
-	urb->buffer_length = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getLength );
+	offset = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getOffset );
+	urb->buffer_length = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getLength );
 
 	if (!(urb->buffer = malloc(urb->buffer_length))) {
-		dbg( MSG_CRITICAL, "isochronous_pipe_request : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		ret = -ENOMEM;
 		goto END_SUBMIT;
 	}
 
-	(*env)->GetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
+	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
 	urb->type = USBDEVFS_URB_TYPE_ISO;
 	urb->flags |= USBDEVFS_URB_ISO_ASAP;
 	urb->number_of_packets = 1;
 	urb->iso_frame_desc[0].length = urb->buffer_length;
 
-	debug_urb( "isochronous_pipe_request", urb );
+	debug_urb( env, "isochronous_pipe_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
@@ -58,7 +58,7 @@ END_SUBMIT:
 	if (ret)
 		if (urb->buffer) free(urb->buffer);
 
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (data) CheckedDeleteLocalRef( env, data );
 
 	return ret;
 }
@@ -72,26 +72,26 @@ END_SUBMIT:
  */
 int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
 {
-	jclass LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	jmethodID setActualLength = (*env)->GetMethodID( env, LinuxPipeRequest, "setActualLength", "(I)V" );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
-	unsigned int offset = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getOffset );
-	unsigned int length = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getLength );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	jclass LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	jmethodID setActualLength = CheckedGetMethodID( env, LinuxPipeRequest, "setActualLength", "(I)V" );
+	jmethodID getData = CheckedGetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
+	jmethodID getOffset = CheckedGetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
+	jmethodID getLength = CheckedGetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
+	jbyteArray data = CheckedCallObjectMethod( env, linuxPipeRequest, getData );
+	unsigned int offset = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getOffset );
+	unsigned int length = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getLength );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
 	if (length < urb->actual_length) {
-		dbg( MSG_ERROR, "complete_interrupt_pipe_request : Actual length %d greater than requested length %d\n", urb->actual_length, length );
+		log( LOG_XFER_ERROR, "Actual length %d greater than requested length %d", urb->actual_length, length );
 		urb->actual_length = length;
 	}
 
-	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer );
+	CheckedSetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer );
 
-	(*env)->CallVoidMethod( env, linuxPipeRequest, setActualLength, urb->iso_frame_desc[0].actual_length );
+	CheckedCallVoidMethod( env, linuxPipeRequest, setActualLength, urb->iso_frame_desc[0].actual_length );
 
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (data) CheckedDeleteLocalRef( env, data );
 	if (urb->buffer) free(urb->buffer);
 
 	return urb->iso_frame_desc[0].status;
@@ -118,20 +118,20 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	jclass LinuxIsochronousRequest;
 	jmethodID getAcceptShortPacket, getTotalLength, size, setUrbAddress, getEndpointAddress;
 
-	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getAcceptShortPacket = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getAcceptShortPacket", "()Z" );
-	getTotalLength = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getTotalLength", "()I" );
-	size = (*env)->GetMethodID( env, LinuxIsochronousRequest, "size", "()I" );
-	setUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(I)V" );
-	getEndpointAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getEndpointAddress", "()B" );
-	npackets = (unsigned int)(*env)->CallIntMethod( env, linuxIsochronousRequest, size );
-	bufsize = (unsigned int)(*env)->CallIntMethod( env, linuxIsochronousRequest, getTotalLength );
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
+	getAcceptShortPacket = CheckedGetMethodID( env, LinuxIsochronousRequest, "getAcceptShortPacket", "()Z" );
+	getTotalLength = CheckedGetMethodID( env, LinuxIsochronousRequest, "getTotalLength", "()I" );
+	size = CheckedGetMethodID( env, LinuxIsochronousRequest, "size", "()I" );
+	setUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(I)V" );
+	getEndpointAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getEndpointAddress", "()B" );
+	npackets = (unsigned int)CheckedCallIntMethod( env, linuxIsochronousRequest, size );
+	bufsize = (unsigned int)CheckedCallIntMethod( env, linuxIsochronousRequest, getTotalLength );
+	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
 	urbsize = sizeof(*urb) + (npackets * sizeof(struct usbdevfs_iso_packet_desc));
 
 	if (!(urb = malloc(urbsize))) {
-		dbg( MSG_CRITICAL, "isochronous_request : Out of memory! (%d bytes needed)\n", urbsize );
+		log( LOG_CRITICAL, "Out of memory! (%d bytes needed)", urbsize );
 		ret = -ENOMEM;
 		goto ISOCHRONOUS_REQUEST_END;
 	}
@@ -142,7 +142,7 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	urb->buffer_length = bufsize;
 
 	if (!(urb->buffer = malloc(urb->buffer_length))) {
-		dbg( MSG_CRITICAL, "isochronous_request : Out of memory! (%d needed)\n", urb->buffer_length );
+		log( LOG_CRITICAL, "Out of memory! (%d needed)", urb->buffer_length );
 		ret = -ENOMEM;
 		goto ISOCHRONOUS_REQUEST_END;
 	}
@@ -153,28 +153,28 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 		goto ISOCHRONOUS_REQUEST_END;
 
 	urb->type = USBDEVFS_URB_TYPE_ISO;
-	urb->usercontext = (*env)->NewGlobalRef( env, linuxIsochronousRequest );
-	urb->endpoint = (unsigned char)(*env)->CallByteMethod( env, linuxIsochronousRequest, getEndpointAddress );
+	urb->usercontext = CheckedNewGlobalRef( env, linuxIsochronousRequest );
+	urb->endpoint = (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getEndpointAddress );
 	urb->flags |= USBDEVFS_URB_ISO_ASAP;
 
-	dbg( MSG_DEBUG2, "isochronous_request : Submitting URB\n" );
-	debug_urb( "isochronous_request", urb );
+	log( LOG_XFER_OTHER, "Submitting URB" );
+	debug_urb( env, "isochronous_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
 		ret = -errno;
 
 	if (ret) {
-		dbg( MSG_ERROR, "isochronous_request : Could not submit URB (errno %d)\n", ret );
+		log( LOG_XFER_ERROR, "Could not submit URB (errno %d)", ret );
 	} else {
-		dbg( MSG_DEBUG2, "isochronous_request : Submitted URB\n" );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setUrbAddress, urb );
+		log( LOG_XFER_OTHER, "isochronous_request : Submitted URB" );
+		CheckedCallVoidMethod( env, linuxIsochronousRequest, setUrbAddress, urb );
 	}
 
 ISOCHRONOUS_REQUEST_END:
 	if (ret) {
 		if (urb) {
-			if (urb->usercontext) (*env)->DeleteGlobalRef( env, urb->usercontext);
+			if (urb->usercontext) CheckedDeleteGlobalRef( env, urb->usercontext);
 			if (urb->buffer) free(urb->buffer);
 			free(urb);
 		}
@@ -196,22 +196,22 @@ void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRe
 	jclass LinuxIsochronousRequest;
 	jmethodID getUrbAddress;
 
-	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
+	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
+	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
-	dbg( MSG_DEBUG2, "cancel_isochronous_request : Canceling URB\n" );
+	log( LOG_XFER_OTHER, "Canceling URB" );
 
-	urb = (struct usbdevfs_urb *)(*env)->CallIntMethod( env, linuxIsochronousRequest, getUrbAddress );
+	urb = (struct usbdevfs_urb *)CheckedCallIntMethod( env, linuxIsochronousRequest, getUrbAddress );
 
 	if (!urb) {
-		dbg( MSG_INFO, "cancel_isochronous_request : No URB to cancel\n" );
+		log( LOG_XFER_ERROR, "No URB to cancel" );
 		return;
 	}
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_DISCARDURB, urb ))
-		dbg( MSG_DEBUG2, "cancel_isochronous_request : Could not unlink urb %p (error %d)\n", urb, -errno );
+		log( LOG_XFER_ERROR, "Could not unlink urb %p (error %d)", urb, -errno );
 }
 
 /**
@@ -228,24 +228,24 @@ int complete_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
 	jclass LinuxIsochronousRequest;
 	jmethodID getUrbAddress;
 
-	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
+	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
+	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
-	if (!(urb = (struct usbdevfs_urb*)(*env)->CallIntMethod( env, linuxIsochronousRequest, getUrbAddress ))) {
-		dbg( MSG_ERROR, "complete_isochronous_request : No URB to complete!\n" );
+	if (!(urb = (struct usbdevfs_urb*)CheckedCallIntMethod( env, linuxIsochronousRequest, getUrbAddress ))) {
+		log( LOG_XFER_ERROR, "No URB to complete!" );
 		return -EINVAL;
 	}
 
-	dbg( MSG_DEBUG2, "complete_isochronous_request : Completing URB\n" );
-	debug_urb( "complete_isochronous_request", urb );
+	log( LOG_XFER_OTHER, "Completing URB" );
+	debug_urb( env, "complete_isochronous_request", urb );
 
 	ret = destroy_iso_buffer( env, linuxIsochronousRequest, urb );
 
 	free(urb->buffer);
 	free(urb);
 
-	dbg( MSG_DEBUG2, "complete_isochronous_request : Completed URB\n" );
+	log( LOG_XFER_OTHER, "Completed URB" );
 
 	return ret;
 }
@@ -261,27 +261,27 @@ static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousReques
 	jmethodID getDirection, getData, getOffset, getLength;
 	jbyteArray jbuf;
 
-	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getDirection = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getDirection", "()B" );
-	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
-	getOffset = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getOffset", "(I)I" );
-	getLength = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getLength", "(I)I" );
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
+	getDirection = CheckedGetMethodID( env, LinuxIsochronousRequest, "getDirection", "()B" );
+	getData = CheckedGetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
+	getOffset = CheckedGetMethodID( env, LinuxIsochronousRequest, "getOffset", "(I)I" );
+	getLength = CheckedGetMethodID( env, LinuxIsochronousRequest, "getLength", "(I)I" );
+	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
 	/* Copy buffer out ONLY if direction is host->device */
-	if (USB_DIR_OUT == (unsigned char)(*env)->CallByteMethod( env, linuxIsochronousRequest, getDirection )) {
+	if (USB_DIR_OUT == (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getDirection )) {
 		for (i=0; i<urb->number_of_packets; i++) {
-			if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
-				dbg( MSG_ERROR, "create_iso_buffer : Could not access data at index %d\n", i );
+			if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+				log( LOG_XFER_ERROR, "Could not access data at index %d", i );
 				return -EINVAL;
 			}
 
-			offset = (*env)->CallIntMethod( env, linuxIsochronousRequest, getOffset, i );
-			urb->iso_frame_desc[i].length = (*env)->CallIntMethod( env, linuxIsochronousRequest, getLength, i );
-			(*env)->GetByteArrayRegion( env, jbuf, offset, urb->iso_frame_desc[i].length, urb->buffer + buffer_offset );
+			offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
+			urb->iso_frame_desc[i].length = CheckedCallIntMethod( env, linuxIsochronousRequest, getLength, i );
+			CheckedGetByteArrayRegion( env, jbuf, offset, urb->iso_frame_desc[i].length, urb->buffer + buffer_offset );
 			buffer_offset += urb->iso_frame_desc[i].length;
 
-			(*env)->DeleteLocalRef( env, jbuf );
+			CheckedDeleteLocalRef( env, jbuf );
 		}
 	}
 
@@ -299,35 +299,35 @@ static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousReque
 	jmethodID getDirection, getData, getOffset, setActualLength, setError;
 	jbyteArray jbuf;
 
-	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getDirection = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getDirection", "()B" );
-	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
-	getOffset = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getOffset", "(I)I" );
-	setActualLength = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setActualLength", "(II)V" );
-	setError = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setError", "(II)V" );
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
+	getDirection = CheckedGetMethodID( env, LinuxIsochronousRequest, "getDirection", "()B" );
+	getData = CheckedGetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
+	getOffset = CheckedGetMethodID( env, LinuxIsochronousRequest, "getOffset", "(I)I" );
+	setActualLength = CheckedGetMethodID( env, LinuxIsochronousRequest, "setActualLength", "(II)V" );
+	setError = CheckedGetMethodID( env, LinuxIsochronousRequest, "setError", "(II)V" );
+	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
 	/* Copy buffer in ONLY if direction is device->host */
-	if (USB_DIR_IN == (unsigned char)(*env)->CallByteMethod( env, linuxIsochronousRequest, getDirection )) {
+	if (USB_DIR_IN == (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getDirection )) {
 		for (i=0; i<urb->number_of_packets; i++) {
-			if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
-				dbg( MSG_ERROR, "destory_iso_buffer : Could not access data buffer at index %d\n", i );
+			if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+				log( LOG_XFER_ERROR, "Could not access data buffer at index %d", i );
 				return -EINVAL;
 			}
 
-			offset = (*env)->CallIntMethod( env, linuxIsochronousRequest, getOffset, i );
+			offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
 			actual_length = urb->iso_frame_desc[i].actual_length;
-			if ((offset + actual_length) > (*env)->GetArrayLength( env, jbuf )) {
-				dbg( MSG_WARNING, "destroy_iso_buffer : WARNING!  Data buffer %d too small, data truncated!\n", i );
-				actual_length = (*env)->GetArrayLength( env, jbuf ) - offset;
+			if ((offset + actual_length) > CheckedGetArrayLength( env, jbuf )) {
+				log( LOG_XFER_ERROR, "Data buffer %d too small, data truncated!", i );
+				actual_length = CheckedGetArrayLength( env, jbuf ) - offset;
 			}
-			(*env)->SetByteArrayRegion( env, jbuf, offset, actual_length, urb->buffer + buffer_offset );
-			(*env)->CallVoidMethod( env, linuxIsochronousRequest, setActualLength, i, actual_length );
+			CheckedSetByteArrayRegion( env, jbuf, offset, actual_length, urb->buffer + buffer_offset );
+			CheckedCallVoidMethod( env, linuxIsochronousRequest, setActualLength, i, actual_length );
 			if (0 > urb->iso_frame_desc[i].status)
-				(*env)->CallVoidMethod( env, linuxIsochronousRequest, setError, i, urb->iso_frame_desc[i].status );
+				CheckedCallVoidMethod( env, linuxIsochronousRequest, setError, i, urb->iso_frame_desc[i].status );
 			buffer_offset += urb->iso_frame_desc[i].length;
 
-			(*env)->DeleteLocalRef( env, jbuf );
+			CheckedDeleteLocalRef( env, jbuf );
 		}
 	}
 			

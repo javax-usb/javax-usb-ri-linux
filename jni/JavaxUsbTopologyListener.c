@@ -22,14 +22,14 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 	int error = 0;
 	unsigned int pollingError = 0;
 
-	jclass LinuxUsbServices = (*env)->GetObjectClass( env, linuxUsbServices );
+	jclass LinuxUsbServices = CheckedGetObjectClass( env, linuxUsbServices );
 
-	jmethodID topologyChange = (*env)->GetMethodID( env, LinuxUsbServices, "topologyChange", "()V" );
+	jmethodID topologyChange = CheckedGetMethodID( env, LinuxUsbServices, "topologyChange", "()V" );
 
 	errno = 0;
 	descriptor = open( USBDEVFS_DEVICES, O_RDONLY, 0 );
 	if ( 0 >= descriptor ) {
-		dbg( MSG_ERROR, "TopologyListener : Could not open %s\n", USBDEVFS_DEVICES );
+		log( LOG_HOTPLUG_CRITICAL, "Could not open %s", USBDEVFS_DEVICES );
 		error = errno;
 		goto TOPOLOGY_LISTENER_CLEANUP;
 	}
@@ -45,9 +45,9 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 
 		// Polling Error...strange...
 		if ( devpoll.revents & POLLERR ) {
-			dbg( MSG_ERROR, "TopologyListener : Topology Polling error.\n" );
+			log( LOG_HOTPLUG_ERROR, "Topology Polling error." );
 			if (MAX_POLLING_ERRORS < ++pollingError) {
-				dbg( MSG_CRITICAL, "TopologyListener : %d polling errors; aborting!\n", pollingError );
+				log( LOG_HOTPLUG_CRITICAL, "%d polling errors; aborting!", pollingError );
 				error = -ENOLINK; /* gotta pick one of 'em */
 				break;
 			} else continue;
@@ -55,21 +55,21 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 
 		// Connect/Disconnect event...
 		if ( devpoll.revents & POLLIN ) {
-			dbg( MSG_DEBUG3, "TopologyListener : Got topology change event\n" );
-			(*env)->CallVoidMethod( env, linuxUsbServices, topologyChange );
+			log( LOG_HOTPLUG_CHANGE, "Got topology change event." );
+			CheckedCallVoidMethod( env, linuxUsbServices, topologyChange );
 			continue;
 		}
 
 		// Freak event...
-		dbg( MSG_DEBUG3, "TopologyListener : Unknown event received = 0x%x\n", devpoll.revents );
+		log( LOG_HOTPLUG_CHANGE, "Unknown event received = 0x%x", devpoll.revents );
 	}
 
-	// Clean up
-	dbg( MSG_DEBUG1, "TopologyListener : Exiting.\n" );
+	/* This should NOT happen! */
+	log( LOG_HOTPLUG_CRITICAL, "TopologyListener Exiting!" );
 	close( descriptor );
 
 TOPOLOGY_LISTENER_CLEANUP:
-	(*env)->DeleteLocalRef( env, LinuxUsbServices );
+	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
 	return error;
 }

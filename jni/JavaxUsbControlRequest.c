@@ -27,33 +27,33 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	jmethodID getSetupPacket, getData, getOffset, getLength;
 	jbyteArray setupPacket = NULL, data = NULL;
 
-	LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
-	getSetupPacket = (*env)->GetMethodID( env, LinuxControlRequest, "getSetupPacket", "()[B" );
-	getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
-	getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
-	getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
-	setupPacket = (*env)->CallObjectMethod( env, linuxControlRequest, getSetupPacket );
-	data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
-	(*env)->DeleteLocalRef( env, LinuxControlRequest );
+	LinuxControlRequest = CheckedGetObjectClass( env, linuxControlRequest );
+	getSetupPacket = CheckedGetMethodID( env, LinuxControlRequest, "getSetupPacket", "()[B" );
+	getData = CheckedGetMethodID( env, LinuxControlRequest, "getData", "()[B" );
+	getOffset = CheckedGetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
+	getLength = CheckedGetMethodID( env, LinuxControlRequest, "getLength", "()I" );
+	setupPacket = CheckedCallObjectMethod( env, linuxControlRequest, getSetupPacket );
+	data = CheckedCallObjectMethod( env, linuxControlRequest, getData );
+	CheckedDeleteLocalRef( env, LinuxControlRequest );
 
-	offset = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getOffset );
-	urb->buffer_length = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getLength );
+	offset = (unsigned int)CheckedCallIntMethod( env, linuxControlRequest, getOffset );
+	urb->buffer_length = (unsigned int)CheckedCallIntMethod( env, linuxControlRequest, getLength );
 
 	if (!(urb->buffer = malloc(urb->buffer_length + 8))) {
-		dbg( MSG_CRITICAL, "control_pipe_request : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		ret = -ENOMEM;
 		goto END_SUBMIT;
 	}
 
-	(*env)->GetByteArrayRegion( env, setupPacket, 0, 8, urb->buffer );
-	(*env)->GetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer + 8 );
+	CheckedGetByteArrayRegion( env, setupPacket, 0, 8, urb->buffer );
+	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer + 8 );
 
 	/* Add 8 for the setup packet */
 	urb->buffer_length += 8;
 
 	urb->type = USBDEVFS_URB_TYPE_CONTROL;
 
-	debug_urb( "control_pipe_request", urb );
+	debug_urb( env, "control_pipe_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
@@ -63,8 +63,8 @@ END_SUBMIT:
 	if (ret)
 		if (urb->buffer) free(urb->buffer);
 
-	if (setupPacket) (*env)->DeleteLocalRef( env, setupPacket );
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (setupPacket) CheckedDeleteLocalRef( env, setupPacket );
+	if (data) CheckedDeleteLocalRef( env, data );
 
 	return ret;
 }
@@ -78,26 +78,26 @@ END_SUBMIT:
  */
 int complete_control_pipe_request( JNIEnv *env, jobject linuxControlRequest, struct usbdevfs_urb *urb )
 {
-	jclass LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
-	jmethodID setActualLength = (*env)->GetMethodID( env, LinuxControlRequest, "setActualLength", "(I)V" );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
-	unsigned int offset = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getOffset );
-	unsigned int length = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getLength );
-	(*env)->DeleteLocalRef( env, LinuxControlRequest );
+	jclass LinuxControlRequest = CheckedGetObjectClass( env, linuxControlRequest );
+	jmethodID setActualLength = CheckedGetMethodID( env, LinuxControlRequest, "setActualLength", "(I)V" );
+	jmethodID getData = CheckedGetMethodID( env, LinuxControlRequest, "getData", "()[B" );
+	jmethodID getOffset = CheckedGetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
+	jmethodID getLength = CheckedGetMethodID( env, LinuxControlRequest, "getLength", "()I" );
+	jbyteArray data = CheckedCallObjectMethod( env, linuxControlRequest, getData );
+	unsigned int offset = (unsigned int)CheckedCallIntMethod( env, linuxControlRequest, getOffset );
+	unsigned int length = (unsigned int)CheckedCallIntMethod( env, linuxControlRequest, getLength );
+	CheckedDeleteLocalRef( env, LinuxControlRequest );
 
 	if (length < urb->actual_length) {
-		dbg( MSG_ERROR, "complete_control_pipe_request : Actual length %d greater than requested length %d\n", urb->actual_length, length );
+		log( LOG_XFER_ERROR, "Actual length %d greater than requested length %d", urb->actual_length, length );
 		urb->actual_length = length;
 	}
 
-	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer + 8 );
+	CheckedSetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer + 8 );
 
-	(*env)->CallVoidMethod( env, linuxControlRequest, setActualLength, urb->actual_length );
+	CheckedCallVoidMethod( env, linuxControlRequest, setActualLength, urb->actual_length );
 
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (data) CheckedDeleteLocalRef( env, data );
 	if (urb->buffer) free(urb->buffer);
 
 	return urb->status;
@@ -118,27 +118,27 @@ int set_configuration( JNIEnv *env, int fd, jobject linuxSetConfigurationRequest
 	jclass LinuxSetConfigurationRequest;
 	jmethodID getConfiguration;
 
-	LinuxSetConfigurationRequest = (*env)->GetObjectClass( env, linuxSetConfigurationRequest );
-	getConfiguration = (*env)->GetMethodID( env, LinuxSetConfigurationRequest, "getConfiguration", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxSetConfigurationRequest );
+	LinuxSetConfigurationRequest = CheckedGetObjectClass( env, linuxSetConfigurationRequest );
+	getConfiguration = CheckedGetMethodID( env, LinuxSetConfigurationRequest, "getConfiguration", "()I" );
+	CheckedDeleteLocalRef( env, LinuxSetConfigurationRequest );
 
 	if (!(configuration = malloc(sizeof(*configuration)))) {
-		dbg( MSG_CRITICAL, "set_configuration : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		return -ENOMEM;
 	}
 
-	*configuration = (unsigned int)(*env)->CallIntMethod( env, linuxSetConfigurationRequest, getConfiguration );
+	*configuration = (unsigned int)CheckedCallIntMethod( env, linuxSetConfigurationRequest, getConfiguration );
 
-	dbg( MSG_DEBUG2, "set_configuration : Setting configuration to %d\n", *configuration );
+	log( LOG_XFER_META, "Setting configuration to %d", *configuration );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SETCONFIGURATION, configuration ))
 		ret = -errno;
 
 	if (ret)
-		dbg( MSG_ERROR, "set_configuration : Could not set configuration (errno %d)\n", ret );
+		log( LOG_XFER_ERROR, "Could not set configuration (errno %d)", ret );
 	else
-		dbg( MSG_DEBUG2, "set_configuration : Set configuration\n" );
+		log( LOG_XFER_META, "set_configuration : Set configuration" );
 
 	free(configuration);
 
@@ -160,29 +160,29 @@ int set_interface( JNIEnv *env, int fd, jobject linuxSetInterfaceRequest )
 	jclass LinuxSetInterfaceRequest;
 	jmethodID getInterface, getSetting;
 
-	LinuxSetInterfaceRequest = (*env)->GetObjectClass( env, linuxSetInterfaceRequest );
-	getInterface = (*env)->GetMethodID( env, LinuxSetInterfaceRequest, "getInterface", "()I" );
-	getSetting = (*env)->GetMethodID( env, LinuxSetInterfaceRequest, "getSetting", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxSetInterfaceRequest );
+	LinuxSetInterfaceRequest = CheckedGetObjectClass( env, linuxSetInterfaceRequest );
+	getInterface = CheckedGetMethodID( env, LinuxSetInterfaceRequest, "getInterface", "()I" );
+	getSetting = CheckedGetMethodID( env, LinuxSetInterfaceRequest, "getSetting", "()I" );
+	CheckedDeleteLocalRef( env, LinuxSetInterfaceRequest );
 
 	if (!(interface = malloc(sizeof(*interface)))) {
-		dbg( MSG_CRITICAL, "set_interface : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		return -ENOMEM;
 	}
 
-	interface->interface = (unsigned int)(*env)->CallIntMethod( env, linuxSetInterfaceRequest, getInterface );
-	interface->altsetting = (unsigned int)(*env)->CallIntMethod( env, linuxSetInterfaceRequest, getSetting );
+	interface->interface = (unsigned int)CheckedCallIntMethod( env, linuxSetInterfaceRequest, getInterface );
+	interface->altsetting = (unsigned int)CheckedCallIntMethod( env, linuxSetInterfaceRequest, getSetting );
 
-	dbg( MSG_DEBUG2, "set_interface : Setting interface %d to setting %d\n", interface->interface, interface->altsetting );
+	log( LOG_XFER_META, "Setting interface %d to setting %d", interface->interface, interface->altsetting );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SETINTERFACE, interface ))
 		ret = -errno;
 
 	if (ret)
-		dbg( MSG_ERROR, "set_interface : Could not set interface (errno %d)\n", ret );
+		log( LOG_XFER_ERROR, "Could not set interface (errno %d)", ret );
 	else
-		dbg( MSG_DEBUG2, "set_interface : Set interface\n" );
+		log( LOG_XFER_META, "Set interface" );
 
 	free(interface);
 

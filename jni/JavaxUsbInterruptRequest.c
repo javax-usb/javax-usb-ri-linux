@@ -23,23 +23,23 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 	int offset = 0;
 	int ret = 0;
 
-	jclass LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	jclass LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	jmethodID getData = CheckedGetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
+	jmethodID getOffset = CheckedGetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
+	jmethodID getLength = CheckedGetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
+	jbyteArray data = CheckedCallObjectMethod( env, linuxPipeRequest, getData );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
-	offset = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getOffset );
-	urb->buffer_length = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getLength );
+	offset = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getOffset );
+	urb->buffer_length = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getLength );
 
 	if (!(urb->buffer = malloc(urb->buffer_length))) {
-		dbg( MSG_CRITICAL, "interrupt_pipe_request : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		ret = -ENOMEM;
 		goto END_SUBMIT;
 	}
 
-	(*env)->GetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
+	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
 #ifdef INTERRUPT_USES_BULK
 	urb->type = USBDEVFS_URB_TYPE_BULK;
@@ -50,7 +50,7 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 	urb->type = USBDEVFS_URB_TYPE_INTERRUPT;
 #endif
 
-	debug_urb( "interrupt_pipe_request", urb );
+	debug_urb( env, "interrupt_pipe_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
@@ -60,7 +60,7 @@ END_SUBMIT:
 	if (ret)
 		if (urb->buffer) free(urb->buffer);
 
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (data) CheckedDeleteLocalRef( env, data );
 
 	return ret;
 }
@@ -74,26 +74,26 @@ END_SUBMIT:
  */
 int complete_interrupt_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
 {
-	jclass LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	jmethodID setActualLength = (*env)->GetMethodID( env, LinuxPipeRequest, "setActualLength", "(I)V" );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
-	unsigned int offset = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getOffset );
-	unsigned int length = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getLength );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	jclass LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	jmethodID setActualLength = CheckedGetMethodID( env, LinuxPipeRequest, "setActualLength", "(I)V" );
+	jmethodID getData = CheckedGetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
+	jmethodID getOffset = CheckedGetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
+	jmethodID getLength = CheckedGetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
+	jbyteArray data = CheckedCallObjectMethod( env, linuxPipeRequest, getData );
+	unsigned int offset = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getOffset );
+	unsigned int length = (unsigned int)CheckedCallIntMethod( env, linuxPipeRequest, getLength );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
 	if (length < urb->actual_length) {
-		dbg( MSG_ERROR, "complete_interrupt_pipe_request : Actual length %d greater than requested length %d\n", urb->actual_length, length );
+		log( LOG_XFER_ERROR, "Actual length %d greater than requested length %d", urb->actual_length, length );
 		urb->actual_length = length;
 	}
 
-	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer );
+	CheckedSetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer );
 
-	(*env)->CallVoidMethod( env, linuxPipeRequest, setActualLength, urb->actual_length );
+	CheckedCallVoidMethod( env, linuxPipeRequest, setActualLength, urb->actual_length );
 
-	if (data) (*env)->DeleteLocalRef( env, data );
+	if (data) CheckedDeleteLocalRef( env, data );
 	if (urb->buffer) free(urb->buffer);
 
 	return urb->status;

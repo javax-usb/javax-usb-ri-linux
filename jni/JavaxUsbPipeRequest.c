@@ -32,53 +32,53 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	jmethodID setUrbAddress, getAcceptShortPacket, getEndpointAddress, getPipeType;
 	jboolean acceptShortPacket;
 
-	linuxPipeRequest = (*env)->NewGlobalRef( env, linuxRequest );
-	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	getEndpointAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "getEndpointAddress", "()B" );
-	getPipeType = (*env)->GetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
-	type = (*env)->CallIntMethod( env, linuxPipeRequest, getPipeType );
-	setUrbAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "setUrbAddress", "(I)V" );
-	getAcceptShortPacket = (*env)->GetMethodID( env, LinuxPipeRequest, "getAcceptShortPacket", "()Z" );
-	acceptShortPacket = (*env)->CallBooleanMethod( env, linuxPipeRequest, getAcceptShortPacket );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	linuxPipeRequest = CheckedNewGlobalRef( env, linuxRequest );
+	LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	getEndpointAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getEndpointAddress", "()B" );
+	getPipeType = CheckedGetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
+	type = CheckedCallIntMethod( env, linuxPipeRequest, getPipeType );
+	setUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "setUrbAddress", "(I)V" );
+	getAcceptShortPacket = CheckedGetMethodID( env, LinuxPipeRequest, "getAcceptShortPacket", "()Z" );
+	acceptShortPacket = CheckedCallBooleanMethod( env, linuxPipeRequest, getAcceptShortPacket );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
 	urbsize = sizeof(*urb);
 	if (PIPE_ISOCHRONOUS == type)
 		urbsize += sizeof(struct usbdevfs_iso_packet_desc);
 
 	if (!(urb = malloc(urbsize))) {
-		dbg( MSG_CRITICAL, "pipe_request : Out of memory!\n" );
+		log( LOG_CRITICAL, "Out of memory!" );
 		ret = -ENOMEM;
 		goto end;
 	}
 
 	memset(urb, 0, sizeof(*urb));
 
-	urb->endpoint = (unsigned char)(*env)->CallByteMethod( env, linuxPipeRequest, getEndpointAddress );
+	urb->endpoint = (unsigned char)CheckedCallByteMethod( env, linuxPipeRequest, getEndpointAddress );
 	urb->usercontext = linuxPipeRequest;
 	if (JNI_FALSE == acceptShortPacket)
 		urb->flags |= NO_ACCEPT_SHORT_PACKET;
 
-	dbg( MSG_DEBUG2, "pipe_request : Submitting URB\n" );
+	log( LOG_XFER_REQUEST, "Submitting URB" );
 
 	switch (type) {
 	case PIPE_CONTROL: ret = control_pipe_request( env, fd, linuxPipeRequest, urb ); break;
 	case PIPE_BULK: ret = bulk_pipe_request( env, fd, linuxPipeRequest, urb ); break;
 	case PIPE_INTERRUPT: ret = interrupt_pipe_request( env, fd, linuxPipeRequest, urb ); break;
 	case PIPE_ISOCHRONOUS: ret = isochronous_pipe_request( env, fd, linuxPipeRequest, urb ); break;
-	default: dbg(MSG_ERROR, "pipe_request : Unknown pipe type %d\n", type ); ret = -EINVAL; break;
+	default: log( LOG_XFER_ERROR, "Unknown pipe type %d", type ); ret = -EINVAL; break;
 	}
 
 	if (ret) {
-		dbg( MSG_ERROR, "pipe_request : Could not submit URB (errno %d)\n", ret );
+		log( LOG_XFER_ERROR, "Could not submit URB (errno %d)", ret );
 	} else {
-		dbg( MSG_DEBUG2, "pipe_request : Submitted URB\n" );
-		(*env)->CallVoidMethod( env, linuxPipeRequest, setUrbAddress, urb );
+		log( LOG_XFER_REQUEST, "Submitted URB" );
+		CheckedCallVoidMethod( env, linuxPipeRequest, setUrbAddress, urb );
 	}
 
 end:
 	if (ret) {
-			if (linuxPipeRequest) (*env)->DeleteGlobalRef( env, linuxPipeRequest );
+			if (linuxPipeRequest) CheckedDeleteGlobalRef( env, linuxPipeRequest );
 			if (urb) free(urb);
 	}
 
@@ -99,31 +99,31 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 	jclass LinuxPipeRequest;
 	jmethodID getPipeType, getUrbAddress;
 
-	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	getPipeType = (*env)->GetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
-	getUrbAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
-	type = (*env)->CallIntMethod( env, linuxPipeRequest, getPipeType );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	getPipeType = CheckedGetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
+	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
+	type = CheckedCallIntMethod( env, linuxPipeRequest, getPipeType );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
-	if (!(urb = (struct usbdevfs_urb*)(*env)->CallIntMethod( env, linuxPipeRequest, getUrbAddress ))) {
-		dbg( MSG_ERROR, "complete_pipe_request : No URB to complete\n" );
+	if (!(urb = (struct usbdevfs_urb*)CheckedCallIntMethod( env, linuxPipeRequest, getUrbAddress ))) {
+		log( LOG_XFER_ERROR, "No URB to complete." );
 		return -EINVAL;
 	}
 
-	dbg( MSG_DEBUG2, "complete_pipe_request : Completing URB\n" );
-	debug_urb( "complete_pipe_request", urb );
+	log( LOG_XFER_REQUEST, "Completing URB." );
+	debug_urb( env, "complete_pipe_request", urb );
 
 	switch (type) {
 	case PIPE_CONTROL: ret = complete_control_pipe_request( env, linuxPipeRequest, urb ); break;
 	case PIPE_BULK: ret = complete_bulk_pipe_request( env, linuxPipeRequest, urb ); break;
 	case PIPE_INTERRUPT: ret = complete_interrupt_pipe_request( env, linuxPipeRequest, urb ); break;
 	case PIPE_ISOCHRONOUS: ret = complete_isochronous_pipe_request( env, linuxPipeRequest, urb ); break;
-	default: dbg(MSG_ERROR, "complete_pipe_request : Unknown pipe type %d\n", type); ret = -EINVAL; break;
+	default: log( LOG_XFER_ERROR, "Unknown pipe type %d", type); ret = -EINVAL; break;
 	}
 
 	free(urb);
 
-	dbg( MSG_DEBUG2, "complete_pipe_request : Completed URB\n" );
+	log( LOG_XFER_REQUEST, "Completed URB." );
 
 	return ret;
 }
@@ -141,20 +141,20 @@ void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest )
 	jclass LinuxPipeRequest;
 	jmethodID getUrbAddress;
 
-	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	getUrbAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
-	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+	LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
+	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
+	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
-	dbg( MSG_DEBUG2, "cancel_pipe_request : Canceling URB\n" );
+	log( LOG_XFER_REQUEST, "Canceling URB." );
 
-	urb = (struct usbdevfs_urb *)(*env)->CallIntMethod( env, linuxPipeRequest, getUrbAddress );
+	urb = (struct usbdevfs_urb *)CheckedCallIntMethod( env, linuxPipeRequest, getUrbAddress );
 
 	if (!urb) {
-		dbg( MSG_INFO, "cancel_pipe_request : No URB to cancel\n" );
+		log( LOG_XFER_ERROR, "No URB to cancel." );
 		return;
 	}
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_DISCARDURB, urb ))
-		dbg( MSG_DEBUG2, "cancel_pipe_request : Could not unlink urb %#x (error %d)\n", (unsigned int)urb, -errno );
+		log( LOG_XFER_ERROR, "Could not unlink urb %#x (error %d)", (unsigned int)urb, -errno );
 }

@@ -27,6 +27,21 @@ class JavaxUsb
 	//*************************************************************************
 	// Public methods
 
+	/**
+	 * Log.
+	 * @param logname The logger name.
+	 * @param level The log level.
+	 * @param file The filename.
+	 * @param func The function.
+	 * @param line The line number.
+	 * @param msg The log message.
+	 */
+	public static void log(String logname, int level, String file, String func, int line, String msg)
+	{
+//FIXME - implement
+//System.err.println("LOG:["+logname+"]("+level+") "+file+"."+func+"["+line+"] "+msg);
+	}
+
 	/** Load native library */
 	public static void loadLibrary() throws UsbException
 	{
@@ -34,30 +49,6 @@ class JavaxUsb
 		try { System.loadLibrary( LIBRARY_NAME ); }
 		catch ( Exception e ) { throw new UsbException( EXCEPTION_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
 		catch ( Error e ) { throw new UsbException( ERROR_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
-
-//FIXME - change to real tracing
-		msgLevelTable.put( MSG_CRITICAL, new Integer(0) );
-		msgLevelTable.put( MSG_ERROR, new Integer(1) );
-		msgLevelTable.put( MSG_WARNING, new Integer(2) );
-		msgLevelTable.put( MSG_NOTICE, new Integer(3) );
-		msgLevelTable.put( MSG_INFO, new Integer(4) );
-		msgLevelTable.put( MSG_DEBUG1, new Integer(5) );
-		msgLevelTable.put( MSG_DEBUG2, new Integer(6) );
-		msgLevelTable.put( MSG_DEBUG3, new Integer(7) );
-
-		if ( null != System.getProperties().getProperty( MSG_ENV_NAME ) )
-			setMsgLevel( System.getProperties().getProperty( MSG_ENV_NAME ) );
-	}
-
-	/**
-	 * @param level the message level to use
-	 */
-	public static void setMsgLevel( String level ) throws UsbException
-	{
-		if ( null != level && null != msgLevelTable.get( level ) )
-			nativeSetMsgLevel( ((Integer)msgLevelTable.get( level )).intValue() );
-		else
-			throw new UsbException( INVALID_MSG_LEVEL + " : " + level );
 	}
 
 	/**
@@ -86,11 +77,6 @@ class JavaxUsb
 
 	//*************************************************************************
 	// Native methods
-
-	/**
-	 * @param level the new msg level to use
-	 */
-	private static native void nativeSetMsgLevel( int level );
 
 		//*********************************
 		// JavaxUsbTopologyUpdater methods
@@ -328,19 +314,6 @@ class JavaxUsb
 
     public static final String ERROR_WHILE_LOADING_SHARED_LIBRARY = "Error while loading shared library";
     public static final String EXCEPTION_WHILE_LOADING_SHARED_LIBRARY = "Exception while loading shared library";
-
-	static final String MSG_ENV_NAME = "JAVAX_USB_MSG_LEVEL";
-
-	static final String MSG_CRITICAL = "CRITICAL";
-	static final String MSG_ERROR = "ERROR";
-	static final String MSG_WARNING = "WARNING";
-	static final String MSG_NOTICE = "NOTICE";
-	static final String MSG_INFO = "INFO";
-	static final String MSG_DEBUG1 = "DEBUG1";
-	static final String MSG_DEBUG2 = "DEBUG2";
-	static final String MSG_DEBUG3 = "DEBUG3";
-
-	private static final String INVALID_MSG_LEVEL = "Invalid message level";
 
 	private static final int SPEED_UNKNOWN = 0;
 	private static final int SPEED_LOW = 1;
