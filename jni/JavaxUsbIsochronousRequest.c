@@ -48,6 +48,8 @@ int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, str
 	urb->number_of_packets = 1;
 	urb->iso_frame_desc[0].length = urb->buffer_length;
 
+	debug_urb( "isochronous_pipe_request", urb );
+
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
 		ret = -errno;

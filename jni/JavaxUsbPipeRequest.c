@@ -60,7 +60,6 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 		urb->flags |= NO_ACCEPT_SHORT_PACKET;
 
 	dbg( MSG_DEBUG2, "pipe_request : Submitting URB\n" );
-	debug_urb( "pipe_request", urb );
 
 	switch (type) {
 	case PIPE_CONTROL: ret = control_pipe_request( env, fd, linuxPipeRequest, urb ); break;
@@ -102,7 +101,6 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 	jbyteArray data;
 
 	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
 	getPipeType = (*env)->GetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
 	getUrbAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
 	type = (*env)->CallIntMethod( env, linuxPipeRequest, getPipeType );
@@ -123,10 +121,6 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 	case PIPE_ISOCHRONOUS: ret = complete_isochronous_pipe_request( env, linuxPipeRequest, urb ); break;
 	default: dbg(MSG_ERROR, "complete_pipe_request : Unknown pipe type %d\n", type); ret = -EINVAL; break;
 	}
-
-	data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
-	(*env)->ReleaseByteArrayElements( env, data, urb->buffer, 0 );
-	(*env)->DeleteLocalRef( env, data );
 
 	free(urb);
 

@@ -46,6 +46,8 @@ int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usb
 	urb->flags |= QUEUE_BULK;
 #endif
 
+	debug_urb( "bulk_pipe_request", urb );
+
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
 		ret = -errno;

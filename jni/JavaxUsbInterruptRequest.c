@@ -50,6 +50,8 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 	urb->type = USBDEVFS_URB_TYPE_INTERRUPT;
 #endif
 
+	debug_urb( "interrupt_pipe_request", urb );
+
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
 		ret = -errno;

@@ -44,7 +44,12 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	(*env)->GetByteArrayRegion( env, setupPacket, 0, 8, urb->buffer );
 	(*env)->GetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer + 8 );
 
+	/* Add 8 for the setup packet */
+	urb->buffer_length += 8;
+
 	urb->type = USBDEVFS_URB_TYPE_CONTROL;
+
+	debug_urb( "control_pipe_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
