@@ -28,7 +28,7 @@ import com.ibm.jusb.os.*;
  * </ul>
  * @author Dan Streetman
  */
-class LinuxDeviceOsImp implements UsbDeviceOsImp
+class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 {
 	/** Constructor */
 	public LinuxDeviceOsImp( UsbDeviceImp device, LinuxDeviceProxy proxy )
@@ -62,29 +62,26 @@ class LinuxDeviceOsImp implements UsbDeviceOsImp
 	/** @param proxy The LinuxDeviceProxy */
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
 
-	/** SyncSubmit a RequestImp */
-	public void syncSubmit( RequestImp request ) throws UsbException
-	{
-//FIXME - STUB
-throw new UsbException("STUB");
-	}
-
-	/** SyncSubmit a List */
-	public void syncSubmit( List list ) throws UsbException
-	{
-//FIXME - STUB
-throw new UsbException("STUB");
-	}
-
 	/** AsyncSubmit a RquestImp */
 	public void asyncSubmit( RequestImp request ) throws UsbException
 	{
-//FIXME - STUB
-throw new UsbException("STUB");
+		LinuxDcpRequest dcpRequest = requestImpToLinuxDcpRequest(request);
+
+		submit(dcpRequest);
 	}
 
 	//**************************************************************************
 	// Package methods
+
+	/** Convert a RequestImp to a LinuxDcpRequest */
+	LinuxDcpRequest requestImpToLinuxDcpRequest(RequestImp request)
+	{
+		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
+		dcpRequest.setData(request.toBytes());
+		dcpRequest.setRequestImp(request);
+
+		return dcpRequest;
+	}
 
 	/** Submit a Request. */
 	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceProxy().submit(request); }

@@ -122,34 +122,44 @@ static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest )
 
 	type = (*env)->CallIntMethod( env, linuxRequest, getType );
 
+	dbg(MSG_DEBUG1, "submitRequest : Submitting Request.\n");
+
 	switch (type) {
 	case LINUX_PIPE_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting Pipe Request.\n");
 		err = pipe_request( env, fd, linuxRequest );
 		break;
 	case LINUX_DCP_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting Dcp Request.\n");
 		err = dcp_request( env, fd, linuxRequest );
 		break;
 	case LINUX_SET_INTERFACE_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting SetInterface Request.\n");
 		err = set_interface( env, fd, linuxRequest );
 		sync = 1;
 		break;
 	case LINUX_SET_CONFIGURATION_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting SetConfiguration Request.\n");
 		err = set_configuration( env, fd, linuxRequest );
 		sync = 1;
 		break;
 	case LINUX_CLAIM_INTERFACE_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting ClaimInterface Request.\n");
 		err = claim_interface( env, fd, 1, linuxRequest );
 		sync = 1;
 		break;
 	case LINUX_RELEASE_INTERFACE_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting ReleaseInterface Request.\n");
 		err = claim_interface( env, fd, 0, linuxRequest );
 		sync = 1;
 		break;
 	case LINUX_IS_CLAIMED_INTERFACE_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting IsClaimed Request.\n");
 		err = is_claimed( env, fd, linuxRequest );
 		sync = 1;
 		break;
 	case LINUX_ISOCHRONOUS_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting Isochronous Request.\n");
 		err = isochronous_request( env, fd, linuxRequest );
 		break;
 	default: /* ? */

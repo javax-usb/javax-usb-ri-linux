@@ -38,6 +38,12 @@ class LinuxDcpRequest extends LinuxRequest
 	/** @param data the data buffer to use */
 	public void setData( byte[] data ) { dataBuffer = data; }
 
+	/** @return this request's data buffer valid length */
+	public int getDataLength() { return getRequestImp().getDataLength(); }
+
+	/** @param len the data buffer valid length */
+	public void setDataLength( int len ) { getRequestImp().setDataLength(len); }
+
 	/** @return The RequestImp */
 	public RequestImp getRequestImp() { return requestImp; }
 
@@ -49,6 +55,17 @@ class LinuxDcpRequest extends LinuxRequest
 
 	/** @param address the address of the assocaited URB */
 	public void setUrbAddress( int address ) { urbAddress = address; }
+
+	/** @param c If this is completed. */
+	public void setCompleted(boolean c)
+	{
+		if (c) {
+			System.arraycopy(dataBuffer, 7, getData(), 0, getDataLength());
+			getRequestImp().complete();
+		}
+
+		super.setCompleted(c);
+	}		
 
 	//*************************************************************************
 	// Instance variables

@@ -130,6 +130,7 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp)
 	{
 		LinuxPipeRequest request = new LinuxPipeRequest();
+		request.setLinuxPipeOsImp(this);
 		request.setUsbIrpImp(usbIrpImp);
 		return request;
 	}

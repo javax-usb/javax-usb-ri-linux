@@ -54,13 +54,21 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @param pipe the assocaited LinuxPipeOsImp */
 	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
 
+	/** @return the address of the assocaited URB */
+	public int getUrbAddress() { return urbAddress; }
+
+	/** @param address the address of the assocaited URB */
+	public void setUrbAddress( int address ) { urbAddress = address; }
+
 	/** @param c If this is completed or not */
 	public void setCompleted(boolean c)
 	{
-		super.setCompleted(c);
-
-		if (c)
+		if (c) {
 			getLinuxPipeOsImp().linuxPipeRequestCompleted(this);
+			getUsbIrpImp().complete();
+		}
+
+		super.setCompleted(c);
 	}
 
 	//****************************************************************************
