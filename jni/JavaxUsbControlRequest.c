@@ -23,13 +23,17 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	int offset = 0;
 	int ret = 0;
 
-	jclass LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
-	jmethodID getSetupPacket = (*env)->GetMethodID( env, LinuxControlRequest, "getSetupPacket", "()[B" );
-	jmethodID getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
-	jmethodID getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
-	jmethodID getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
-	jbyteArray setupPacket = (*env)->CallObjectMethod( env, linuxControlRequest, getSetupPacket );
-	jbyteArray data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
+	jclass LinuxControlRequest = NULL;
+	jmethodID getSetupPacket, getData, getOffset, getLength;
+	jbyteArray setupPacket = NULL, data = NULL;
+
+	LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
+	getSetupPacket = (*env)->GetMethodID( env, LinuxControlRequest, "getSetupPacket", "()[B" );
+	getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
+	getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
+	getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
+	setupPacket = (*env)->CallObjectMethod( env, linuxControlRequest, getSetupPacket );
+	data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
 	(*env)->DeleteLocalRef( env, LinuxControlRequest );
 
 	offset = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getOffset );
