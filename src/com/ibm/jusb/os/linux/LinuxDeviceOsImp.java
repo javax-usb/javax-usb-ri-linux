@@ -65,23 +65,16 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	/** AsyncSubmit a RquestImp */
 	public void asyncSubmit( RequestImp request ) throws UsbException
 	{
-		LinuxDcpRequest dcpRequest = requestImpToLinuxDcpRequest(request);
-
-		submit(dcpRequest);
+		if (request.isSetConfigurationRequest())
+			submit(requestImpToLinuxSetConfigurationRequest(request));
+		else if (request.isSetInterfaceRequest())
+			submit(requestImpToLinuxSetInterfaceRequest(request));
+		else
+			submit(requestImpToLinuxDcpRequest(request));
 	}
 
 	//**************************************************************************
 	// Package methods
-
-	/** Convert a RequestImp to a LinuxDcpRequest */
-	LinuxDcpRequest requestImpToLinuxDcpRequest(RequestImp request)
-	{
-		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
-		dcpRequest.setData(request.toBytes());
-		dcpRequest.setRequestImp(request);
-
-		return dcpRequest;
-	}
 
 	/** Submit a Request. */
 	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceProxy().submit(request); }
@@ -92,6 +85,35 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 		/* Ignore proxy-starting exception, it should already be started */
 		try { getLinuxDeviceProxy().cancel(request); }
 		catch ( UsbException uE ) { }
+	}
+
+	//**************************************************************************
+	// Protected methods
+
+	/** Convert a RequestImp to a LinuxSetConfigurationRequest */
+	protected LinuxSetConfigurationRequest requestImpToLinuxSetConfigurationRequest(RequestImp request)
+	{
+		LinuxSetConfigurationRequest configRequest = new LinuxSetConfigurationRequest();
+		configRequest.setConfiguration((byte)request.getValue());
+		return configRequest;
+	}
+
+	/** Convert a RequestImp to a LinuxSetInterfaceRequest */
+	protected LinuxSetInterfaceRequest requestImpToLinuxSetInterfaceRequest(RequestImp request)
+	{
+		LinuxSetInterfaceRequest interfaceRequest = new LinuxSetInterfaceRequest();
+		interfaceRequest.setInterface((byte)request.getIndex());
+		interfaceRequest.setSetting((byte)request.getValue());
+		return interfaceRequest;
+	}
+
+	/** Convert a RequestImp to a LinuxDcpRequest */
+	protected LinuxDcpRequest requestImpToLinuxDcpRequest(RequestImp request)
+	{
+		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
+		dcpRequest.setData(request.toBytes());
+		dcpRequest.setRequestImp(request);
+		return dcpRequest;
 	}
 
 	//**************************************************************************
