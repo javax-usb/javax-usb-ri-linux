@@ -268,21 +268,18 @@ static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousReques
 	getLength = CheckedGetMethodID( env, LinuxIsochronousRequest, "getLength", "(I)I" );
 	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
-	/* Copy buffer out ONLY if direction is host->device */
-	if (USB_DIR_OUT == (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getDirection )) {
-		for (i=0; i<urb->number_of_packets; i++) {
-			if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
-				log( LOG_XFER_ERROR, "Could not access data at index %d", i );
-				return -EINVAL;
-			}
+	for (i=0; i<urb->number_of_packets; i++) {
+	  if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+		log( LOG_XFER_ERROR, "Could not access data at index %d", i );
+		return -EINVAL;
+	  }
 
-			offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
-			urb->iso_frame_desc[i].length = CheckedCallIntMethod( env, linuxIsochronousRequest, getLength, i );
-			CheckedGetByteArrayRegion( env, jbuf, offset, urb->iso_frame_desc[i].length, urb->buffer + buffer_offset );
-			buffer_offset += urb->iso_frame_desc[i].length;
+	  offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
+	  urb->iso_frame_desc[i].length = CheckedCallIntMethod( env, linuxIsochronousRequest, getLength, i );
+	  CheckedGetByteArrayRegion( env, jbuf, offset, urb->iso_frame_desc[i].length, urb->buffer + buffer_offset );
+	  buffer_offset += urb->iso_frame_desc[i].length;
 
-			CheckedDeleteLocalRef( env, jbuf );
-		}
+	  CheckedDeleteLocalRef( env, jbuf );
 	}
 
 	return 0;
@@ -307,28 +304,25 @@ static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousReque
 	setError = CheckedGetMethodID( env, LinuxIsochronousRequest, "setError", "(II)V" );
 	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
-	/* Copy buffer in ONLY if direction is device->host */
-	if (USB_DIR_IN == (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getDirection )) {
-		for (i=0; i<urb->number_of_packets; i++) {
-			if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
-				log( LOG_XFER_ERROR, "Could not access data buffer at index %d", i );
-				return -EINVAL;
-			}
+	for (i=0; i<urb->number_of_packets; i++) {
+	  if (!(jbuf = CheckedCallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+		log( LOG_XFER_ERROR, "Could not access data buffer at index %d", i );
+		return -EINVAL;
+	  }
 
-			offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
-			actual_length = urb->iso_frame_desc[i].actual_length;
-			if ((offset + actual_length) > CheckedGetArrayLength( env, jbuf )) {
-				log( LOG_XFER_ERROR, "Data buffer %d too small, data truncated!", i );
-				actual_length = CheckedGetArrayLength( env, jbuf ) - offset;
-			}
-			CheckedSetByteArrayRegion( env, jbuf, offset, actual_length, urb->buffer + buffer_offset );
-			CheckedCallVoidMethod( env, linuxIsochronousRequest, setActualLength, i, actual_length );
-			if (0 > urb->iso_frame_desc[i].status)
-				CheckedCallVoidMethod( env, linuxIsochronousRequest, setError, i, urb->iso_frame_desc[i].status );
-			buffer_offset += urb->iso_frame_desc[i].length;
+	  offset = CheckedCallIntMethod( env, linuxIsochronousRequest, getOffset, i );
+	  actual_length = urb->iso_frame_desc[i].actual_length;
+	  if ((offset + actual_length) > CheckedGetArrayLength( env, jbuf )) {
+		log( LOG_XFER_ERROR, "Data buffer %d too small, data truncated!", i );
+		actual_length = CheckedGetArrayLength( env, jbuf ) - offset;
+	  }
+	  CheckedSetByteArrayRegion( env, jbuf, offset, actual_length, urb->buffer + buffer_offset );
+	  CheckedCallVoidMethod( env, linuxIsochronousRequest, setActualLength, i, actual_length );
+	  if (0 > urb->iso_frame_desc[i].status)
+		CheckedCallVoidMethod( env, linuxIsochronousRequest, setError, i, urb->iso_frame_desc[i].status );
+	  buffer_offset += urb->iso_frame_desc[i].length;
 
-			CheckedDeleteLocalRef( env, jbuf );
-		}
+	  CheckedDeleteLocalRef( env, jbuf );
 	}
 			
 //FIXME - what should we return here, this or something based on each packet's status?
