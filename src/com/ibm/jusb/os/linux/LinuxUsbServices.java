@@ -49,8 +49,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	{
 		JavaxUsb.loadLibrary(); 
 
-		if (!isListening()) {
-			synchronized (topologyLock) {
+		synchronized (topologyLock) {
+			if (!isListening()) {
 				startTopologyListener();
 
 				try {
