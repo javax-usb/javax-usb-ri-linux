@@ -271,15 +271,15 @@ static inline int select_dirent_reg( const struct dirent *reg ) { return select_
  */
 static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs_urb *urb )
 {
+	if (!trace_data)
+		return;
+
 //FIXME - add device number and/or other dev info
 	trace_urb_data( "%s : URB endpoint = %x\n", calling_method, urb->endpoint );
 	trace_urb_data( "%s : URB status = %d\n", calling_method, urb->status );
 	trace_urb_data( "%s : URB signal = %d\n", calling_method, urb->signr );
 	trace_urb_data( "%s : URB buffer length = %d\n", calling_method, urb->buffer_length );
 	trace_urb_data( "%s : URB actual length = %d\n", calling_method, urb->actual_length );
-
-	if (!trace_data)
-		return;
 
 	if (urb->buffer && (0 < urb->buffer_length)) {
 		static const char hex[] = "0123456789abcdef";
