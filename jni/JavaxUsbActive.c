@@ -270,8 +270,8 @@ jboolean isConfigActive( JNIEnv *env, int fd, unsigned char bus, unsigned char d
 #endif
 #ifdef CONFIG_SETTING_1_ALWAYS_ACTIVE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "All configs set to active; no checking." );
-		ret = 0;
+		log( LOG_HOTPLUG_OTHER, "Config %d%s set to active; no checking.", config, 1 == config ? "" : " NOT" );
+		ret = ( 1 == config ? 0 : -1 );
 	}
 #endif
 

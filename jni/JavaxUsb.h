@@ -174,7 +174,7 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
  * the last attempted and will do the right thing in many more cases than leaving the
  * device to appear as Not Configured.
  */
-#undef CONFIG_SETTING_ASK_DEVICE
+#define CONFIG_SETTING_ASK_DEVICE
 #undef CONFIG_SETTING_USE_DEVICES_FILE
 #define CONFIG_SETTING_1_ALWAYS_ACTIVE
 
