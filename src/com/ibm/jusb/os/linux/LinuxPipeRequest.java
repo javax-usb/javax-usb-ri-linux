@@ -30,6 +30,9 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_PIPE_REQUEST; }
 
+	/** @return The direction of this request */
+	public byte getDirection() { return (byte)(UsbConst.ENDPOINT_DIRECTION_MASK & getEndpointAddress()); }
+
 	/** @return this request's data buffer */
 	public byte[] getData() { return data; }
 

@@ -44,35 +44,13 @@ public class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp
 	public UsbPipeImp getUsbPipeImp() { return usbPipeImp; }
 
 	/** @param usbPipeImp The UsbPipeImp for this */
-	public void setUsbPipeImp( UsbPipeImp pipe )
-	{
-		usbPipeImp = pipe;
-
-		try {
-			pipeType = pipe.getUsbEndpointImp().getType();
-			endpointAddress = pipe.getUsbEndpointImp().getEndpointDescriptor().bEndpointAddress();
-		} catch ( NullPointerException npE ) {
-			/* wait 'til the UsbPipeImp is non-null */
-		}
-	}
+	public void setUsbPipeImp( UsbPipeImp pipe ) { usbPipeImp = pipe; }
 
 	/** @return The LinuxInterfaceOsImp */
 	public LinuxInterfaceOsImp getLinuxInterfaceOsImp() { return linuxInterfaceOsImp; }
 
 	/** @param iface The LinuxInterfaceOsImp */
 	public void setLinuxInterfaceOsImp(LinuxInterfaceOsImp iface) { linuxInterfaceOsImp = iface; }
-
-	/**
-	 * Open this pipe
-	 * @exception javax.usb.UsbException if the pipe could not be opened
-	 */
-	public void open() throws UsbException
-	{
-		if (!getLinuxInterfaceOsImp().isClaimed())
-			throw new UsbException("Interface must be claimed before opening pipe");
-
-//FIXME - use open/closed states?
-	}
 
 	/**
 	 * Asynchronous submission using a UsbIrpImp.
@@ -124,17 +102,35 @@ public class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp
 	 */
 	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp)
 	{
-		LinuxPipeRequest request = new LinuxPipeRequest(pipeType,endpointAddress);
+		LinuxPipeRequest request = new LinuxPipeRequest(getPipeType(),getEndpointAddress());
 		request.setUsbIrpImp(usbIrpImp);
 		request.setCompletion(this);
 		return request;
 	}
 
+	/** @return The endpoint address */
+	protected byte getEndpointAddress()
+	{
+		if (0 == endpointAddress)
+			endpointAddress = usbPipeImp.getUsbEndpointImp().getEndpointDescriptor().bEndpointAddress();
+
+		return endpointAddress;
+	}
+
+	/** @return The pipe type */
+	protected byte getPipeType()
+	{
+		if (0 == pipeType)
+			pipeType = usbPipeImp.getUsbEndpointImp().getType();
+
+		return pipeType;
+	}
+
 	private UsbPipeImp usbPipeImp = null;
 	private LinuxInterfaceOsImp linuxInterfaceOsImp = null;
 
-	private byte pipeType = 0;
-	private byte endpointAddress = 0;
+	protected byte pipeType = 0;
+	protected byte endpointAddress = 0;
 
-	private List inProgressList = new LinkedList();
+	protected List inProgressList = new LinkedList();
 }

@@ -9,7 +9,9 @@ package com.ibm.jusb.os.linux;
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
-import javax.usb.UsbException;
+import java.util.*;
+
+import javax.usb.*;
 import javax.usb.util.*;
 
 import com.ibm.jusb.*;
@@ -26,9 +28,34 @@ class LinuxIsochronousPipeImp extends LinuxPipeOsImp
 	/** Constructor */
     public LinuxIsochronousPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
-	//*************************************************************************
-	// Public methods
+	/**
+	 * Asynchronously submit a List of UsbIrpImps.
+	 * @param list The List of UsbIrpImps.
+	 * @exception UsbException If one of the UsbIrpImps is invalid.
+	 */
+	public void asyncSubmit(List list) throws UsbException
+	{
+		LinuxIsochronousRequest request = listToLinuxIsochronousRequest(list);
 
-//FIXME - implement async/syncSubmit(List)
+		getLinuxInterfaceOsImp().submit(request);
+
+		synchronized (inProgressList) {
+			inProgressList.add(request);
+		}
+	}
+
+	/**
+	 * Convert a List of UsbIrpImps to a LinuxIsochronousRequest.
+	 * @param list The List.
+	 * @return A LinuxIsochronousRequest.
+	 */
+	protected LinuxIsochronousRequest listToLinuxIsochronousRequest(List list)
+	{
+		LinuxIsochronousRequest request = new LinuxIsochronousRequest(getEndpointAddress());
+		request.setUsbIrpImps(list);
+		request.setCompletion(this);
+		return request;
+	}
+
 }
 

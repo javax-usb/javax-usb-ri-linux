@@ -23,61 +23,77 @@ import com.ibm.jusb.util.*;
 class LinuxIsochronousRequest extends LinuxPipeRequest
 {
 	/** Constructor */
-	public LinuxIsochronousRequest(byte type, byte addr) { super(type,addr); }
+	public LinuxIsochronousRequest(byte addr) { super(UsbConst.ENDPOINT_TYPE_ISOCHRONOUS,addr); }
 
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_ISOCHRONOUS_REQUEST; }
 
-	/** @param The error */
-	public void setError(int error)
+	/**
+	 * Get the data from the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @return The data from the specified UsbIrpImp.
+	 */
+	public byte[] getData( int index ) { return getUsbIrpImp(index).getData(); }
+
+	/**
+	 * Get the offset from the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @return The offset from the specified UsbIrpImp.
+	 */
+	public int getOffset( int index ) { return getUsbIrpImp(index).getOffset(); }
+
+	/**
+	 * Get the length from the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @return The length from the specified UsbIrpImp.
+	 */
+	public int getLength( int index ) { return getUsbIrpImp(index).getLength(); }
+
+	/**
+	 * Set the actual length of the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @param length The actual length of the specified UsbIrpImp.
+	 */
+	public void setActualLength( int index, int length ) { getUsbIrpImp(index).setActualLength(length); }
+
+	/**
+	 * Set the error of the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @param error The error of the specified UsbIrpImp.
+	 */
+	public void setError( int index, int error ) { getUsbIrpImp(index).setUsbException(JavaxUsb.errorToUsbException(error)); }
+
+	/**
+	 * Get the number of UsbIrpImps.
+	 * @return The number of UsbIrpImps.
+	 */
+	public int size() { return usbIrpImps.size(); }
+
+	/**
+	 * Get the aggregated length of all UsbIrpImps.
+	 * @return The length of all UsbIrpImps.
+	 */
+	public int getTotalLength()
 	{
-		for (int i=0; i<getNumberOfPackets(); i++)
-			setError( i, error );
+		int totalLength = 0;
+
+		for (int i=0; i<size(); i++)
+			totalLength += getUsbIrpImp(i).getLength();
+
+		return totalLength;
 	}
 
 	/**
-	 * Get the data buffer at the specified index.
-	 * @return The data buffer for the specified index.
+	 * Get the specified UsbIrpImp.
+	 * @param index The index of the UsbIrpImp.
+	 * @return The specified UsbIrpImp.
 	 */
-	public byte[] getData( int index ) { return getUsbIrpImp(index).getData(); }   
-
-	/**
-	 * Get the total size of all buffers in the List.
-	 * @return The total size of all buffers in the List.
-	 */
-	public int getBufferSize()
-	{
-		int totalSize = 0;
-		for (int i=0; i<getNumberOfPackets(); i++)
-			totalSize += getData(i).length;
-		return totalSize;
-	}
-
-	/**
-	 * Set the data length of the data at the specified index.
-	 * @param index The index of the data.
-	 * @param len The data length of the specified indexed data.
-	 */
-	public void setStatus( int index, int len ) { getUsbIrpImp(index).setActualLength(len); }
-
-	/**
-	 * Set the error of the data at the specified index.
-	 * @param index The index of the data.
-	 * @param err The number of the error that occurred.
-	 */
-	public void setError( int index, int error )
-	{
-//FIXME - improve message and/or set correct error number?
-		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMessage(error)));
-	}
-
-	/** @return The number of 'packets' */
-	public int getNumberOfPackets() { return usbIrpImps.size(); }
-
-	/** @return The UsbIrpImp of */
 	public UsbIrpImp getUsbIrpImp( int index ) { return (UsbIrpImp)usbIrpImps.get(index); }
 
-	/** @param list The List of UsbIrpImps */
+	/**
+	 * Set the List of UsbIrpImps.
+	 * @param list The List of UsbIrpImps.
+	 */
 	public void setUsbIrpImps( List list ) { usbIrpImps = list; }
 
 	private List usbIrpImps = null;
