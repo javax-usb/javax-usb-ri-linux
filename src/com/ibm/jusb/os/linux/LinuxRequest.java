@@ -36,18 +36,16 @@ abstract class LinuxRequest
 		long start = System.currentTimeMillis();
 		boolean use_timeout = 0 < timeout;
 
-		if (!isCompleted()) {
-			synchronized ( waitLock ) {
-				waitCount++;
-				while (!isCompleted()) {
-					long elapsed = System.currentTimeMillis() - start;
-					if (use_timeout && (elapsed > timeout))
-						break;
-					try { waitLock.wait(1000); }
-					catch ( InterruptedException iE ) { }
-				}
-				waitCount--;
+		synchronized ( waitLock ) {
+			waitCount++;
+			while (!isCompleted()) {
+				long elapsed = System.currentTimeMillis() - start;
+				if (use_timeout && (elapsed > timeout))
+					break;
+				try { waitLock.wait(1000); }
+				catch ( InterruptedException iE ) { }
 			}
+			waitCount--;
 		}
 	}
 
@@ -71,8 +69,8 @@ abstract class LinuxRequest
 	/** Notify waiteers of completion. */
 	public void notifyCompleted()
 	{
-		if (0 < waitCount) {
-			synchronized ( waitLock ) {
+		synchronized ( waitLock ) {
+			if (0 < waitCount) {
 				waitLock.notifyAll();
 			}
 		}		
