@@ -33,6 +33,8 @@
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_HEADER" value="JSR80 Linux Implementation v${Jsr80Env.JSR80_LINUX_VERSION}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_FOOTER" value=""/>
 
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_PATH" value=""/>
+
 	<!-- Variables -->
 	<property name="jsr80.linux.version" value="${Jsr80Env.JSR80_LINUX_VERSION}"/>
 	
@@ -71,6 +73,8 @@
 	<property name="jsr80.linux.jdoc.protected" value="yes"/>
 	<property name="jsr80.linux.jdoc.package" value="yes"/>
 	<property name="jsr80.linux.jdoc.private" value="no"/>
+
+	<property name="jsr80.linux.jdoc.path" value="${Jsr80Env.JSR80_JDOC_PATH"/>
 
 	<!-- Show help -->
 	<target name="help">
