@@ -30,13 +30,22 @@ abstract class LinuxInterfaceRequest extends LinuxRequest
 	/** @param c If the interface is claimed */
 	public void setClaimed(boolean c) { claimed = c; }
 
+	/** @return If claiming an interface, if the claim should be forced. */
+	public boolean getForceClaim() { return forceClaim; }
+
 	private int interfaceNumber = 0;
 
 	private boolean claimed = false;
+	protected boolean forceClaim = false;
 
 	public static class LinuxClaimInterfaceRequest extends LinuxInterfaceRequest
 	{
 		public LinuxClaimInterfaceRequest(int ifnum) { super(ifnum); }
+		public LinuxClaimInterfaceRequest(int ifnum, boolean force)
+		{
+			this(ifnum);
+			forceClaim = force;
+		}
 		public int getType() { return LinuxRequest.LINUX_CLAIM_INTERFACE_REQUEST; }
 	}
 

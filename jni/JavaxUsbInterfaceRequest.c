@@ -17,6 +17,40 @@
  *
  */
 
+#ifdef USBDEVFS_DISCONNECT
+
+/**
+ * Disconnect the driver from the specified interface.
+ * @param end The JNIEnv.
+ * @param fd The file descriptor.
+ * @param interface The interface number.
+ */
+void disconnect_interface_driver(JNIEnv *env, int fd, int interface)
+{
+	struct usbdevfs_ioctl *disc_ioctl = NULL;
+
+	if (!(disc_ioctl = malloc(sizeof(*disc_ioctl)))) {
+		log( LOG_CRITICAL, "Out of memory!" );
+		return;
+	}
+
+	disc_ioctl->ifno = interface;
+	disc_ioctl->ioctl_code = USBDEVFS_DISCONNECT;
+	disc_ioctl->data = NULL;
+
+	errno = 0;
+	if (ioctl( fd, USBDEVFS_IOCTL, disc_ioctl )) {
+		if (ENODATA == errno)
+			log( LOG_ERROR, "No driver associated with specified interface." );
+		else
+			log( LOG_ERROR, "Could not disconnect driver from interface : %s", strerror(errno) );
+	}
+
+	free(disc_ioctl);
+}
+
+#endif /* USBDEVFS_DISCONNECT */
+
 /**
  * Claim or release a specified interface.
  * @param env The JNIEnv.
@@ -28,12 +62,14 @@
 int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 {
 	int ret = 0, *interface = NULL;
+	int triedDisconnect = 0;
 
 	jclass LinuxRequest = NULL;
-	jmethodID getInterfaceNumber;
+	jmethodID getInterfaceNumber, getForceClaim;
 
 	LinuxRequest = CheckedGetObjectClass( env, linuxRequest );
 	getInterfaceNumber = CheckedGetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
+	getForceClaim = CheckedGetMethodID( env, LinuxRequest, "getForceClaim", "()Z" );
 	CheckedDeleteLocalRef( env, LinuxRequest );
 
 	if (!(interface = malloc(sizeof(*interface)))) {
@@ -43,16 +79,30 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 
 	*interface = CheckedCallIntMethod( env, linuxRequest, getInterfaceNumber );
 
-	log( LOG_FUNC, "%s interface %d", claim ? "Claiming" : "Releasing", *interface );
+	while(1) {
+		log( LOG_FUNC, "%s interface %d", claim ? "Claiming" : "Releasing", *interface );
 
-	errno = 0;
-	if (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
-		ret = -errno;
+		errno = 0;
+		if (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
+			ret = -errno;
 
-	if (ret)
-		log( LOG_ERROR, "Could not %s interface %d : errno %d", claim ? "claim" : "release", *interface, ret );
-	else
-		log( LOG_FUNC, "%s interface %d", claim ? "Claimed" : "Released", *interface );
+		if (ret)
+			log( LOG_ERROR, "Could not %s interface %d : errno %d", claim ? "claim" : "release", *interface, ret );
+		else
+			log( LOG_FUNC, "%s interface %d", claim ? "Claimed" : "Released", *interface );
+
+		if (ret && claim && !triedDisconnect) {
+			triedDisconnect = 1;
+#ifdef USBDEVFS_DISCONNECT
+			disconnect_interface_driver(env, fd, *interface);
+#else
+#warning This kernel has no USBDEVFS_DISCONNECT support, compiling WITHOUT disconnect ability!
+			log( LOG_ERROR, "This was compiled without driver-disconnection ability!" );
+			break;
+#endif
+		} else
+			break;
+	}
 
 	free(interface);
 
