@@ -17,7 +17,7 @@ import java.util.*;
  */
 abstract class LinuxRequestProxy
 {
-	//*************************************************************************
+	//**************************************************************************
 	// Public methods
 
 	/**
@@ -44,7 +44,7 @@ abstract class LinuxRequestProxy
 		}
 	}
 
-	//*************************************************************************
+	//**************************************************************************
 	// JNI methods
 
 	/**
@@ -65,10 +65,10 @@ abstract class LinuxRequestProxy
 		LinuxRequest request = null;
 
 		synchronized(readyList) {
-			request = (LinuxRequest)readyList.remove(0);
-			synchronized(inProgressList) {
-				inProgressList.add(request);
-			}
+			try { request = (LinuxRequest)readyList.remove(0); }
+			catch ( IndexOutOfBoundsException ioobE ) { return null; }
+	
+			inProgressList.add(request);
 		}
 
 		return request;
@@ -81,7 +81,8 @@ abstract class LinuxRequestProxy
 	private LinuxRequest getCancelRequest()
 	{
 		synchronized(cancelList) {
-			return (LinuxRequest)cancelList.remove(0);
+			try { return (LinuxRequest)cancelList.remove(0); }
+			catch ( IndexOutOfBoundsException ioobE ) { return null; }
 		}
 	}
 
@@ -91,15 +92,13 @@ abstract class LinuxRequestProxy
 	 */
 	private void completeRequest(LinuxRequest request)
 	{
-		synchronized(inProgressList) {
-			inProgressList.remove(request);
-		}
+		inProgressList.remove(request);
 	}
 
-	//*************************************************************************
+	//**************************************************************************
 	// Instance variables
 
 	private List readyList = new LinkedList();
 	private List cancelList = new LinkedList();
-	private List inProgressList = new LinkedList();
+	private List inProgressList = new LinkedList(); /* only proxy Thread touches, no sync required */
 }

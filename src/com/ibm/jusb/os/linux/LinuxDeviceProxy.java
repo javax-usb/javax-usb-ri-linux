@@ -21,7 +21,11 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 	// Public methods
 
 	/** If this is running */
-	public boolean isRunning() { return null == thread; }
+	public boolean isRunning()
+	{
+		try { return thread.isActive(); }
+		catch ( NullPointerException npE ) { return false; }
+	}
 
 	/** Start this proxy. */
 	public void start() throws UsbException

@@ -47,8 +47,8 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 	int loop_count;
 #endif /* SIGSUSPEND_WORKS */
 
-	jclass LinuxDeviceProxy, LinuxProxyThread, LinuxRequest;
-	jobject linuxProxyThread, linuxRequest, usbDevice;
+	jclass LinuxDeviceProxy, LinuxRequest;
+	jobject linuxRequest, usbDevice;
 	jstring usbDeviceKey;
 	jmethodID startupCompleted, getLinuxProxyThread, setPID, setSignal, dequeueRequestVector, dequeueCancelVector;
 	jmethodID getUsbDevice, getUsbDeviceKey, submitNative, abortNative, completeNative, setFileDescriptor;
