@@ -14,19 +14,50 @@
  * Submit a control pipe request.
  * @param env The JNIEnv.
  * @param fd The file descriptor.
- * @param linuxPipeRequest The LinuxPipeRequest.
+ * @param linuxControlRequest The LinuxControlRequest.
  * @param usb The usbdevfs_urb.
  * @return The error that occurred, or 0.
  */
-int control_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
+int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, struct usbdevfs_urb *urb )
 {
+	int offset = 0;
+	int ret = 0;
+
+	jclass LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
+	jmethodID getSetupPacket = (*env)->GetMethodID( env, LinuxControlRequest, "getSetupPacket", "()[B" );
+	jmethodID getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
+	jmethodID getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
+	jmethodID getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
+	jbyteArray setupPacket = (*env)->CallObjectMethod( env, linuxControlRequest, getSetupPacket );
+	jbyteArray data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
+	(*env)->DeleteLocalRef( env, LinuxControlRequest );
+
+	offset = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getOffset );
+	urb->buffer_length = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getLength );
+
+	if (!(urb->buffer = malloc(urb->buffer_length + 8))) {
+		dbg( MSG_CRITICAL, "control_pipe_request : Out of memory!\n" );
+		ret = -ENOMEM;
+		goto END_SUBMIT;
+	}
+
+	(*env)->GetByteArrayRegion( env, setupPacket, 0, 8, urb->buffer );
+	(*env)->GetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer + 8 );
+
 	urb->type = USBDEVFS_URB_TYPE_CONTROL;
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
-		return -errno;
-	else
-		return 0;
+		ret = -errno;
+
+END_SUBMIT:
+	if (ret)
+		if (urb->buffer) free(urb->buffer);
+
+	if (setupPacket) (*env)->DeleteLocalRef( env, setupPacket );
+	if (data) (*env)->DeleteLocalRef( env, data );
+
+	return ret;
 }
 
 /**
@@ -38,14 +69,27 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct 
  */
 int complete_control_pipe_request( JNIEnv *env, jobject linuxControlRequest, struct usbdevfs_urb *urb )
 {
-	jclass LinuxControlRequest;
-	jmethodID setActualLength;
-
-	LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
-	setActualLength = (*env)->GetMethodID( env, LinuxControlRequest, "setActualLength", "(I)V" );
+	jclass LinuxControlRequest = (*env)->GetObjectClass( env, linuxControlRequest );
+	jmethodID setActualLength = (*env)->GetMethodID( env, LinuxControlRequest, "setActualLength", "(I)V" );
+	jmethodID getData = (*env)->GetMethodID( env, LinuxControlRequest, "getData", "()[B" );
+	jmethodID getOffset = (*env)->GetMethodID( env, LinuxControlRequest, "getOffset", "()I" );
+	jmethodID getLength = (*env)->GetMethodID( env, LinuxControlRequest, "getLength", "()I" );
+	jbyteArray data = (*env)->CallObjectMethod( env, linuxControlRequest, getData );
+	unsigned int offset = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getOffset );
+	unsigned int length = (unsigned int)(*env)->CallIntMethod( env, linuxControlRequest, getLength );
 	(*env)->DeleteLocalRef( env, LinuxControlRequest );
 
-	(*env)->CallVoidMethod( env, linuxPipeRequest, setDataLength, urb->actual_length );
+	if (length < urb->actual_length) {
+		dbg( MSG_ERROR, "complete_control_pipe_request : Actual length %d greater than requested length %d\n", urb->actual_length, length );
+		urb->actual_length = length;
+	}
+
+	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer + 8 );
+
+	(*env)->CallVoidMethod( env, linuxPipeRequest, setActualLength, urb->actual_length );
+
+	if (data) (*env)->DeleteLocalRef( env, data );
+	if (urb->buffer) free(urb->buffer);
 
 	return urb->status;
 }

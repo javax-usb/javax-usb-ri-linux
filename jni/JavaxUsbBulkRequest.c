@@ -51,6 +51,9 @@ int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usb
 		ret = -errno;
 
 END_SUBMIT:
+	if (ret)
+		if (urb->buffer) free(urb->buffer);
+
 	if (data) (*env)->DeleteLocalRef( env, data );
 
 	return ret;
@@ -65,14 +68,27 @@ END_SUBMIT:
  */
 int complete_bulk_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
 {
-	jclass LinuxPipeRequest;
-	jmethodID setDataLength;
-
-	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
-	setDataLength = (*env)->GetMethodID( env, LinuxPipeRequest, "setDataLength", "(I)V" );
+	jclass LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
+	jmethodID setActualLength = (*env)->GetMethodID( env, LinuxPipeRequest, "setActualLength", "(I)V" );
+	jmethodID getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
+	jmethodID getOffset = (*env)->GetMethodID( env, LinuxPipeRequest, "getOffset", "()I" );
+	jmethodID getLength = (*env)->GetMethodID( env, LinuxPipeRequest, "getLength", "()I" );
+	jbyteArray data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
+	unsigned int offset = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getOffset );
+	unsigned int length = (unsigned int)(*env)->CallIntMethod( env, linuxPipeRequest, getLength );
 	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
 
-	(*env)->CallVoidMethod( env, linuxPipeRequest, setDataLength, urb->actual_length );
+	if (length < urb->actual_length) {
+		dbg( MSG_ERROR, "complete_bulk_pipe_request : Actual length %d greater than requested length %d\n", urb->actual_length, length );
+		urb->actual_length = length;
+	}
+
+	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer );
+
+	(*env)->CallVoidMethod( env, linuxPipeRequest, setActualLength, urb->actual_length );
+
+	if (data) (*env)->DeleteLocalRef( env, data );
+	if (urb->buffer) free(urb->buffer);
 
 	return urb->status;
 }
