@@ -41,9 +41,11 @@ void disconnect_interface_driver(JNIEnv *env, int fd, int interface)
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_IOCTL, disc_ioctl )) {
 		if (ENODATA == errno)
-			log( LOG_ERROR, "No driver associated with specified interface." );
+			log( LOG_ERROR, "No driver associated with interface %d.", interface );
 		else
-			log( LOG_ERROR, "Could not disconnect driver from interface : %s", strerror(errno) );
+			log( LOG_ERROR, "Could not disconnect driver from interface %d : %s", interface, strerror(errno) );
+	} else {
+		log( LOG_INFO, "Disconnected driver from interface %d", interface );
 	}
 
 	free(disc_ioctl);
@@ -82,6 +84,8 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 	*interface = CheckedCallIntMethod( env, linuxRequest, getInterfaceNumber );
 
 	while(1) {
+		ret = 0;
+
 		log( LOG_FUNC, "%s interface %d", claim ? "Claiming" : "Releasing", *interface );
 
 		errno = 0;
