@@ -28,10 +28,21 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	public LinuxUsbServices()
 	{
 		topologyUpdateManager.setMaxSize(Long.MAX_VALUE);
+
+		try { setTopologyUpdateDelay(); }
+		catch ( Exception e ) { /* use hardcoded default TOPOLOGY_UPDATE_DELAY */ }
 	}
 
     //*************************************************************************
     // Public methods
+
+	/** Main method to print out version information */
+	public static void main(String[] argv)
+	{
+		System.out.println("javax.usb Linux implementation version " + LINUX_IMP_VERSION);
+		System.out.println("javax.usb Required Platform-Implementation version " + LINUX_API_VERSION + " (or later)");
+		System.out.println(LINUX_IMP_DESCRIPTION);
+	}
 
     /** @return The virtual USB root hub */
     public synchronized UsbHub getRootUsbHub() throws UsbException
@@ -68,6 +79,14 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
     //*************************************************************************
     // Private methods
+
+	/** Set the topologyUpdateDelay variable from user-specified property */
+	private void setTopologyUpdateDelay() throws Exception
+	{
+		String delay = UsbHostManager.getProperties().getProperty(TOPOLOGY_UPDATE_DELAY_KEY);
+		Integer delayInt = Integer.decode(delay);
+		topologyUpdateDelay = delayInt.intValue();
+	}
 
 	/** @return If the topology listener is listening */
 	private boolean isListening()
@@ -111,7 +130,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	/** Enqueue an update topology request */
 	private void topologyChange()
 	{
-		try { Thread.sleep(TOPOLOGY_UPDATE_DELAY); } catch ( InterruptedException iE ) { }
+		try { Thread.sleep(topologyUpdateDelay); } catch ( InterruptedException iE ) { }
 
 		Runnable r = new Runnable() {
 				public void run()
@@ -245,17 +264,21 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     private int topologyListenerError = 0;
 	private int topologyUpdateResult = 0;
 
+	protected int topologyUpdateDelay = TOPOLOGY_UPDATE_DELAY;
+
 	//*************************************************************************
 	// Class constants
 
-	private static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
+	/* TOPOLOGY_UPDATE_DELAY is overridden by value of TOPOLOGY_UPDATE_DELAY_KEY property (if set) */
+	public static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
+	public static final String TOPOLOGY_UPDATE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateDelay";
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
-	public static final String LINUX_API_VERSION = com.ibm.jusb.Version.getApiVersion();
-	public static final String LINUX_IMP_VERSION = "0.10.3-CVS";
+	public static final String LINUX_API_VERSION = "0.10.1";
+	public static final String LINUX_IMP_VERSION = "0.10.3";
 	public static final String LINUX_IMP_DESCRIPTION =
-		 "\t"+"JSR80 : javax.usb"
+		 "JSR80 : javax.usb"
 		+"\n"
 		+"\n"+"Implementation for the Linux kernel (2.4.x).\n"
 		+"\n"
@@ -268,7 +291,6 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		+"\n"+"* http://oss.software.ibm.com/developerworks/opensource/license-cpl.html"
 		+"\n"
 		+"\n"+"http://javax-usb.org/"
-		+"\n"+"\n"
 		;
 
 }
