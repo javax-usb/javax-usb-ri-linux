@@ -154,6 +154,10 @@ int complete_bulk_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct us
 int complete_interrupt_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
 int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
 
+/* Config method */
+
+jboolean isConfigActive( int fd, unsigned char bus, unsigned char dev, unsigned char config );
+
 /* Utility methods */
 
 __u16 bcd( __u8 msb, __u8 lsb );

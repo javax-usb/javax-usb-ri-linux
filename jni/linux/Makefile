@@ -14,7 +14,7 @@
 # Object and header dependencies - these are removed by 'make clean'
 OBJECTS = \
 	JavaxUsbUtil.o \
-	JavaxUsbTopologyUpdater.o JavaxUsbTopologyListener.o \
+	JavaxUsbTopologyUpdater.o JavaxUsbTopologyListener.o JavaxUsbConfig.o \
 	JavaxUsbDeviceProxy.o \
 	JavaxUsbPipeRequest.o JavaxUsbInterfaceRequest.o JavaxUsbDcpRequest.o \
 	JavaxUsbControlRequest.o JavaxUsbBulkRequest.o JavaxUsbInterruptRequest.o JavaxUsbIsochronousRequest.o \

@@ -10,10 +10,10 @@
 
 #include "JavaxUsb.h"
 
-static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev,
+static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char bus, unsigned char dev,
 	jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices );
 
-static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device );
+static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device, unsigned char bus, unsigned char dev );
 
 static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc );
 
@@ -46,8 +46,9 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 			dbg( MSG_ERROR, "nativeTopologyUpdater : Could not access %s/%s\n", USBDEVFS_PATH, buslist[port]->d_name );
 		} else {
 			struct dirent **devlist = NULL;
-			int hcAddress, devs;
+			int bus, hcAddress, devs;
 
+			bus = atoi( buslist[port]->d_name );
 			devs = scandir(".", &devlist, select_dirent_reg, alphasort);
 
 			errno = 0;
@@ -58,7 +59,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 			} else {
 				/* Hopefully, the host controller has the lowest numbered address on this bus! */
 				hcAddress = atoi( devlist[0]->d_name );
-				devices += build_device( env, JavaxUsb, linuxUsbServices, hcAddress, rootHub, port, connectedDevices, disconnectedDevices );
+				devices += build_device( env, JavaxUsb, linuxUsbServices, bus, hcAddress, rootHub, port, connectedDevices, disconnectedDevices );
 			}
 
 			while (0 < devs) free(devlist[--devs]);
@@ -81,7 +82,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	return 0;
 }
 
-static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev,
+static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char bus, unsigned char dev,
 	jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices )
 {
 	int fd = 0, port, ncfg;
@@ -169,8 +170,8 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 
 	/* Build config descriptors */
 	for (ncfg=0; ncfg<dev_desc->bNumConfigurations; ncfg++) {
-		if (build_config( env, JavaxUsb, fd, device )) {
-			dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get config %d for device\n", ncfg );
+		if (build_config( env, JavaxUsb, fd, device, bus, dev )) {
+			dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get config %d for device %d\n", ncfg, dev );
 			goto BUILD_DEVICE_EXIT;
 		}
 	}
@@ -188,7 +189,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 		for (port=0; port<(portinfo->nports); port++)
 			if (portinfo->port[port]) {
 				dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device attached to port %d\n", portinfo->port[port]);
-				devices += build_device( env, JavaxUsb, linuxUsbServices, portinfo->port[port], device, port, connectedDevices, disconnectedDevices );
+				devices += build_device( env, JavaxUsb, linuxUsbServices, bus, portinfo->port[port], device, port, connectedDevices, disconnectedDevices );
 			}
 
 BUILD_DEVICE_EXIT:
@@ -206,7 +207,7 @@ BUILD_DEVICE_EXIT:
 	return devices;
 }
 
-static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device )
+static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device, unsigned char bus, unsigned char dev )
 {
 	int result = -1;
 	struct jusb_config_descriptor *cfg_desc = NULL;
@@ -229,8 +230,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 	wTotalLength = cfg_desc->wTotalLength;
 	pos = cfg_desc->bLength;
 
-//FIXME - find if active
-	isActive = ( 1 == cfg_desc->bConfigurationValue ? JNI_TRUE : JNI_FALSE );
+	isActive = isConfigActive( fd, bus, dev, cfg_desc->bConfigurationValue );
 	config = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbConfigImp, device,
 		cfg_desc->bLength, cfg_desc->bDescriptorType, wTotalLength,
 		cfg_desc->bNumInterfaces, cfg_desc->bConfigurationValue, cfg_desc->iConfiguration,

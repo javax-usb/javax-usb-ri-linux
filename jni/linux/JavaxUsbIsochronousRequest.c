@@ -62,6 +62,7 @@ static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousReque
 
 /**
  * Submit a complex isochronous pipe request.
+ * Note that this does not support _disabling_ short packets.
  * @param env The JNIEnv.
  * @param fd The file descriptor.
  * @param linuxIsochronousRequest The LinuxIsochronousRequest.
@@ -69,46 +70,28 @@ static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousReque
  */
 int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 {
-/*
 	struct usbdevfs_urb *urb;
-	int result = 0, fd = -1, npackets, bufsize, urbsize;
+	int ret = 0, npackets, bufsize, urbsize;
 
-	jclass LinuxRequestProxy, LinuxIsochronousRequest;
-	jobject linuxIsochronousRequest, linuxRequestProxy;
-	jmethodID setSubmissionStatus, setSubmitCompleted, removePendingVector, setUrbAddress;
-	jmethodID getData, getAcceptShortPacket, getLinuxRequestProxy, getFileDescriptor;
-	jmethodID getNumberOfPackets, getBufferSize;
-	jboolean acceptShortPacket;
-	jbyteArray data;
+	jclass LinuxIsochronousRequest;
+	jmethodID setUrbAddress, setStatus, setError, getNumberOfPackets, getBufferSize, getEndpointAddress;
 
-	linuxIsochronousRequest = (*env)->NewGlobalRef( env, localLinuxIsochronousRequest );
 	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
 	setUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(I)V" );
-	setSubmissionStatus = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setSubmissionStatus", "(I)V" );
-	setSubmitCompleted = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setSubmitCompleted", "(Z)V" );
+	setStatus = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setStatus", "(II)V" );
+	setError = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setError", "(II)V" );
 	getNumberOfPackets = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getNumberOfPackets", "()I" );
 	getBufferSize = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getBufferSize", "()I" );
-	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "()[B" );
-	data = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getData );
-	getAcceptShortPacket = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getAcceptShortPacket", "()Z" );
-	acceptShortPacket = (*env)->CallBooleanMethod( env, linuxIsochronousRequest, getAcceptShortPacket );
-	getLinuxRequestProxy = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getLinuxRequestProxy", "()Lcom/ibm/jusb/os/linux/LinuxRequestProxy;" );
-	linuxRequestProxy = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getLinuxRequestProxy );
-	LinuxRequestProxy = (*env)->GetObjectClass( env, linuxRequestProxy );
-	removePendingVector = (*env)->GetMethodID( env, LinuxRequestProxy, "removePendingVector", "(Lcom/ibm/jusb/os/linux/LinuxRequest;)V" );
-	getFileDescriptor = (*env)->GetMethodID( env, LinuxRequestProxy, "getFileDescriptor", "()I" );
-	fd = (int)(*env)->CallIntMethod( env, linuxRequestProxy, getFileDescriptor );
+	getEndpointAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getEndpointAddress", "()B" );
 	npackets = (int)(*env)->CallIntMethod( env, linuxIsochronousRequest, getNumberOfPackets );
 	bufsize = (int)(*env)->CallIntMethod( env, linuxIsochronousRequest, getBufferSize );
+	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	urbsize = sizeof(*urb) + (npackets * sizeof(struct usbdevfs_iso_packet_desc));
 
 	if (!(urb = malloc(urbsize))) {
-		dbg( MSG_CRITICAL, "nativeSubmitIsochronousRequest : Out of memory! (%d needed)\n", urbsize );
-		(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxIsochronousRequest );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmissionStatus, -ENOMEM );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmitCompleted, JNI_TRUE );
-		return;
+		dbg( MSG_CRITICAL, "isochronous_request : Out of memory! (%d bytes needed)\n", urbsize );
+		goto end;
 	}
 
 	memset(urb, 0, urbsize);
@@ -116,43 +99,45 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	urb->number_of_packets = npackets;
 	urb->buffer_length = bufsize;
 
-	if ((result = create_iso_buffer( env, linuxIsochronousRequest, urb ))) {
-		(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxIsochronousRequest );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmissionStatus, result );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmitCompleted, JNI_TRUE );
-		free(urb);
-		return;
+	if (!(urb->buffer = malloc(urb->buffer_length))) {
+		dbg( MSG_CRITICAL, "isochronous_request : Out of memory! (%d needed)\n", urb->buffer_length );
+		goto end;
 	}
 
-	dbg( MSG_DEBUG2, "nativeSubmitIsochronousRequest : Submitting URB\n" );
+	memset(urb->buffer, 0, urb->buffer_length);
+
+	if ((ret = create_iso_buffer( env, linuxIsochronousRequest, urb )))
+		goto end;
 
 	urb->type = USBDEVFS_URB_TYPE_ISO;
-	urb->usercontext = linuxIsochronousRequest;
-	urb->endpoint = (unsigned char)epAddress;
+	urb->usercontext = (*env)->NewGlobalRef( env, linuxIsochronousRequest );
+	urb->endpoint = (unsigned char)(*env)->CallByteMethod( env, linuxIsochronousRequest, getEndpointAddress );
 	urb->flags |= USBDEVFS_URB_ISO_ASAP;
-	if (JNI_FALSE == acceptShortPacket)
-		urb->flags |= USBDEVFS_URB_DISABLE_SPD;
 
-	debug_urb( "nativeSubmitIsochronousRequest", urb );
+	dbg( MSG_DEBUG2, "isochronous_request : Submitting URB\n" );
+	debug_urb( "isochronous_request", urb );
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
-		result = -errno;
+		ret = -errno;
 
-	if (result) {
-		dbg( MSG_ERROR, "nativeSubmitIsochronousRequest : Could not submit URB (errno %d)\n", result );
-		(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxIsochronousRequest );
-		free(urb->buffer);
-		free(urb);
+	if (ret) {
+		dbg( MSG_ERROR, "submit_isochronous_request : Could not submit URB (errno %d)\n", ret );
 	} else {
-		dbg( MSG_DEBUG2, "nativeSubmitIsochronousRequest : Submitted URB\n" );
+		dbg( MSG_DEBUG2, "submit_isochronous_request : Submitted URB\n" );
 		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setUrbAddress, urb );
 	}
 
-	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmissionStatus, result );
-	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmitCompleted, JNI_TRUE );
-*/
-return -ENOSYS;
+end:
+	if (ret) {
+		if (urb) {
+			if (urb->usercontext) (*env)->DeleteGlobalRef( env, urb->usercontext);
+			if (urb->buffer) free(urb->buffer);
+			free(urb);
+		}
+	}
+
+	return ret;
 }
 
 /**
@@ -163,7 +148,27 @@ return -ENOSYS;
  */
 void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 {
-//FIXME - implement
+	struct usbdevfs_urb *urb;
+
+	jclass LinuxIsochronousRequest;
+	jmethodID getUrbAddress;
+
+	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
+	getUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
+	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
+
+	dbg( MSG_DEBUG2, "cancel_isochronous_request : Canceling URB\n" );
+
+	urb = (struct usbdevfs_urb *)(*env)->CallIntMethod( env, linuxIsochronousRequest, getUrbAddress );
+
+	if (!urb) {
+		dbg( MSG_INFO, "cancel_isochronous_request : No URB to cancel\n" );
+		return;
+	}
+
+	errno = 0;
+	if (ioctl( fd, USBDEVFS_DISCARDURB, urb ))
+		dbg( MSG_DEBUG2, "cancel_isochronous_request : Could not unlink urb %#x (error %d)\n", (unsigned int)urb, -errno );
 }
 
 /**
@@ -174,77 +179,54 @@ void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRe
  */
 int complete_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
 {
-/*
 	struct usbdevfs_urb *urb;
-	int result;
+	int ret;
 
-	jclass LinuxRequestProxy, LinuxIsochronousRequest;
-	jobject linuxRequestProxy;
-	jmethodID setRequestCompleted, setCompletionStatus, getLinuxRequestProxy;
-	jmethodID requestCompleted, removePendingVector, getData, getUrbAddress, setUrbAddress;
+	jclass LinuxIsochronousRequest;
+	jmethodID getData, getUrbAddress;
 
 	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
 	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "()[B" );
-	setRequestCompleted = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setRequestCompleted", "(Z)V" );
-	setCompletionStatus = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setCompletionStatus", "(I)V" );
 	getUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
-	setUrbAddress = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(I)V" );
-	getLinuxRequestProxy = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getLinuxRequestProxy", "()Lcom/ibm/jusb/os/linux/LinuxRequestProxy;" );
-	linuxRequestProxy = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getLinuxRequestProxy );
-	LinuxRequestProxy = (*env)->GetObjectClass( env, linuxRequestProxy );
-	removePendingVector = (*env)->GetMethodID( env, LinuxRequestProxy, "removePendingVector", "(Lcom/ibm/jusb/os/linux/LinuxRequest;)V" );
-	requestCompleted = (*env)->GetMethodID( env, LinuxRequestProxy, "requestCompleted", "(Lcom/ibm/jusb/os/linux/LinuxRequest;)V" );
-
-	dbg( MSG_DEBUG2, "nativeCompleteIsochronousRequest : Completing URB\n" );
+	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	if (!(urb = (struct usbdevfs_urb*)(*env)->CallIntMethod( env, linuxIsochronousRequest, getUrbAddress ))) {
-		dbg( MSG_ERROR, "nativeCompleteIsochronousRequest : No URB to complete\n" );
-		(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxIsochronousRequest );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setCompletionStatus, -ENODATA );
-		(*env)->CallVoidMethod( env, linuxIsochronousRequest, setRequestCompleted, JNI_TRUE );
-		(*env)->CallVoidMethod( env, linuxRequestProxy, requestCompleted, linuxIsochronousRequest );
-		return;
+		dbg( MSG_ERROR, "complete_isochronous_request : No URB to complete!\n" );
+		return -EINVAL;
 	}
 
-	debug_urb( "nativeCompleteIsochronousRequest", urb );
+	dbg( MSG_DEBUG2, "complete_isochronous_request : Completing URB\n" );
+	debug_urb( "complete_isochronous_request", urb );
 
-	result = destroy_iso_buffer( env, linuxIsochronousRequest, urb );
+	ret = destroy_iso_buffer( env, linuxIsochronousRequest, urb );
 
-	(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxIsochronousRequest );
-	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setCompletionStatus, result );
-	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setRequestCompleted, JNI_TRUE );
-	(*env)->CallVoidMethod( env, linuxRequestProxy, requestCompleted, linuxIsochronousRequest );
-	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setUrbAddress, 0 );
-
+	free(urb->buffer);
 	free(urb);
 
-	dbg( MSG_DEBUG2, "nativeCompleteIsochronousRequest : Completed URB\n" );
-*/
-return -ENOSYS;
+	dbg( MSG_DEBUG2, "complete_isochronous_request : Completed URB\n" );
+
+	return ret;
 }
 
+/**
+ * Create the multi-packet ISO buffer and iso_frame_desc's.
+ */
 static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb )
 {
-/*
 	int i, offset = 0;
 
 	jclass LinuxIsochronousRequest;
-	jmethodID getDataBuffer;
+	jmethodID getData;
 	jbyteArray jbuf;
 
-	if (!(urb->buffer = malloc(urb->buffer_length))) {
-		dbg( MSG_CRITICAL, "nativeSubmitIsochronousRequest : Out of memory! (%d needed)\n", urb->buffer_length );
-		return -ENOMEM;
-	}
-
 	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
-	getDataBuffer = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getDataBuffer", "(I)[B" );
+	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
+	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	for (i=0; i<urb->number_of_packets; i++) {
-		if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getDataBuffer, i ))) {
-			dbg( MSG_ERROR, "nativeSubmitIsochronousRequest : Could not access data buffer at index %d\n", i );
-			(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
-			free( urb->buffer );
+		if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+			dbg( MSG_ERROR, "create_iso_buffer : Could not access data at index %d\n", i );
+//FIXME - need to ReleaseByteArrayRegion for data up to this i?
 			return -EINVAL;
 		}
 
@@ -254,55 +236,48 @@ static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousReques
 
 		(*env)->DeleteLocalRef( env, jbuf );
 	}
-			
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	return 0;
-*/
-return -ENOSYS;
 }
 
+/**
+ * Destroy the multi-packet ISO buffer and iso_frame_desc's.
+ */
 static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb )
 {
-/*
 	int i, offset = 0;
 
 	jclass LinuxIsochronousRequest;
-	jmethodID setStatus, getDataBuffer;
+	jmethodID setStatus, getData;
 	jbyteArray jbuf;
 
 	LinuxIsochronousRequest = (*env)->GetObjectClass( env, linuxIsochronousRequest );
 	setStatus = (*env)->GetMethodID( env, LinuxIsochronousRequest, "setStatus", "(II)V" );
-	getDataBuffer = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getDataBuffer", "(I)[B" );
+	getData = (*env)->GetMethodID( env, LinuxIsochronousRequest, "getData", "(I)[B" );
+	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	for (i=0; i<urb->number_of_packets; i++) {
-		if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getDataBuffer, i ))) {
-			dbg( MSG_ERROR, "nativeSubmitIsochronousRequest : Could not access data buffer at index %d\n", i );
-			(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
-			free(urb->buffer);
+		if (!(jbuf = (*env)->CallObjectMethod( env, linuxIsochronousRequest, getData, i ))) {
+			dbg( MSG_ERROR, "destory_iso_buffer : Could not access data buffer at index %d\n", i );
+//FIXME - release all buffers?
 			return -EINVAL;
 		}
 
 		if (urb->iso_frame_desc[i].actual_length > (*env)->GetArrayLength( env, jbuf )) {
-			dbg( MSG_WARNING, "nativeSubmitIsochronousRequest : WARNING!  Data buffer too small, data truncated!\n" );
+			dbg( MSG_WARNING, "destroy_iso_buffer : WARNING!  Data buffer %d too small, data truncated!\n", i );
 			urb->iso_frame_desc[i].actual_length = (*env)->GetArrayLength( env, jbuf );
 		}
 		(*env)->SetByteArrayRegion( env, jbuf, 0, urb->iso_frame_desc[i].actual_length, urb->buffer + offset );
 		if (0 > urb->iso_frame_desc[i].status)
-			(*env)->CallVoidMethod( env, linuxIsochronousRequest, setStatus, 0, urb->iso_frame_desc[i].status );
+			(*env)->CallVoidMethod( env, linuxIsochronousRequest, setStatus, i, urb->iso_frame_desc[i].status );
 		else
-			(*env)->CallVoidMethod( env, linuxIsochronousRequest, setStatus, 0, urb->iso_frame_desc[i].actual_length );
+			(*env)->CallVoidMethod( env, linuxIsochronousRequest, setStatus, i, urb->iso_frame_desc[i].actual_length );
 		offset += urb->iso_frame_desc[i].length;
 
 		(*env)->DeleteLocalRef( env, jbuf );
 	}
 			
-	free(urb->buffer);
-
-	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
-
+//FIXME - if not all packets completed (e.g. if URB canceled) then we need to the uncompleted packets to this
 	return urb->status;
-*/
-return -ENOSYS;
 }
 
