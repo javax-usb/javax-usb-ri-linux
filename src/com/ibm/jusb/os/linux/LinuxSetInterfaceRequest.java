@@ -11,6 +11,7 @@ package com.ibm.jusb.os.linux;
 
 import javax.usb.util.UsbUtil;
 
+import com.ibm.jusb.*;
 import com.ibm.jusb.util.*;
 
 /**
@@ -43,8 +44,25 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	/** @param error The number of the error that occurred. */
 	public void setError(int error) { errorNumber = error; }
 
+	/** @return The RequestImp */
+	public RequestImp getRequestImp() { return requestImp; }
+
+	/** @param request The RequestImp. */
+	public void setRequestImp(RequestImp request) { requestImp = request; }
+
+	/** @param c If this is completed. */
+	public void setCompleted(boolean c)
+	{
+		if (c)
+			getRequestImp().complete();
+
+		super.setCompleted(c);
+	}		
+
 	//*************************************************************************
 	// Instance variables
+
+	private RequestImp requestImp = null;
 
 	private int interfaceNumber;
 	private int interfaceSetting;

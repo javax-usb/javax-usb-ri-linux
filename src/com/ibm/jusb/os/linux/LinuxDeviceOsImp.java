@@ -95,6 +95,7 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	{
 		LinuxSetConfigurationRequest configRequest = new LinuxSetConfigurationRequest();
 		configRequest.setConfiguration((byte)request.getValue());
+		configRequest.setRequestImp(request);
 		return configRequest;
 	}
 
@@ -104,6 +105,7 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 		LinuxSetInterfaceRequest interfaceRequest = new LinuxSetInterfaceRequest();
 		interfaceRequest.setInterface((byte)request.getIndex());
 		interfaceRequest.setSetting((byte)request.getValue());
+		interfaceRequest.setRequestImp(request);
 		return interfaceRequest;
 	}
 
