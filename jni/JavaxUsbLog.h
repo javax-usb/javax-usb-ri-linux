@@ -62,21 +62,26 @@
 #define LOG_HOTPLUG_OTHER    (LOG_HOTPLUG_FLAG | 0x04) /* all other logging */
 
 /* log_named() should not be directly used */
+static char *log_oom = "Out of memory while logging!";
 #define DEFAULT_LOG_LEN 256
 #define OLD_GLIBC_MAX_LOG_LEN 1024 /* If glibc is 2.0 or lower, snprintf does not report needed length, so set this as max */
 #define log_named(level,logname,args...) \
 do { \
-  char buf1[DEFAULT_LOG_LEN],*buffer = buf1; \
+  char buf1[DEFAULT_LOG_LEN], *buf2 = NULL, *buffer = buf1; \
   int real_len; \
   real_len = snprintf(buffer, DEFAULT_LOG_LEN, args); \
   if (0 > real_len || DEFAULT_LOG_LEN <= real_len) { \
     int full_len = (0 > real_len ? OLD_GLIBC_MAX_LOG_LEN : real_len+1); \
-    char buf2[full_len]; \
-    buffer = buf2; \
-    real_len = snprintf(buffer, full_len, args); \
-    buffer[full_len-1] = 0; \
+    if (!(buf2 = malloc(full_len))) { \
+      buffer = log_oom; \
+    } else { \
+      buffer = buf2; \
+      real_len = snprintf(buffer, full_len, args); \
+      buffer[((real_len < full_len-1 && 0 <= real_len) ? real_len : full_len-1)] = 0; \
+    } \
   } \
   java_log(env,logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
+  if (buf2) free(buf2); \
 } while (0)
 
 /* Do not use this, use log() */
