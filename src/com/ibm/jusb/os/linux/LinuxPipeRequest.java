@@ -73,16 +73,22 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @param c If this is completed or not */
 	public void setCompleted(boolean c)
 	{
-		if (c) {
-//FIXME - do this here?  in other Thread?  Also, handle errors better.
-			if (0 != error)
-				getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(error)) );
-			getUsbIrpImp().setActualLength(actualLength);
-			getUsbIrpImp().complete();
-		}
+		if (c)
+			completeUsbIrp();
 
 		super.setCompleted(c);
 	}
+
+	/** Complete the UsbIrp */
+	public void completeUsbIrp()
+	{
+//FIXME - do this here?  in other Thread?  Also, handle errors better.
+		if (0 != error)
+			getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(error)) );
+		getUsbIrpImp().setActualLength(actualLength);
+		getUsbIrpImp().complete();
+	}
+
 
 	/** @param type The pipe type. */
 	public void setPipeType(byte type)
