@@ -8,6 +8,14 @@
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
+/**
+ * Define DEBUG_URB_DATA in order to debug the data in the urb.
+ * Warning, this generates a lot of overhead, typically by a factor
+ * of 40.
+ */
+/* #define DEBUG_URB_DATA */
+#undef DEBUG_URB_DATA
+
 #ifndef _JAVAXUSBUTIL_H
 #define _JAVAXUSBUTIL_H
 
@@ -277,15 +285,17 @@ static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs
 	log( LOG_XFER_OTHER, "%s : URB signal = %d", calling_method, urb->signr );
 	log( LOG_XFER_OTHER, "%s : URB buffer length = %d", calling_method, urb->buffer_length );
 	log( LOG_XFER_OTHER, "%s : URB actual length = %d", calling_method, urb->actual_length );
-	if (urb->buffer) {
-		int i, loglen = strlen(calling_method) + (3*urb->buffer_length) + 15;
-		char logbuf[loglen], *bufp = logbuf;
-		bufp += sprintf(bufp, "%s : URB data = ", calling_method );
-		for (i=0; i<urb->buffer_length; i++, bufp += 3) sprintf(bufp, "%2.2x ", ((unsigned char *)urb->buffer)[i] );
-		log( LOG_XFER_DATA, logbuf );
-	} else {
-		log( LOG_XFER_DATA, "%s : URB data empty", calling_method );
-	}
+#ifdef DEBUG_URB_DATA
+ 	if (urb->buffer) { 
+ 		int i, loglen = strlen(calling_method) + (3*urb->buffer_length) + 15; 
+ 		char logbuf[loglen], *bufp = logbuf; 
+ 		bufp += sprintf(bufp, "%s : URB data = ", calling_method ); 
+ 		for (i=0; i<urb->buffer_length; i++, bufp += 3) sprintf(bufp, "%2.2x ", ((unsigned char *)urb->buffer)[i] ); 
+ 		log( LOG_XFER_DATA, logbuf ); 
+ 	} else { 
+ 		log( LOG_XFER_DATA, "%s : URB data empty", calling_method ); 
+ 	} 
+#endif /* DEBUG_URB_DATA */
 
 }
 
