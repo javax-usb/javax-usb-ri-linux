@@ -1,0 +1,28 @@
+
+The JCP web site for the JSR80 is: http://jcp.org/detail/80.jsp
+The location of this modification is http://javax-usb.sourceforge.net
+
+****************
+* Requirements *
+****************
+
+Java      Standard Edition version 1.2 or greater - Micro Edition has not been tested but may work
+ANT       http://jakarta.apache.org/ant (make sure to get the optional.jar file!)
+
+GCC development tools (make, gcc, ld, etc...)
+
+*********
+* Build *
+*********
+
+The ANT tool uses XML buildfiles to create the project.  Run ant in
+the toplevel directory to list all available targets.  To build the RI,
+use the "all" target which compiles all classes and creates the jarfiles.
+
+****************
+* Installation *
+****************
+
+Add the class jarfile (or class destination directory) to your CLASSPATH.
+Copy the native library to a location where your dynamic loader will find it
+(i.e., either your LD_LIBRARY_PATH or directory listed in /etc/ld.so.conf)

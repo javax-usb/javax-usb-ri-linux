@@ -1,0 +1,186 @@
+
+<!-- JSR80 Linux Implementation -->
+
+<project name="JSR80 Linux Implementation" default="help">
+
+	<!-- User overrides from environment -->
+	<!-- Note these depend on ANT not overwriting preset variables -->
+	<property environment="Jsr80Env"/>
+	
+	<property name="Jsr80Env.JSR80_LINUX_VERSION" value="0.9.1"/>
+
+	<property name="Jsr80Env.JSR80_LINUX_JARFILE" value="jsr80_linux.jar"/>
+
+	<property name="Jsr80Env.JSR80_LINUX_SRC_DIR" value="src"/>
+	<property name="Jsr80Env.JSR80_LINUX_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_SRC_DIR}"/>
+	<property name="Jsr80Env.JSR80_LINUX_LIB_DIR" value="lib"/>
+	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="jni/linux"/>
+	<property name="Jsr80Env.JSR80_LINUX_JNI_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
+	<property name="Jsr80Env.JSR80_LINUX_JARFILE_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
+	<property name="Jsr80Env.JSR80_LINUX_DOCS_DIR" value="docs"/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="${Jsr80Env.JSR80_LINUX_DOCS_DIR}/jdoc"/>
+
+	<property name="Jsr80Env.JSR80_LINUX_DEBUG" value="no"/>
+	<property name="Jsr80Env.JSR80_LINUX_OPTIMIZE" value="yes"/>
+	<property name="Jsr80Env.JSR80_LINUX_DEPRECATION" value="yes"/>
+	<property name="Jsr80Env.JSR80_LINUX_VERBOSE" value="no"/>
+	<property name="Jsr80Env.JSR80_LINUX_QUIET" value="no"/>
+	<property name="Jsr80Env.JSR80_LINUX_COMPRESS" value="yes"/>
+
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_WINDOWTITLE" value="JavaDOC for JSR80 Linux Implementation"/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_DOCTITLE" value="JSR80 Linux Implementation"/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_BOTTOM" value=""/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_HEADER" value="JSR80 Linux Implementation v${Jsr80Env.JSR80_LINUX_VERSION}"/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_FOOTER" value=""/>
+
+	<!-- Variables -->
+	<property name="jsr80.linux.version" value="${Jsr80Env.JSR80_LINUX_VERSION}"/>
+	
+	<property name="jsr80.linux.dest.dir" value="${Jsr80Env.JSR80_LINUX_DEST_DIR}"/>
+	<property name="jsr80.linux.src.dir" value="${Jsr80Env.JSR80_LINUX_SRC_DIR}"/>
+	<property name="jsr80.linux.lib.dir" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
+	<property name="jsr80.linux.jni.src.dir" value="${Jsr80Env.JSR80_LINUX_JNI_SRC_DIR}"/>
+	<property name="jsr80.linux.docs.dir" value="${Jsr80Env.JSR80_LINUX_DOCS_DIR}"/>
+	<property name="jsr80.linux.jdoc.dir" value="${Jsr80Env.JSR80_LINUX_JDOC_DIR}"/>
+
+	<property name="jsr80.linux.debug" value="${Jsr80Env.JSR80_LINUX_DEBUG}"/>
+	<property name="jsr80.linux.optimize" value="${Jsr80Env.JSR80_LINUX_OPTIMIZE}"/>
+	<property name="jsr80.linux.deprecation" value="${Jsr80Env.JSR80_LINUX_DEPRECATION}"/>
+	<property name="jsr80.linux.verbose" value="${Jsr80Env.JSR80_LINUX_VERBOSE}"/>
+	<property name="jsr80.linux.quiet" value="${Jsr80Env.JSR80_LINUX_QUIET}"/>
+	<property name="jsr80.linux.compress" value="${Jsr80Env.JSR80_LINUX_COMPRESS}"/>
+
+	<property name="jsr80.linux.jni.src.dir" value="${Jsr80Env.JSR80_LINUX_JNI_SRC_DIR}"/>
+	<property name="jsr80.linux.jni.dest.dir" value="${Jsr80Env.JSR80_LINUX_JNI_DEST_DIR}"/>
+	<property name="jsr80.linux.jni.library" value="libJavaxUsb.so"/>
+	<property name="jsr80.linux.jarfile" value="${Jsr80Env.JSR80_LINUX_JARFILE}"/>
+	<property name="jsr80.linux.jarfile.dir" value="${Jsr80Env.JSR80_LINUX_JARFILE_DIR}"/>
+
+	<property name="jsr80.linux.jdoc.windowtitle" value="${Jsr80Env.JSR80_LINUX_JDOC_WINDOWTITLE}"/>
+	<property name="jsr80.linux.jdoc.doctitle" value="${Jsr80Env.JSR80_LINUX_JDOC_DOCTITLE}"/>
+	<property name="jsr80.linux.jdoc.bottom" value="${Jsr80Env.JSR80_LINUX_JDOC_BOTTOM}"/>
+	<property name="jsr80.linux.jdoc.header" value="${Jsr80Env.JSR80_LINUX_JDOC_HEADER}"/>
+	<property name="jsr80.linux.jdoc.footer" value="${Jsr80Env.JSR80_LINUX_JDOC_FOOTER}"/>
+	<property name="jsr80.linux.jdoc.verbose" value="no"/>
+	<property name="jsr80.linux.jdoc.version" value="yes"/>
+	<property name="jsr80.linux.jdoc.author" value="no"/>
+	<property name="jsr80.linux.jdoc.nodeprecated" value="no"/>
+	<property name="jsr80.linux.jdoc.nodeprecatedlist" value="no"/>
+	<property name="jsr80.linux.jdoc.failonerror" value="yes"/>
+	<property name="jsr80.linux.jdoc.public" value="yes"/>
+	<property name="jsr80.linux.jdoc.protected" value="yes"/>
+	<property name="jsr80.linux.jdoc.package" value="yes"/>
+	<property name="jsr80.linux.jdoc.private" value="no"/>
+
+	<!-- Show help -->
+	<target name="help">
+		<echo message="Buildfile for JSR80 (javax.usb) RI"/>
+		<echo message=""/>
+		<echo message="Targets:"/>
+		<echo message=""/>
+		<echo message="  all                == compile jars jdoc"/>
+		<echo message="  clean              Clean all classes"/>
+		<echo message="  compile            Compile all classes"/>
+		<echo message="  help               Show this help"/>
+		<echo message="  jars               Create JAR files"/>
+		<echo message="  jdoc               Create JavaDOC"/>
+		<echo message="  mrproper           Clean everything (including JAR/SO files)"/>
+		<echo message=""/>
+	</target>
+
+	<!-- compile, jars, jdoc -->
+	<target name="all" depends="compile,jars,jdoc"/>
+
+	<!-- Compile classfiles and create the native library -->
+	<target name="compile">
+		<echo message="Compiling class files."/>
+		<mkdir dir="${jsr80.linux.dest.dir}"/>
+		<javac
+			srcdir="${jsr80.linux.src.dir}"
+			destdir="${jsr80.linux.dest.dir}"
+			debug="${jsr80.linux.debug}"
+			optimize="${jsr80.linux.optimize}"
+			deprecation="${jsr80.linux.deprecation}"
+			verbose="${jsr80.linux.verbose}"
+			failonerror="yes"/>
+
+		<echo message="Compiling JNI library."/>
+		<javah
+			class="com.ibm.jusb.os.linux.JavaxUsb"
+			destdir="${jsr80.linux.jni.src.dir}"
+			verbose="${jsr80.linux.verbose}"
+			classpath="${java.class.path}:${jsr80.linux.src.dir}"/>
+
+		<exec executable="make" dir="${jsr80.linux.jni.src.dir}" failonerror="yes">
+			<arg line="${jsr80.linux.jni.library}"/>
+		</exec>
+	</target>
+
+	<!-- Cleans the class files and native library -->
+	<target name="clean">
+		<echo message="Cleaning class files and JNI library." />
+		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" failonerror="false">
+			<fileset dir="${jsr80.linux.dest.dir}" includes="com/ibm/jusb/**/*.class"/>
+		</delete>
+
+		<exec executable="make" dir="${jsr80.linux.jni.src.dir}" failonerror="yes">
+			<arg line="clean"/>
+		</exec>
+	</target>
+
+	<!-- Clean everything (Mr. Clean) -->
+	<target name="mrproper" depends="clean">
+		<echo message="Cleaning everything."/>
+		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" failonerror="false">
+			<fileset dir="${jsr80.linux.jarfile.dir}" includes="${jsr80.linux.class.jarfile}"/>
+			<fileset dir="${jsr80.linux.jni.dest.dir}" includes="${jsr80.linux.jni.library}"/>
+		</delete>
+
+		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" failonerror="false"
+			dir="${jsr80.linux.jdoc.dir}"/>
+	</target>
+
+	<!-- Creates the source and class JAR files and moves JNI library -->
+	<target name="jars" depends="compile">
+		<echo message="Creating JAR files."/>
+		<mkdir dir="${jsr80.linux.jarfile.dir}"/>
+		<jar
+			jarfile="${jsr80.linux.jarfile.dir}/${jsr80.linux.jarfile}"
+			basedir="${jsr80.linux.dest.dir}"
+			compress="${jsr80.linux.compress}"
+			includes="javax/usb/res/jusb.properties,**/*.class"/>
+
+		<mkdir dir="${jsr80.linux.lib.dir}"/>
+		<copy
+			file="${jsr80.linux.jni.src.dir}/${jsr80.linux.jni.library}"
+			todir="${jsr80.linux.jni.dest.dir}"
+			overwrite="yes"/>
+	</target>
+
+	<!-- Build JavaDOC -->
+	<target name="jdoc">
+		<echo message="Creating JavaDOC."/>
+		<mkdir dir="${jsr80.linux.jdoc.dir}"/>
+		<javadoc
+			packagenames="javax.usb.*,com.ibm.jusb.*"
+			sourcepath="${jsr80.linux.src.dir}:${jsr80.linux.jdoc.path}"
+			destdir="${jsr80.linux.jdoc.dir}"
+			verbose="${jsr80.linux.verbose}"
+			Public="${jsr80.linux.public}"
+			Protected="${jsr80.linux.protected}"
+			Package="${jsr80.linux.package}"
+			Private="${jsr80.linux.private}"
+			Version="${jsr80.linux.version}"
+			Author="${jsr80.linux.author}"
+			windowtitle="${jsr80.linux.jdoc.windowtitle}"
+			doctitle="${jsr80.linux.jdoc.doctitle}"
+			bottom="${jsr80.linux.jdoc.bottom}"
+			header="${jsr80.linux.jdoc.header}"
+			footer="${jsr80.linux.jdoc.footer}"
+			nodeprecated="${jsr80.linux.jdoc.nodeprecated}"
+			nodeprecatedlist="${jsr80.linux.jdoc.nodeprecatedlist}"
+			failonerror="${jsr80.linux.jdoc.failonerror}"
+		/>
+	</target>
+
+</project>
