@@ -42,7 +42,6 @@ abstract class LinuxRequestProxy {
 		checkRequest( request );
 
 		request.setLinuxRequestProxy( this );
-		request.getPreTask().execute();
 
 		requestVector.addElement( request );
 		notifyProxyThread();
@@ -169,7 +168,7 @@ abstract class LinuxRequestProxy {
 	 */
 	protected void requestCompleted( LinuxRequest request )
 	{
-		taskManager.post( request.getPostTask() );
+//FIXME
 	}
 
 	/**
@@ -180,12 +179,6 @@ abstract class LinuxRequestProxy {
 	 * when this is changed to false.
 	 */
 	protected boolean isRunning() { return isRunning; }
-
-	/** @return a MethodHandlerFactory object */
-	protected MethodHandlerFactory getMethodHandlerFactory()
-	{
-		return LinuxUsbServices.getLinuxInstance().getLinuxHelper().getMethodHandlerFactory();
-	}
 
 	//*************************************************************************
 	// Private methods

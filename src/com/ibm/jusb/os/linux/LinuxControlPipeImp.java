@@ -17,10 +17,10 @@ import com.ibm.jusb.*;
 /**
  * Control parameters to pass to native code
  * <p>
- * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeOsImp LinuxPipeOsImp} for details.
  * @author Dan Streetman
  */
-class LinuxControlPipeImp extends LinuxPipeImp
+class LinuxControlPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
 	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }

@@ -9,7 +9,7 @@ package com.ibm.jusb.os.linux;
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
-import javax.usb.UsbException;
+import javax.usb.*;
 
 import com.ibm.jusb.*;
 import com.ibm.jusb.util.*;
@@ -17,7 +17,6 @@ import com.ibm.jusb.util.*;
 /**
  * LinuxRequest for use on pipes.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
 class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
 {
@@ -28,13 +27,13 @@ class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
 	// Public methods
 
 	/** Native submit method */
-	public void submitNative() { getLinuxPipeImp().submitNative( this ); }
+	public void submitNative() { getLinuxPipeOsImp().submitNative( this ); }
 
 	/** Native abort method */
 	public void abortNative() { JavaxUsb.nativeAbortPipeRequest( this ); }
 
 	/** Native complete method */
-	public void completeNative() { getLinuxPipeImp().completeNative( this ); }
+	public void completeNative() { getLinuxPipeOsImp().completeNative( this ); }
 
 	/** @return this request's data buffer */
 	public byte[] getData() { return dataBuffer; }
@@ -51,30 +50,17 @@ class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
 	/** @param irp the assocaited UsbIrpImp */
 	public void setUsbIrpImp( UsbIrpImp irp ) { usbIrpImp = irp; }
 
-	/** @return the assocaited LinuxPipeImp */
-	public LinuxPipeImp getLinuxPipeImp() { return linuxPipeImp; }
+	/** @return the assocaited LinuxPipeOsImp */
+	public LinuxPipeOsImp getLinuxPipeOsImp() { return linuxPipeImp; }
 
-	/** @param pipe the assocaited LinuxPipeImp */
-	public void setLinuxPipeImp( LinuxPipeImp pipe ) { linuxPipeImp = pipe; }
+	/** @param pipe the assocaited LinuxPipeOsImp */
+	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
 
 	/** @return the address of the assocaited URB */
 	public int getUrbAddress() { return urbAddress; }
 
 	/** @param address the address of the assocaited URB */
 	public void setUrbAddress( int address ) { urbAddress = address; }
-
-	//*************************************************************************
-	// Public overridden methods
-
-	/**
-	 * Get the pre-execution Task object.
-	 */
-	public Task getPreTask() { return preTask; }
-
-	/**
-	 * Get the post-execution Task object.
-	 */
-	public Task getPostTask() { return postTask; }
 
 	//*************************************************************************
 	// Recyclable methods
@@ -90,53 +76,14 @@ class LinuxPipeRequest extends DefaultLinuxRequest implements LinuxRequest
 	}
 
 	//*************************************************************************
-	// Protected methods
-
-	protected void preTaskMethod()
-	{
-		getUsbIrpImp().getPreSubmissionTask().execute( getUsbIrpImp() );
-	}
-
-	protected void postTaskMethod()
-	{
-		if ( getUsbIrpImp().getDataLength() < 0 ) {
-			getUsbIrpImp().setDataLength( getCompletionStatus() );
-		}
-
-		if (0 > getCompletionStatus()) {
-			String errorMessage = JavaxUsb.nativeGetErrorMessage( getCompletionStatus() );
-
-			UsbException uE = new UsbException( errorMessage, getCompletionStatus() );
-
-			getUsbIrpImp().setUsbException( uE );
-		}
-
-		getLinuxPipeImp().removeUsbIrpImpKey( getUsbIrpImp() );
-
-		UsbIrpImp irp = getUsbIrpImp();
-
-		recycle();
-
-		irp.getPostSubmissionTask().execute( irp );
-	}
-
-	//*************************************************************************
 	// Instance variables
 
 	private byte[] dataBuffer = null;
 
 	private UsbIrpImp usbIrpImp = null;
 
-	private LinuxPipeImp linuxPipeImp = null;
+	private LinuxPipeOsImp linuxPipeImp = null;
 
 	private int urbAddress = 0;
-
-	private Task preTask = new Task() {
-		public void execute() { LinuxPipeRequest.this.preTaskMethod(); }
-	};
-
-	private Task postTask = new Task() {
-		public void execute() { LinuxPipeRequest.this.postTaskMethod(); }
-	};
 
 }

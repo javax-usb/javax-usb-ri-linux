@@ -83,7 +83,7 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 	 * Release an interface
 	 * @param intefaceNumber the number of the interface to release
 	 */
-	public void releaseInterface( byte interfaceNumber ) throws UsbException
+	public void releaseInterface( byte interfaceNumber )
 	{
 		synchronized ( interfaceTable ) {
 			if ( !isInterfaceClaimed( interfaceNumber ) )
@@ -96,7 +96,7 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 			try {
 				submitRequest( request );
 			} catch ( UsbException uE ) {
-				throw uE;
+//FIXME - ignore?
 			}
 
 			request.recycle();
@@ -148,7 +148,8 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 	/** Get a LinuxInterfaceRequestFactory */
 	private LinuxRequestFactory getLinuxInterfaceRequestFactory()
 	{
-		return LinuxUsbServices.getLinuxInstance().getLinuxHelper().getLinuxInterfaceRequestFactory();
+//FIXME
+return null;
 	}
 
 	//*************************************************************************

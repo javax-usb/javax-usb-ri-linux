@@ -34,7 +34,11 @@ import com.ibm.jusb.util.*;
 public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 {
 	/** Constructor */
-	public LinuxPipeOsImp( UsbPipeImp pipe ) { setUsbPipeImp( pipe ); }
+	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxDeviceProxy proxy )
+	{
+		setUsbPipeImp(pipe);
+		setLinuxDeviceProxy(proxy);
+	}
 
     //*************************************************************************
     // public methods
@@ -73,7 +77,7 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
 	public int syncSubmit( byte[] data ) throws UsbException
 	{
-		UsbIrpImp irp = (UsbIrpImp)getUsbIrpImpFactory().take();
+		UsbIrpImp irp = usbIrpImpFactory.createUsbIrpImp();
 		irp.setData( data );
 
 		syncSubmit( irp );
@@ -136,10 +140,7 @@ throw new UsbException("STUB");
 	 */
 	public void abortSubmission( UsbIrpImp irp )
 	{
-		if (!irpRequests.containsKey( irp ))
-			return;
-
-		getLinuxDeviceProxy().cancelRequest( (LinuxRequest)irpRequests.get( irp ) );
+//FIXME - implement
 	}
 
 	/**
@@ -190,13 +191,13 @@ throw new UsbException("STUB");
 	 */
 	protected LinuxPipeRequest createLinuxPipeRequest( UsbIrpImp irp )
 	{
-		LinuxPipeRequest request = (LinuxPipeRequest)linuxRequestFactory.take();
+//FIXME - implament
 
-		request.setLinuxPipeOsImp( this );
-		request.setUsbIrpImp( irp );
-		request.setData( irp.getData() );
+		//request.setLinuxPipeOsImp( this );
+		//request.setUsbIrpImp( irp );
+		//request.setData( irp.getData() );
 
-		return request;
+return null;
 	}
 
 	/**
@@ -208,7 +209,7 @@ throw new UsbException("STUB");
 	{
 		getLinuxDeviceProxy().submitRequest( request );
 		if ( request.isActive() ) {
-			getLinuxRequestTable().put( request.getUsbIrpImp(), request );
+//getLinuxRequestTable().put( request.getUsbIrpImp(), request );
 		}
 	}
 
@@ -217,4 +218,5 @@ throw new UsbException("STUB");
 
 	private UsbPipeImp usbPipeImp = null;
 	private LinuxDeviceProxy linuxDeviceProxy = null;
+	private UsbIrpImpFactory usbIrpImpFactory = new UsbIrpImpFactory();
 }

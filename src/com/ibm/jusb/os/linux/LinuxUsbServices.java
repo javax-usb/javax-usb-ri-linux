@@ -97,8 +97,6 @@ catch ( InterruptedException iE ) { }
 	{
 		topologyListener.thread = new Thread( topologyListenerRunnable ); 
 
-		topologyChangeScheduler.start();
-
 		topologyListener.thread.setDaemon( true );
 		topologyListener.thread.setName( "javax.usb Topology Listener Thread" );
 		topologyListener.thread.start();
@@ -178,8 +176,6 @@ catch ( InterruptedException iE ) { }
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
     public static final String NO_USB_DEVICES_FOUND = "No USB devices found.";
-    public static final String ERROR_WHILE_LOADING_SHARED_LIBRARY = "Error while loading shared library";
-    public static final String EXCEPTION_WHILE_LOADING_SHARED_LIBRARY = "Exception while loading shared library";
 
 	public static final String LINUX_API_VERSION = "0.9.1";
 	public static final String LINUX_IMP_VERSION = "0.9.1";
@@ -241,6 +237,7 @@ catch ( InterruptedException iE ) { }
 		 */
 		private UsbDevice addUsbDevice( UsbDevice device, String key )
 		{
+/*
 			allDeviceKeys.addElement( key );
 			UsbDevice oldDevice = JavaxUsb.getUsbDevice( key );
 			if ( null != oldDevice) return oldDevice;
@@ -248,6 +245,7 @@ catch ( InterruptedException iE ) { }
 			connectedDevices.addUsbInfo( device );
 			JavaxUsb.addUsbDevice( device, key );
 			return device;
+*/return null;
 		}
 
 		/**
@@ -256,6 +254,7 @@ catch ( InterruptedException iE ) { }
 		 */
 		private void updateTopology()
 		{
+/*
 			Enumeration oldKeys = JavaxUsb.getUsbDeviceKeyEnumeration();
 
 			while (oldKeys.hasMoreElements()) {
@@ -270,6 +269,7 @@ catch ( InterruptedException iE ) { }
 			}
 
 			allDeviceKeys.removeAllElements();
+*/
 		}
 
 		public UsbInfoList getConnectedDevices() { return connectedDevices; }

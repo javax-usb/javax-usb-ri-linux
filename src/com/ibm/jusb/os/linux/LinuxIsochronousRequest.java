@@ -28,13 +28,13 @@ class LinuxIsochronousRequest extends LinuxPipeRequest implements LinuxRequest
 	// Public methods
 
 	/** Native submit method */
-	public void submitNative() { getLinuxPipeImp().submitNative( this ); }
+	public void submitNative() { getLinuxPipeOsImp().submitNative( this ); }
 
 	/** Native abort method */
 	public void abortNative() { JavaxUsb.nativeAbortPipeRequest( this ); }
 
 	/** Native complete method */
-	public void completeNative() { getLinuxPipeImp().completeNative( this ); }
+	public void completeNative() { getLinuxPipeOsImp().completeNative( this ); }
 
 	/**
 	 * Get specified data buffer.

@@ -13,6 +13,7 @@ import javax.usb.*;
 import javax.usb.util.*;
 
 import com.ibm.jusb.*;
+import com.ibm.jusb.os.*;
 
 /**
  * UsbInterfaceOsImp implementation for Linux platform.
@@ -56,16 +57,16 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	 */
 	public void claim() throws UsbException
 	{
-		getLinuxDeviceOsProxy().claimInterface( getInterfaceNumber() );
+		getLinuxDeviceProxy().claimInterface( getInterfaceNumber() );
 	}
 
 	/**
 	 * Release this interface.
 	 * @exception UsbException if the interface could not be released.
 	 */
-	public void release() throws UsbException
+	public void release()
 	{
-		getLinuxDeviceOsProxy().releaseInterface( getInterfaceNumber() );
+		getLinuxDeviceProxy().releaseInterface( getInterfaceNumber() );
 	}
 
 	/**
@@ -73,8 +74,10 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	 */
 	public boolean isClaimed()
 	{
-		return getLinuxDeviceOsProxy().isInterfaceClaimed( getInterfaceNumber() );
+		return getLinuxDeviceProxy().isInterfaceClaimed( getInterfaceNumber() );
 	}
+
+	public LinuxDeviceProxy getLinuxDeviceProxy() { return getLinuxDeviceOsImp().getLinuxDeviceProxy(); }
 
 	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceNumber(); }
 

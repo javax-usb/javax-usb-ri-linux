@@ -12,12 +12,12 @@ package com.ibm.jusb.os.linux;
 import com.ibm.jusb.*;
 
 /**
- * LinuxPipeImp implementation for Bulk pipe.
+ * LinuxPipeOsImp implementation for Bulk pipe.
  * <p>
- * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeOsImp LinuxPipeOsImp} for details.
  * @author Dan Streetman
  */
-class LinuxBulkPipeImp extends LinuxPipeImp
+class LinuxBulkPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
     public LinuxBulkPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }

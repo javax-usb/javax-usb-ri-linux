@@ -14,10 +14,10 @@ import com.ibm.jusb.*;
 /**
  * LinuxPipeImp imeplementation for Interrupt pipe.
  * <p>
- * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeOsImp LinuxPipeOsImp} for details.
  * @author Dan Streetman
  */
-class LinuxInterruptPipeImp extends LinuxPipeImp
+class LinuxInterruptPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
 	public LinuxInterruptPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }

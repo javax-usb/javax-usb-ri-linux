@@ -12,9 +12,11 @@ package com.ibm.jusb.os.linux;
 import java.util.*;
 
 import javax.usb.*;
+import javax.usb.util.*;
+
 import com.ibm.jusb.*;
 import com.ibm.jusb.os.*;
-import javax.usb.util.*;
+import com.ibm.jusb.util.*;
 
 /**
  * Provides package visible native methods
@@ -297,8 +299,7 @@ class JavaxUsb {
 	 */
 	private static UsbRootHub createUsbRootHub()
 	{
-		UsbDeviceOsImp osImp = new LinuxDeviceOsImp();
-		return new UsbRootHubImp(
+return null;
 	}
 
 	/**
@@ -411,7 +412,7 @@ return null;
 
 		speedString = speedString.trim();
 
-		DeviceDescriptor desc = new DeviceDescriptor( length, type,
+		DeviceDescriptorImp desc = new DeviceDescriptorImp( length, type,
 			deviceClass, deviceSubClass, deviceProtocol, maxDefaultEndpointSize, manufacturerIndex,
 			productIndex, serialNumberIndex, numConfigs, vendorId, productId, bcdDevice, bcdUsb );
 
@@ -434,7 +435,8 @@ return null;
 		attributes += 0;
 		maxPowerNeeded += 0;
 
-		ConfigDescriptor desc = new ConfigDescriptor( length, type,
+		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type,
+/* FIXME - get total length! */ (short)0,
 			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
 
 		targetConfig.setConfigDescriptor(desc);
@@ -460,7 +462,7 @@ return null;
 		interfaceProtocol += 0;
 		interfaceIndex += 0;
 
-		InterfaceDescriptor desc = new InterfaceDescriptor( length, type,
+		InterfaceDescriptorImp desc = new InterfaceDescriptorImp( length, type,
 			interfaceNumber, alternateNumber, numEndpoints, interfaceClass, interfaceSubClass,
 			interfaceProtocol, interfaceIndex );
 
@@ -480,7 +482,7 @@ return null;
 		interval += 0;
 		maxPacketSize += 0;
 
-		EndpointDescriptor desc = new EndpointDescriptor( length, type,
+		EndpointDescriptorImp desc = new EndpointDescriptorImp( length, type,
 			endpointAddress, attributes, interval, maxPacketSize );
 
 		targetEndpoint.setEndpointDescriptor(desc);
@@ -496,7 +498,7 @@ return null;
 		type += 0;
 		index += 0;
 
-		StringDescriptor desc = new StringDescriptor( length, type, newString );
+		StringDescriptorImp desc = new StringDescriptorImp( length, type, newString );
 
 		device.setStringDescriptor(index,desc);
 	}
@@ -547,7 +549,7 @@ throw new UsbRuntimeException("Could not attach UsbDeviceImp to parent UsbHubImp
 	// Class variables
 
 	private static UsbRootHub rootHub = null;
-	private static UsbRootHub virtualRootHub = new VirtualUsbRootHub();
+	private static UsbRootHub virtualRootHub = new VirtualUsbRootHubImp();
 
 	private static Hashtable usbDeviceTable = new Hashtable();
 	private static Hashtable usbDeviceKeyTable = new Hashtable();
@@ -558,6 +560,11 @@ throw new UsbRuntimeException("Could not attach UsbDeviceImp to parent UsbHubImp
 
 	//*************************************************************************
 	// Class constants
+
+	public static final String LIBRARY_NAME = "JavaxUsb";
+
+    public static final String ERROR_WHILE_LOADING_SHARED_LIBRARY = "Error while loading shared library";
+    public static final String EXCEPTION_WHILE_LOADING_SHARED_LIBRARY = "Exception while loading shared library";
 
 	static final String MSG_ENV_NAME = "JAVAX_USB_MSG_LEVEL";
 

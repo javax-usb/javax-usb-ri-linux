@@ -15,12 +15,12 @@ import javax.usb.util.*;
 import com.ibm.jusb.*;
 
 /**
- * LinuxPipeImp implementation for Isochronous pipe.
+ * LinuxPipeOsImp implementation for Isochronous pipe.
  * <p>
- * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeOsImp LinuxPipeOsImp} for details.
  * @author Dan Streetman
  */
-class LinuxIsochronousPipeImp extends LinuxPipeImp
+class LinuxIsochronousPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
     public LinuxIsochronousPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }

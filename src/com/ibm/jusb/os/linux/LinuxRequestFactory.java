@@ -12,11 +12,10 @@ package com.ibm.jusb.os.linux;
 import com.ibm.jusb.util.*;
 
 /**
- * Factory to generate LinuxRequests
+ * Factory to manage LinuxRequests.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-abstract class LinuxRequestFactory extends RecycleFactory
+abstract class LinuxRequestFactory
 {
 	/** Constructor */
 	public LinuxRequestFactory() { }
@@ -24,25 +23,16 @@ abstract class LinuxRequestFactory extends RecycleFactory
 	//*************************************************************************
 	// Public methods
 
-	/** @return a Recyclable */
-	public Recyclable take() { return takeLinuxRequest(); }
-
 	/** @return a 'clean' LinuxRequest ready for use */
 	public LinuxRequest takeLinuxRequest()
 	{
-		LinuxRequest request = (LinuxRequest)super.take();
-
-		request.setActive( true );
-
-		return request;
+return null;
 	}
 
 	/** @param the LinuxRequest that is done with (which will be recycled) */
 	public void returnLinuxRequest( LinuxRequest request )
 	{
-		request.setActive( false );
-
-		super.recycle( request );
+//FIXME
 	}
 
 }

@@ -9,6 +9,8 @@ package com.ibm.jusb.os.linux;
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
+import java.util.*;
+
 import javax.usb.*;
 
 import com.ibm.jusb.*;
@@ -46,6 +48,24 @@ class LinuxDeviceOsImp implements UsbDeviceOsImp
 
 	/** @param proxy The LinuxDeviceProxy */
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
+
+	/** SyncSubmit a RequestImp */
+	public void syncSubmit( RequestImp request ) throws UsbException
+	{
+throw new UsbException("STUB");
+	}
+
+	/** SyncSubmit a List */
+	public void syncSubmit( List list ) throws UsbException
+	{
+throw new UsbException("STUB");
+	}
+
+	/** AsyncSubmit a RquestImp */
+	public void asyncSubmit( RequestImp request ) throws UsbException
+	{
+throw new UsbException("STUB");
+	}
 
 	//**************************************************************************
 	// Instance variables
