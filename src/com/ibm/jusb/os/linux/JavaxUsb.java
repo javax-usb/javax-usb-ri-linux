@@ -38,8 +38,8 @@ class JavaxUsb
 	 */
 	public static void log(String logname, int level, String file, String func, int line, String msg)
 	{
-//FIXME - implement
-//System.err.println("LOG:["+logname+"]("+level+") "+file+"."+func+"["+line+"] "+msg);
+//FIXME - implement logging
+if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:["+logname+"]("+level+") "+file+"."+func+"["+line+"] "+msg);
 	}
 
 	/** Load native library */
