@@ -70,7 +70,7 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 	/**
 	 * Asynchronous submission using a UsbIrpImp.
 	 * @param irp the UsbIrpImp to use for this submission
-     * @exception javax.usb.UsbException if error occurs
+	 * @exception javax.usb.UsbException if error occurs
 	 */
 	public void asyncSubmit( UsbIrpImp irp ) throws UsbException
 	{
@@ -88,22 +88,30 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 	 */
 	public void abortAllSubmissions()
 	{
-		LinuxPipeRequest[] requests = null;
+		Object[] requests = null;
 
 		synchronized(inProgressList) {
-			requests = (LinuxPipeRequest[])inProgressList.toArray();
+			requests = inProgressList.toArray();
 			inProgressList.clear();
 		}
 
 		for (int i=0; i<requests.length; i++)
-			getLinuxInterfaceOsImp().cancel(requests[i]);
+			getLinuxInterfaceOsImp().cancel((LinuxPipeRequest)requests[i]);
 
 		for (int i=0; i<requests.length; i++)
-			requests[i].getUsbIrpImp().waitUntilCompleted();
+				((LinuxPipeRequest)requests[i]).waitUntilCompleted();
 	}
 
     //*************************************************************************
     // Protected methods
+
+	/** @param request The LinuxPipeRequest that completed. */
+	protected void linuxPipeRequestCompleted(LinuxPipeRequest request)
+	{
+		synchronized (inProgressList) {
+			inProgressList.remove(request);
+		}
+	}
 
 	/**
 	 * Create and submit a LinuxRequest.

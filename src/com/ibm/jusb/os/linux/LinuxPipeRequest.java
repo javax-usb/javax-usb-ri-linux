@@ -54,6 +54,15 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @param pipe the assocaited LinuxPipeOsImp */
 	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
 
+	/** @param c If this is completed or not */
+	public void setCompleted(boolean c)
+	{
+		super.setCompleted(c);
+
+		if (c)
+			getLinuxPipeOsImp().linuxPipeRequestCompleted(this);
+	}
+
 	//****************************************************************************
 	// Private methods
 

@@ -39,6 +39,15 @@ abstract class LinuxRequestProxy
 	 */
 	public void cancel( LinuxRequest request )
 	{
+		synchronized(readyList) {
+			if (readyList.contains(request)) {
+				readyList.remove(request);
+				request.setError(-1);
+				request.setCompleted(true);
+				return;
+			}
+		}
+
 		synchronized(cancelList) {
 			cancelList.add(request);
 		}
