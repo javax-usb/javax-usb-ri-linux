@@ -124,7 +124,6 @@
 		<mkdir dir="${jsr80.linux.jarfile.dir}"/>
 		<jar jarfile="${jsr80.linux.jarfile.dir}/${jsr80.linux.jarfile}" compress="${jsr80.linux.compress}">
 			<fileset dir="${jsr80.linux.dest.dir}" includes="**/*.class"/>
-			<fileset dir="${jsr80.linux.properties.dir}" includes="${jsr80.linux.properties}"/>
 		</jar>
 
 		<mkdir dir="${jsr80.linux.lib.dir}"/>
