@@ -92,9 +92,9 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	struct usbdevfs_ioctl *usbioctl = NULL;
 	struct usbdevfs_hub_portinfo *portinfo = NULL;
 	struct usbdevfs_connectinfo *connectinfo = NULL;
-	struct jusb_device_descriptor *dev_desc;
+	struct jusb_device_descriptor *dev_desc = NULL;
 
-	jobject device = NULL, existingDevice;
+	jobject device = NULL, existingDevice = NULL;
 	jstring keyString = NULL;
 
 	jclass LinuxUsbServices = CheckedGetObjectClass( env, linuxUsbServices );
