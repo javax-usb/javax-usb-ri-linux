@@ -63,7 +63,11 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	}
 
 	/** @param proxy The LinuxDeviceProxy */
-	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
+	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy)
+	{
+		linuxDeviceProxy = proxy;
+		key = linuxDeviceProxy.getKey();
+	}
 
 	/** AsyncSubmit a UsbControlIrpImp */
 	public void asyncSubmit( UsbControlIrpImp usbControlIrpImp ) throws UsbException
@@ -89,6 +93,12 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 
 		submit(request);
 	}
+
+	/**
+	 * This is used by LinuxUsbServices to compare devices.
+	 * @return The key.
+	 */
+	public String getKey() { return key; }
 
 	/** Submit a Request. */
 	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceProxy().submit(request); }
@@ -165,5 +175,6 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	private UsbDeviceImp usbDeviceImp = null;
 
 	private LinuxDeviceProxy linuxDeviceProxy = null;
+	private String key = "";
 
 }

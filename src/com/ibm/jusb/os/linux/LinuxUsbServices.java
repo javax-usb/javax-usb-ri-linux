@@ -298,11 +298,19 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 			UsbDeviceDescriptor desc1 = dev1.getUsbDeviceDescriptor();
 			UsbDeviceDescriptor desc2 = dev2.getUsbDeviceDescriptor();
 
+			String key1 = ((LinuxDeviceOsImp)dev1.getUsbDeviceOsImp()).getKey();
+			String key2 = ((LinuxDeviceOsImp)dev2.getUsbDeviceOsImp()).getKey();
+
 			return
+				(key1.equals(key2)) &&
 				(dev1.isUsbHub() == dev1.isUsbHub()) &&
 				dev1.getSpeed() == dev2.getSpeed() &&
 				desc1.equals(desc2);
 		} catch ( NullPointerException npE ) {
+//FIXME - log/trace!!
+			return false;
+		} catch ( ClassCastException ccE ) {
+			//FIXME - log/trace!!
 			return false;
 		}
 	}

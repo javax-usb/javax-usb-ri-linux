@@ -58,11 +58,14 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 			thread = t;
 	}
 
+	/**
+	 * This is used in LinuxUsbServices to compare UsbDevicesImps.
+	 * @return The native device key.
+	 */
+	public String getKey() { return key; }
+
 	//*************************************************************************
 	// JNI methods
-
-	/** @return The native device key. */
-	private String getKey() { return key; }
 
 	/**
 	 * Signal startup completed.
