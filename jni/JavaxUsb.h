@@ -213,7 +213,7 @@ static inline int open_device( JNIEnv *env, jstring javaKey, int oflag )
     int filed;
 
     node = (*env)->GetStringUTFChars( env, javaKey, NULL );
-    log( LOG_INFO, " : Opening node %s\n", node );
+    log( LOG_INFO, "Opening node %s", node );
     filed = open( node, oflag );
     (*env)->ReleaseStringUTFChars( env, javaKey, node );
     return filed;
