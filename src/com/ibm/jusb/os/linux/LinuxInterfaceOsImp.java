@@ -88,27 +88,17 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 			throw JavaxUsb.errorToUsbException(request.getError(), "Could not claim interface");
 	}
 
-	/**
-	 * Release this interface.
-	 * <p>
-	 * This ignores the key and calls the {@link #release() other release}.
-	 * @param key The key is ignored.
-	 */
-	public void release(Object key) { release(); }
-
 	/** Release this interface. */
-	public void release()
+	public void release() throws UsbException
 	{
 		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxReleaseInterfaceRequest(getInterfaceNumber());
 
-		try {
-			submit(request);
-		} catch ( UsbException uE ) {
-//FIXME - log this
-			return;
-		}
+		submit(request);
 
 		request.waitUntilCompleted();
+
+		if (0 != request.getError())
+			throw new UsbNativeClaimException(JavaxUsb.errorToUsbException(request.getError()).getMessage());
 	}
 
 	/** @return if this interface is claimed. */
