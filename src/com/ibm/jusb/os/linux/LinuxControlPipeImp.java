@@ -26,9 +26,6 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 	/** Constructor */
 	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
-	//*************************************************************************
-	// Public methods
-
 	/**
 	 * Asynchronous submission using a ControlUsbIrpImp.
 	 * @param irp the ControlUsbIrpImp to use for this submission
