@@ -11,6 +11,8 @@ ANT       http://jakarta.apache.org/ant (make sure to get the optional.jar file!
 
 GCC development tools (make, gcc, ld, etc...)
 
+JSR80 API and common RI - You must have the API and common RI classfiles/jars in your CLASSPATH.
+
 *********
 * Build *
 *********
@@ -18,10 +20,13 @@ GCC development tools (make, gcc, ld, etc...)
 The ANT tool uses XML buildfiles to create the project.  Run ant in
 the toplevel directory to list all available targets.
 
+To build JavaDOC including the API and common RI source as well, set your environment variable
+JSR80_LINUX_JDOC_PATH to both the API and common RI src/ directories separated with ":".
+
 ****************
 * Installation *
 ****************
 
-Add lib/jsr80_ri_linux.jar to your CLASSPATH.
-Add lib/libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
+Add lib/jsr80_linux.jar to your CLASSPATH.
+Add the directory containing libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
 

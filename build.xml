@@ -33,8 +33,8 @@
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_HEADER" value=""/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_FOOTER" value=""/>
 
-	<!-- If all the packages are located in the same directory, this will pick up the API and common RI source files. -->
-	<property name="Jsr80Env.JSR80_LINUX_JDOC_PATH" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/../javax-usb-ri/src:${Jsr80Env.JSR80_LINUX_BASE_DIR}/../javax-usb/src"/>
+	<!-- This should be set to the src/ directories from the API and common RI packages. -->
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_PATH" value=""/>
 
 	<!-- Variables -->
 	<property name="jsr80.linux.dest.dir" value="${Jsr80Env.JSR80_LINUX_DEST_DIR}"/>
@@ -67,7 +67,7 @@
 	<property name="jsr80.linux.jdoc.author" value="no"/>
 	<property name="jsr80.linux.jdoc.nodeprecated" value="no"/>
 	<property name="jsr80.linux.jdoc.nodeprecatedlist" value="no"/>
-	<property name="jsr80.linux.jdoc.failonerror" value="yes"/>
+	<property name="jsr80.linux.jdoc.failonerror" value="no"/>
 	<property name="jsr80.linux.jdoc.public" value="yes"/>
 	<property name="jsr80.linux.jdoc.protected" value="yes"/>
 	<property name="jsr80.linux.jdoc.package" value="yes"/>
