@@ -86,16 +86,19 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 			}
 		}
 
+		errno = 0;
 		if (!(ioctl( fd, USBDEVFS_REAPURBNDELAY, &urb ))) {
 			log( LOG_XFER_REQUEST, "Got completed URB" );
 			linuxRequest = urb->usercontext;
 			completeRequest( env, linuxRequest );
 			CheckedDeleteGlobalRef( env, linuxRequest );
 			log( LOG_XFER_REQUEST, "Finished completed URB" );
+		} else if (ENODEV == errno) {
+			break;
 		}
 	}
 
-	log( LOG_XFER_CRITICAL, "ERROR - Device Proxy exiting!" );
+	log( LOG_XFER_OTHER, "Device Proxy exiting." );
 
 	close( fd );
 }

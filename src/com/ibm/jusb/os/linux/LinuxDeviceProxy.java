@@ -43,6 +43,7 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 		Thread t = new Thread(proxyRunnable);
 
 		t.setDaemon(true);
+		t.setName("LinuxDeviceProxy " + getKey());
 
 		synchronized (startLock) {
 			t.start();
