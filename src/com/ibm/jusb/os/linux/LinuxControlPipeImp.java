@@ -27,15 +27,46 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	/**
-	 * Asynchronous submission using a UsbControlIrpImp.
-	 * @param irp the UsbControlIrpImp to use for this submission
-     * @exception UsbException If any error occurrs.
+	 * Create a LinuxPipeRequest to wrap a UsbIrpImp.
+	 * @param usbIrpImp The UsbIrpImp.
+	 * @return A LinuxPipeRequest for a UsbIrpImp.
+	 * @exception UsbException If there is an error.
 	 */
-	public void asyncSubmit( UsbControlIrpImp irp ) throws UsbException
+	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp) throws UsbException
 	{
-//FIXME - a check could be added here to verify claimed interface, if appropriate, as the kernel errors are generic
+		try { return usbIrpImpToLinuxPipeRequest((UsbControlIrpImp)usbIrpImp); }
+		catch ( ClassCastException ccE ) { throw new UsbException("Cannot submit a UsbIrp on a Control-type pipe."); }
+	}
 
-		super.asyncSubmit( irp );
+	/**
+	 * Create a LinuxPipeRequest to wrap a UsbControlIrpImp.
+	 * @param usbControlIrpImp The UsbControlIrpImp.
+	 * @return A LinuxPipeRequest for a UsbControlIrpImp.
+	 * @exception UsbException If there is an error.
+	 */
+	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbControlIrpImp usbControlIrpImp) throws UsbException
+	{
+		LinuxControlRequest request = null;
+
+		/* FIXME - a set-config or set-interface on a non-DCP isn't possible using Linux's calls!
+		 * Should this do a 'normal' set-config or set-interface call on the non-DCP?
+		 * That would most likely drop the Linux kernel out of sync with the actual device config/setting.
+		 * The LinuxSetConfigurationRequest and LinuxSetInterfaceRequest both use the provided
+		 * mechanisms, which use the DCP.  Which isn't what's being requested here (since we're not the DCP).
+		 * Note that non-setters (simple LinuxControlRequests on non-DCP pipe) are ok and what we want to do,
+		 * since we're setting the endpoint address to non-0 (the DCP is ep0).
+		 */
+		if (usbControlIrpImp.isSetConfiguration())
+			request = new LinuxSetConfigurationRequest();
+		else if (usbControlIrpImp.isSetInterface())
+			request = new LinuxSetInterfaceRequest();
+		else
+			request = new LinuxControlRequest();
+
+		request.getEndpointAddress(getEndpointAddress());
+		request.setUsbIrpImp(usbControlIrpImp);
+		request.setCompletion(this);
+		return request;
 	}
 
 }

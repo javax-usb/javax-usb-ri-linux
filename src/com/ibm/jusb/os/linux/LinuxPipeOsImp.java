@@ -99,8 +99,9 @@ public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,
 	 * Create a LinuxPipeRequest to wrap a UsbIrpImp.
 	 * @param usbIrpImp The UsbIrpImp.
 	 * @return A LinuxPipeRequest for a UsbIrpImp.
+	 * @exception If there is an error while converting.
 	 */
-	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp)
+	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp) throws UsbException
 	{
 		LinuxPipeRequest request = new LinuxPipeRequest(getPipeType(),getEndpointAddress());
 		request.setUsbIrpImp(usbIrpImp);
