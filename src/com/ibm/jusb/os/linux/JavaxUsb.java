@@ -316,7 +316,7 @@ class JavaxUsb {
 	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigImp config,
 		byte length, byte type,
 		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
-		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex )
+		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex, boolean active )
 	{
 		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
 		/* Email ddstreet@ieee.org for more info */
@@ -335,6 +335,10 @@ class JavaxUsb {
 			interfaceProtocol, interfaceIndex );
 
 		UsbInterfaceImp iface = new UsbInterfaceImp( config, desc );
+
+		/* If the config is not active, neither are its interface settings */
+		if (config.isActive() && active)
+			iface.setActiveAlternateSettingNumber( iface.getAlternateSettingNumber() );
 
 		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbDeviceImp().getUsbDeviceOsImp();
 		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );

@@ -15,7 +15,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 
 static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device, unsigned char bus, unsigned char dev );
 
-static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc );
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc );
 
 static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc );
 
@@ -254,7 +254,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 
 			case USB_DT_INTERFACE:
 				if (interface) (*env)->DeleteLocalRef( env, interface );
-				interface = build_interface( env, JavaxUsb, config, (struct jusb_interface_descriptor*)desc );
+				interface = build_interface( env, JavaxUsb, fd, config, (struct jusb_interface_descriptor*)desc );
 				break;
 
 			case USB_DT_ENDPOINT:
@@ -280,18 +280,20 @@ BUILD_CONFIG_EXIT:
 	return result;
 }
 
-static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc )
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc )
 {
 	jobject interface;
+	jboolean isActive;
 
-	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigImp;BBBBBBBBB)Lcom/ibm/jusb/UsbInterfaceImp;" );
+	jmethodID createUsbInterfaceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigImp;BBBBBBBBBZ)Lcom/ibm/jusb/UsbInterfaceImp;" );
 
 	dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_interface : Building interface %d\n", if_desc->bInterfaceNumber );
 
+	isActive = isInterfaceSettingActive( fd, if_desc->bInterfaceNumber, if_desc->bAlternateSetting );
 	interface = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbInterfaceImp, config,
 		if_desc->bLength, if_desc->bDescriptorType,
 		if_desc->bInterfaceNumber, if_desc->bAlternateSetting, if_desc->bNumEndpoints, if_desc->bInterfaceClass,
-		if_desc->bInterfaceSubClass, if_desc->bInterfaceProtocol, if_desc->iInterface );
+		if_desc->bInterfaceSubClass, if_desc->bInterfaceProtocol, if_desc->iInterface, isActive );
 
 	return interface;
 }
