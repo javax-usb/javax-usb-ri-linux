@@ -66,11 +66,13 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 
 	jclass LinuxRequest = NULL;
 	jmethodID getInterfaceNumber, getForceClaim;
+	jboolean forceClaim;
 
 	LinuxRequest = CheckedGetObjectClass( env, linuxRequest );
 	getInterfaceNumber = CheckedGetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
 	getForceClaim = CheckedGetMethodID( env, LinuxRequest, "getForceClaim", "()Z" );
 	CheckedDeleteLocalRef( env, LinuxRequest );
+	forceClaim = CheckedCallBooleanMethod( env, linuxRequest, getForceClaim );
 
 	if (!(interface = malloc(sizeof(*interface)))) {
 		log( LOG_CRITICAL, "Out of memory!" );
@@ -91,7 +93,7 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 		else
 			log( LOG_FUNC, "%s interface %d", claim ? "Claimed" : "Released", *interface );
 
-		if (ret && claim && !triedDisconnect) {
+		if (ret && claim && !triedDisconnect && (JNI_TRUE == forceClaim)) {
 			triedDisconnect = 1;
 #ifdef USBDEVFS_DISCONNECT
 			disconnect_interface_driver(env, fd, *interface);
