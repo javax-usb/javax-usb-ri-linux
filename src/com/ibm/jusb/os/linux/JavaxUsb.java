@@ -45,7 +45,6 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	/** Load native library */
 	public static void loadLibrary() throws UsbException
 	{
-		if ( libraryLoaded ) return;
 		try { System.loadLibrary( LIBRARY_NAME ); }
 		catch ( Exception e ) { throw new UsbException( EXCEPTION_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
 		catch ( Error e ) { throw new UsbException( ERROR_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
@@ -77,6 +76,15 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 
 	//*************************************************************************
 	// Native methods
+
+		//*********************************
+		// Tracing/Logging methods
+
+	/**
+	 * Enable (or disable) tracing of data.
+	 * @param enable If tracing of data should be enabled.
+	 */
+	static native void nativeSetTraceData(boolean enable);
 
 		//*********************************
 		// JavaxUsbTopologyUpdater methods
@@ -302,8 +310,6 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 
 	//*************************************************************************
 	// Class variables
-
-	private static boolean libraryLoaded = false;
 
 	private static Hashtable msgLevelTable = new Hashtable();
 

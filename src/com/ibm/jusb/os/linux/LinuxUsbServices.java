@@ -25,11 +25,16 @@ import com.ibm.jusb.util.*;
  */
 public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 {
-	public LinuxUsbServices()
+	public LinuxUsbServices() throws UsbException
 	{
+		JavaxUsb.loadLibrary();
+
 		topologyUpdateManager.setMaxSize(Long.MAX_VALUE);
 
 		checkProperties();
+
+		/* Startup listener/poller...FIXME - manage the listener/poller better */
+		getRootUsbHub();
 	}
 
     //*************************************************************************
@@ -46,8 +51,6 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     /** @return The virtual USB root hub */
     public synchronized UsbHub getRootUsbHub() throws UsbException
 	{
-		JavaxUsb.loadLibrary(); 
-
 		synchronized (topologyLock) {
 			if (!isListening()) {
 				startTopologyListener();
@@ -94,6 +97,11 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		try {
 			if (p.containsKey(TOPOLOGY_UPDATE_USE_POLLING_KEY))
 				topologyUpdateUsePolling = Boolean.valueOf(p.getProperty(TOPOLOGY_UPDATE_USE_POLLING_KEY)).booleanValue();
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TRACE_DATA))
+				JavaxUsb.nativeSetTraceData(Boolean.valueOf(p.getProperty(TRACE_DATA)).booleanValue());
 		} catch ( Exception e ) { }
 	}
 
@@ -305,6 +313,9 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	/* Whether to use polling to wait for connect/disconnect notification */
 	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = false;
 	public static final String TOPOLOGY_UPDATE_USE_POLLING_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateUsePolling";
+
+	/* This enables (or disables) JNI tracing of data. */
+	public static final String TRACE_DATA = "com.ibm.jusb.os.linux.LinuxUsbServices.trace_data";
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
