@@ -10,15 +10,16 @@
 
 #include "JavaxUsb.h"
 
-static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev, jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices );
+static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev,
+	jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices );
 
-static int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device );
+static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device );
 
-static jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc );
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc );
 
-static void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc );
+static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc );
 
-static void *get_descriptor( int fd );
+static inline void *get_descriptor( int fd );
 
 /**
  * Update topology tree
@@ -80,7 +81,8 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	return 0;
 }
 
-static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev, jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices )
+static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices, unsigned char dev,
+	jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices )
 {
 	int fd = 0, port, ncfg;
 	int devices = 0;
@@ -99,9 +101,7 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 	jmethodID createUsbHubImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbHubImp", "(Ljava/lang/String;I)Lcom/ibm/jusb/UsbHubImp;" );
 	jmethodID createUsbDeviceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbDeviceImp", "(Ljava/lang/String;)Lcom/ibm/jusb/UsbDeviceImp;" );
 	jmethodID configureUsbDeviceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbDeviceImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBBBBBBBBBSSSSLjava/lang/String;)V" );
-	jmethodID checkUsbDeviceImp = (*env)->GetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;BLcom/ibm/jusb/UsbDeviceImp;Ljava/lang/List;Ljava/lang/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
-
-	dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device %d\n", dev );
+	jmethodID checkUsbDeviceImp = (*env)->GetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;ILcom/ibm/jusb/UsbDeviceImp;Ljava/util/List;Ljava/util/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
 
 	if (!path) {
 		dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get current directory!\n" );
@@ -111,6 +111,8 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 	key = malloc(strlen(path) + 5);
 	sprintf( key, "%s/%3.03d", path, dev );
 	keyString = (*env)->NewStringUTF( env, key );
+
+	dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device %s\n", key );
 
 	sprintf( node, "%3.03d", dev );
 	fd = open( node, O_RDWR );
@@ -134,17 +136,23 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 		if (0 >= ioctl( fd, USBDEVFS_IOCTL, usbioctl )) {
 			dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get portinfo from hub, error = %d\n", errno );
 			goto BUILD_DEVICE_EXIT;
+		} else {
+		  dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Device is hub with %d ports\n",portinfo->nports );
 		}
 		free(usbioctl);
 		usbioctl = NULL;
 		device = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbHubImp, keyString, portinfo->nports );
-	} else device = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbDeviceImp, keyString );
+	} else {
+	  device = (*env)->CallStaticObjectMethod( env, JavaxUsb, createUsbDeviceImp, keyString );
+	}
 
 	connectinfo = malloc(sizeof(*connectinfo));
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_CONNECTINFO, connectinfo )) {
 		dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get connectinfo from device, error = %d\n", errno );
 		goto BUILD_DEVICE_EXIT;
+	} else {
+	  dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Device speed is %s\n", (connectinfo->slow?"1.5 Mbps":"12 Mbps") );
 	}
 	speedString = (*env)->NewStringUTF( env, ( connectinfo->slow ? "1.5 Mbps" : "12 Mbps" ) );
 	free(connectinfo);
@@ -167,7 +175,7 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 		}
 	}
 
-	existingDevice = (*env)->CallObjectMethod( env, linuxUsbServices, checkUsbDeviceImp, parent, parentport, device, connectedDevices, disconnectedDevices );
+	existingDevice = (*env)->CallObjectMethod( env, linuxUsbServices, checkUsbDeviceImp, parent, parentport+1, device, connectedDevices, disconnectedDevices );
 	(*env)->DeleteLocalRef( env, device );
 	device = existingDevice;
 
@@ -178,12 +186,13 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 
 	if ((dev_desc->bDeviceClass == USB_CLASS_HUB) && portinfo)
 		for (port=0; port<(portinfo->nports); port++)
-			if (portinfo->port[port])
+			if (portinfo->port[port]) {
+				dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device attached to port %d\n", portinfo->port[port]);
 				devices += build_device( env, JavaxUsb, linuxUsbServices, portinfo->port[port], device, port, connectedDevices, disconnectedDevices );
+			}
 
- BUILD_DEVICE_EXIT:
+BUILD_DEVICE_EXIT:
 	if (fd) close(fd);
-	if (LinuxUsbServices) (*env)->DeleteLocalRef( env, LinuxUsbServices );
 	if (device) (*env)->DeleteLocalRef( env, device );
 	if (connectinfo) free(connectinfo);
 	if (dev_desc) free(dev_desc);
@@ -197,7 +206,7 @@ static int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices,
 	return devices;
 }
 
-static int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device )
+static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device )
 {
 	int result = -1;
 	struct jusb_config_descriptor *cfg_desc = NULL;
@@ -273,7 +282,7 @@ BUILD_CONFIG_EXIT:
 	return result;
 }
 
-static jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc )
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, struct jusb_interface_descriptor *if_desc )
 {
 	jobject interface;
 
@@ -291,7 +300,7 @@ static jobject build_interface( JNIEnv *env, jclass JavaxUsb, jobject config, st
 	return interface;
 }
 
-static void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc )
+static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc )
 {
 	jobject endpoint;
 
@@ -313,7 +322,7 @@ static void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, str
 	(*env)->DeleteLocalRef( env, endpoint );
 }
 
-static void *get_descriptor( int fd )
+static inline void *get_descriptor( int fd )
 {
 	unsigned char *buffer = NULL, *len = NULL;
 	int nread;

@@ -306,30 +306,7 @@ class JavaxUsb {
 	/** @return A new UsbEndpointImp */
 	private static UsbEndpointImp createUsbEndpointImp( UsbInterfaceImp iface )
 	{
-		UsbEndpointImp endpoint = new UsbEndpointImp( iface, null, null );
-
-		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)endpoint.getUsbInterfaceImp().getUsbInterfaceOsImp();
-		LinuxPipeOsImp linuxPipeOsImp = null;
-		switch (endpoint.getType()) {
-		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
-			linuxPipeOsImp = new LinuxControlPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_BULK:
-			linuxPipeOsImp = new LinuxBulkPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_INT:
-			linuxPipeOsImp = new LinuxInterruptPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
-			linuxPipeOsImp = new LinuxIsochronousPipeImp( endpoint.getUsbPipeImp(), linuxInterfaceOsImp );
-			break;
-		default:
-//FIXME - ?
-		}
-		UsbPipeImp usbPipeImp = new UsbPipeImp( endpoint, linuxPipeOsImp );
-		endpoint.setUsbPipeImp( usbPipeImp );
-
-		return endpoint;
+		return new UsbEndpointImp( iface, null, null );
 	}
 
 	//*************************************************************************
@@ -369,7 +346,7 @@ class JavaxUsb {
 	}
 
 	private static void configureUsbConfigImp( UsbConfigImp targetConfig,
-		byte length, byte type,
+		byte length, byte type, short totalLen,
 		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
 		byte maxPowerNeeded, boolean active )
 	{
@@ -383,8 +360,7 @@ class JavaxUsb {
 		attributes += 0;
 		maxPowerNeeded += 0;
 
-		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type,
-/* FIXME - get total length! */ (short)0xff,
+		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type, totalLen,
 			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
 
 		targetConfig.setConfigDescriptor(desc);
@@ -434,6 +410,27 @@ class JavaxUsb {
 			endpointAddress, attributes, interval, maxPacketSize );
 
 		targetEndpoint.setEndpointDescriptor(desc);
+
+		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)targetEndpoint.getUsbInterfaceImp().getUsbInterfaceOsImp();
+		LinuxPipeOsImp linuxPipeOsImp = null;
+		switch (targetEndpoint.getType()) {
+		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
+			linuxPipeOsImp = new LinuxControlPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_BULK:
+			linuxPipeOsImp = new LinuxBulkPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_INT:
+			linuxPipeOsImp = new LinuxInterruptPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
+			linuxPipeOsImp = new LinuxIsochronousPipeImp( targetEndpoint.getUsbPipeImp(), linuxInterfaceOsImp );
+			break;
+		default:
+//FIXME - log
+		}
+		UsbPipeImp usbPipeImp = new UsbPipeImp( targetEndpoint, linuxPipeOsImp );
+		targetEndpoint.setUsbPipeImp( usbPipeImp );
 	}
 
 	//*************************************************************************

@@ -183,15 +183,16 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	 * If the device is new, it is added to the connected list and returned.  If the new device replaces
 	 * an existing device, the old device is retained in the disconnected list, and the new device is returned.
 	 * @param hub The parent UsbHubImp.
-	 * @param port The parent port number.
+	 * @param p The parent port number.
 	 * @param device The UsbDeviceImp to add.
 	 * @param disconnected The List of disconnected devices.
 	 * @param connected The List of connected devices.
 	 * @return The new UsbDeviceImp or existing UsbDeviceImp.
 	 */
-	private UsbDeviceImp checkUsbDeviceImp( UsbHubImp hub, byte port, UsbDeviceImp device, List disconnected, List connected )
+	private UsbDeviceImp checkUsbDeviceImp( UsbHubImp hub, int p, UsbDeviceImp device, List connected, List disconnected )
 	{
 		UsbPortImp usbPortImp = null;
+		byte port = (byte)p;
 
 		try {
 			usbPortImp = hub.getUsbPortImp(port);
