@@ -23,7 +23,7 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 	/** If this is running */
 	public boolean isRunning()
 	{
-		try { return thread.isActive(); }
+		try { return thread.isAlive(); }
 		catch ( NullPointerException npE ) { return false; }
 	}
 

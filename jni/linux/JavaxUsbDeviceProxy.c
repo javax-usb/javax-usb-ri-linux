@@ -59,11 +59,6 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 	startupErrnoID = (*env)->GetFieldID( env, LinuxDeviceProxy, "startupErrno", "I" );
 	isRunningID = (*env)->GetFieldID( env, LinuxDeviceProxy, "isRunning", "Z" );
 	startupCompleted = (*env)->GetMethodID( env, LinuxDeviceProxy, "startupCompleted", "()V" );
-	getLinuxProxyThread = (*env)->GetMethodID( env, LinuxDeviceProxy, "getLinuxProxyThread", "()Ljava/lang/Thread;" );
-	linuxProxyThread = (*env)->CallObjectMethod( env, linuxDeviceProxy, getLinuxProxyThread );
-	LinuxProxyThread = (*env)->GetObjectClass( env, linuxProxyThread );
-	setPID = (*env)->GetMethodID( env, LinuxProxyThread, "setPID", "(I)V" );
-	setSignal = (*env)->GetMethodID( env, LinuxProxyThread, "setSignal", "(I)V" );
 	dequeueRequestVector = (*env)->GetMethodID( env, LinuxDeviceProxy, "dequeueRequestVector", "()Lcom/ibm/jusb/os/linux/LinuxRequest;" );
 	dequeueCancelVector = (*env)->GetMethodID( env, LinuxDeviceProxy, "dequeueCancelVector", "()Lcom/ibm/jusb/os/linux/LinuxRequest;" );
 	getUsbDevice = (*env)->GetMethodID( env, LinuxDeviceProxy, "getUsbDevice", "()Ljavax/usb/UsbDevice;" );
@@ -112,9 +107,6 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 #else
 	loop_count = 0;
 #endif /* SIGSUSPEND_WORKS */
-
-	(*env)->CallVoidMethod( env, linuxProxyThread, setPID, getpid() );
-	(*env)->CallVoidMethod( env, linuxProxyThread, setSignal, JAVA_NOTIFY_SIGNAL );
 
 	(*env)->CallVoidMethod( env, linuxDeviceProxy, startupCompleted );
 
@@ -176,8 +168,6 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 
 DEVICE_PROXY_CLEANUP:
 	(*env)->DeleteLocalRef( env, LinuxDeviceProxy );
-	(*env)->DeleteLocalRef( env, linuxProxyThread );
-	(*env)->DeleteLocalRef( env, LinuxProxyThread );
 	(*env)->DeleteLocalRef( env, usbDevice );
 	if (usbDeviceKey) (*env)->DeleteLocalRef( env, usbDeviceKey );
 }
