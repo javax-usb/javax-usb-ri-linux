@@ -48,9 +48,6 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @param len The actual length. */
 	public void setActualLength(int len) { actualLength = len; }
 
-	/** @param err The number of the error that occurred. */
-	public void setError(int err) { error = err; }
-
 	/** @return the assocaited UsbIrpImp */
 	public UsbIrpImp getUsbIrpImp() { return usbIrpImp; }
 
@@ -83,8 +80,8 @@ class LinuxPipeRequest extends LinuxRequest
 	public void completeUsbIrp()
 	{
 //FIXME - do this here?  in other Thread?  Also, handle errors better.
-		if (0 != error)
-			getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(error)) );
+		if (0 != getError())
+			getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(getError())) );
 		getUsbIrpImp().setActualLength(actualLength);
 		getUsbIrpImp().complete();
 	}
@@ -120,7 +117,6 @@ class LinuxPipeRequest extends LinuxRequest
 	private int length = 0;
 	private int actualLength = 0;
 	private boolean shortPacket = true;
-	private int error = 0;
 
 	private LinuxPipeOsImp linuxPipeImp = null;
 
