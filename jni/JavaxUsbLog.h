@@ -26,35 +26,40 @@
  * @args... The sprintf() format string and replacement parameters.
  */
 #define log(level,args...) do { \
-  if (100 > level) log_named(level,"default",args); else \
-  if (200 > level) log_xfer((level-100),args); else \
-  if (300 > level) log_hotplug((level-200),args); \
+  if (LOG_XFER_FLAG&level) log_xfer(level,args); else \
+  if (LOG_HOTPLUG_FLAG&level) log_hotplug(level,args); else \
+  log_named(level,"default",args); \
 } while(0)
 
+#define LOG_LEVEL_MASK    0x00ff
+#define LOG_FLAG_MASK     0x0f00
+#define LOG_XFER_FLAG     0x0100
+#define LOG_HOTPLUG_FLAG  0x0200
+
 /* Logging levels: */
-#define LOG_CRITICAL  0 /* critical messages, this is the default */
-#define LOG_ERROR     1 /* error messages */
-#define LOG_FUNC      2 /* function entry/exit */
-#define LOG_INFO      3 /* function internal */
-#define LOG_DEBUG     4 /* debugging */
-#define LOG_OTHER     5 /* all other logging */
+#define LOG_CRITICAL  0x00 /* critical messages, this is the default */
+#define LOG_ERROR     0x01 /* error messages */
+#define LOG_FUNC      0x02 /* function entry/exit */
+#define LOG_INFO      0x03 /* function internal */
+#define LOG_DEBUG     0x04 /* debugging */
+#define LOG_OTHER     0x05 /* all other logging */
 
 /* Log data transfers */
 #define log_xfer(level,args...) log_named(level,"xfer",args)
-#define LOG_XFER_CRITICAL  100 /* critical xfers errors */
-#define LOG_XFER_ERROR     101 /* xfer errors */
-#define LOG_XFER_DATA      102 /* raw data only */
-#define LOG_XFER_META      103 /* metadata (device, endpoint, setup, etc) */
-#define LOG_XFER_REQUEST   104 /* request received or completed */
-#define LOG_XFER_OTHER     105 /* all other transfer logging */
+#define LOG_XFER_CRITICAL  (LOG_XFER_FLAG & 0x00) /* critical xfers errors */
+#define LOG_XFER_ERROR     (LOG_XFER_FLAG & 0x01) /* xfer errors */
+#define LOG_XFER_DATA      (LOG_XFER_FLAG & 0x02) /* raw data only */
+#define LOG_XFER_META      (LOG_XFER_FLAG & 0x03) /* metadata (device, endpoint, setup, etc) */
+#define LOG_XFER_REQUEST   (LOG_XFER_FLAG & 0x04) /* request received or completed */
+#define LOG_XFER_OTHER     (LOG_XFER_FLAG & 0x05) /* all other transfer logging */
 
 /* Log hotplug / initialization */
 #define log_hotplug(level,args...) log_named(level,"hotplug",args)
-#define LOG_HOTPLUG_CRITICAL 200 /* critical hotplug errors */
-#define LOG_HOTPLUG_ERROR    201 /* hotplug errors */
-#define LOG_HOTPLUG_CHANGE   202 /* connect/disconnect notices */
-#define LOG_HOTPLUG_DEVICE   203 /* device information */
-#define LOG_HOTPLUG_OTHER    204 /* all other logging */
+#define LOG_HOTPLUG_CRITICAL (LOG_HOTPLUG_FLAG & 0x00) /* critical hotplug errors */
+#define LOG_HOTPLUG_ERROR    (LOG_HOTPLUG_FLAG & 0x01) /* hotplug errors */
+#define LOG_HOTPLUG_CHANGE   (LOG_HOTPLUG_FLAG & 0x02) /* connect/disconnect notices */
+#define LOG_HOTPLUG_DEVICE   (LOG_HOTPLUG_FLAG & 0x03) /* device information */
+#define LOG_HOTPLUG_OTHER    (LOG_HOTPLUG_FLAG & 0x04) /* all other logging */
 
 /* log_named() should not be directly used */
 #define DEFAULT_LOG_LEN 256
@@ -71,7 +76,7 @@ do { \
     real_len = snprintf(buffer, full_len, args); \
     buffer[full_len-1] = 0; \
   } \
-  java_log(env,logname,level,__FILE__,__FUNCTION__,__LINE__,buffer); \
+  java_log(env,logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
 } while (0)
 
 /* Do not use this, use log() */
