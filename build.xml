@@ -9,14 +9,16 @@
 	
 	<property name="Jsr80Env.JSR80_LINUX_JARFILE" value="jsr80_linux.jar"/>
 
-	<property name="Jsr80Env.JSR80_LINUX_SRC_DIR" value="src"/>
+	<property name="Jsr80Env.JSR80_LINUX_BASE_DIR" value="."/>
+
+	<property name="Jsr80Env.JSR80_LINUX_SRC_DIR" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/src"/>
 	<property name="Jsr80Env.JSR80_LINUX_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_SRC_DIR}"/>
-	<property name="Jsr80Env.JSR80_LINUX_LIB_DIR" value="lib"/>
-	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="jni"/>
+	<property name="Jsr80Env.JSR80_LINUX_LIB_DIR" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/lib"/>
+	<property name="Jsr80Env.JSR80_LINUX_JNI_SRC_DIR" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/jni"/>
 	<property name="Jsr80Env.JSR80_LINUX_JNI_DEST_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JARFILE_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_PROPERTIES_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
-	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="docs/jdoc"/>
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/docs/jdoc"/>
 
 	<property name="Jsr80Env.JSR80_LINUX_DEBUG" value="yes"/>
 	<property name="Jsr80Env.JSR80_LINUX_OPTIMIZE" value="yes"/>
@@ -31,7 +33,8 @@
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_HEADER" value=""/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_FOOTER" value=""/>
 
-	<property name="Jsr80Env.JSR80_LINUX_JDOC_PATH" value=""/>
+	<!-- If all the packages are located in the same directory, this will pick up the API and common RI source files. -->
+	<property name="Jsr80Env.JSR80_LINUX_JDOC_PATH" value="${Jsr80Env.JSR80_LINUX_BASE_DIR}/../javax-usb-ri/src:${Jsr80Env.JSR80_LINUX_BASE_DIR}/../javax-usb/src"/>
 
 	<!-- Variables -->
 	<property name="jsr80.linux.dest.dir" value="${Jsr80Env.JSR80_LINUX_DEST_DIR}"/>
