@@ -362,13 +362,13 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	/* If not polling, this is the delay in ms after getting a connect/disconnect notification
 	 * before checking for device updates.  If polling, this is the number of ms between polls.
 	 */
-	public static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
+	public static final int TOPOLOGY_UPDATE_DELAY = 5000; /* 5 seconds */
 	public static final String TOPOLOGY_UPDATE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateDelay";
 
 	/* This is a delay when new devices are found, before sending the notification event that there is a new device.
 	 * This delay is per-device.
 	 */
-	public static final int TOPOLOGY_UPDATE_NEW_DEVICE_DELAY = 2000; /* 2 second per device */
+	public static final int TOPOLOGY_UPDATE_NEW_DEVICE_DELAY = 500; /* 1/2 second per device */
 	public static final String TOPOLOGY_UPDATE_NEW_DEVICE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateNewDeviceDelay";
 
 	/* Whether to use polling to wait for connect/disconnect notification */

@@ -69,8 +69,8 @@ extern int trace_level;
 
 /* Log urb data */
 #define log_urb(level,args...) do { if (trace_urb) log_named(level,"urb",args); } while(0)
-#define LOG_URB_METADATA (LOG_URB_FLAG | 0x00) /* URB fields */
-#define LOG_URB_DATA     (LOG_URB_FLAG | 0x01) /* Actual URB data */
+#define LOG_URB_METADATA (LOG_URB_FLAG | 0x02) /* URB fields */
+#define LOG_URB_DATA     (LOG_URB_FLAG | 0x03) /* Actual URB data */
 
 #define log_default(level,args...) do { if (trace_default) log_named(level,"default",args); } while(0)
 
