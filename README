@@ -13,6 +13,9 @@ GCC development tools (make, gcc, ld, etc...)
 
 JSR80 API and common RI - You must have the API and common RI classfiles/jars in your CLASSPATH.
 
+Note that pre-installed versions of these tools may not be right, e.g. some distros have "Kaffe"
+or "gcc-java" or another version of ant.  Those packages should be replaced/removed.
+
 *********
 * Build *
 *********
