@@ -97,11 +97,13 @@ class LinuxIsochronousRequest extends LinuxPipeRequest
 	public void setUsbIrpImps( List list ) { usbIrpImps = list; }
 
 	/**
-	 * Complete the UsbIrp.
-	 * <p>
-	 * This does not use a single UsbIrp, so this does nothing.
+	 * Complete all the UsbIrps.
 	 */
-	public void completeUsbIrp() { }
+	public void completeUsbIrp()
+	{
+		for (int i=0; i<size(); i++)
+			getUsbIrpImp(i).complete();
+	}
 
 	private List usbIrpImps = null;
 
