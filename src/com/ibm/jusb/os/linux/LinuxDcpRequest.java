@@ -26,6 +26,12 @@ class LinuxDcpRequest extends LinuxRequest
 	/** @return The type of this request */
 	public int getType() { return LinuxRequest.LINUX_DCP_REQUEST; }
 
+	/** @param error The error. */
+	public void setError(int error)
+	{
+		requestImp.setUsbException( new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error), error ) );
+	}
+
 	/** @return this request's data buffer */
 	public byte[] getData() { return dataBuffer; }
 

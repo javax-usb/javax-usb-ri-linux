@@ -28,6 +28,13 @@ class LinuxIsochronousRequest extends LinuxRequest
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_ISOCHRONOUS_REQUEST; }
 
+	/** @param The error */
+	public void setError(int error)
+	{
+		for (int i=0; i<getNumberOfPackets(); i++)
+			setError( i, error );
+	}
+
 	/**
 	 * Get the data buffer at the specified index.
 	 * @return The data buffer for the specified index.

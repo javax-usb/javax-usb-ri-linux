@@ -16,64 +16,93 @@
  * This handles requests to claim/release interfaces
  *
  */
-JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSubmitInterfaceRequest
-  ( JNIEnv *env, jclass JavaxUsb, jobject linuxInterfaceRequest )
-{
-	int *interface = NULL, result = 0, fd = -1;
 
-	jobject linuxRequestProxy;
-	jclass LinuxRequestProxy, LinuxInterfaceRequest;
-	jmethodID getLinuxRequestProxy, getFileDescriptor, getInterfaceNumber, isClaimRequest;
-	jmethodID setSubmitCompleted, setSubmissionStatus, setRequestCompleted, setCompletionStatus;
-	jmethodID removePendingVector, requestCompleted;
-	jboolean claimRequest;
+/**
+ * Claim or release a specified interface.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param claim Whether to claim or release.
+ * @param linuxRequest The request.
+ * @return error.
+ */
+int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
+{
+	int ret = 0, *interface = NULL;
+
+	jclass LinuxRequest = NULL;
+	jmethodID getInterfaceNumber;
+
+	LinuxRequest = (*env)->GetObjectClass( env, linuxRequest );
+	getInterfaceNumber = (*env)->GetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
+	(*env)->DeleteLocalRef( env, LinuxRequest );
 
 	if (!(interface = malloc(sizeof(*interface)))) {
-		dbg( MSG_CRITICAL, "nativeDeviceProxy.handle_interface : Out of memory!\n" );
-		return;
+		dbg( MSG_CRITICAL, "claim_interface : Out of memory!\n" );
+		return -ENOMEM;
 	}
 
-	memset(interface, 0, sizeof(*interface));
+	*interface = (*env)->CallIntMethod( env, linuxRequest, getInterfaceNumber );
 
-	LinuxInterfaceRequest = (*env)->GetObjectClass( env, linuxInterfaceRequest );
-	getLinuxRequestProxy = (*env)->GetMethodID( env, LinuxInterfaceRequest, "getLinuxRequestProxy", "()Lcom/ibm/jusb/os/linux/LinuxRequestProxy;" );
-	getInterfaceNumber = (*env)->GetMethodID( env, LinuxInterfaceRequest, "getInterfaceNumber", "()B" );
-	isClaimRequest = (*env)->GetMethodID( env, LinuxInterfaceRequest, "isClaimRequest", "()Z" );
-	setSubmitCompleted = (*env)->GetMethodID( env, LinuxInterfaceRequest, "setSubmitCompleted", "(Z)V" );
-	setSubmissionStatus = (*env)->GetMethodID( env, LinuxInterfaceRequest, "setSubmissionStatus", "(I)V" );
-	setRequestCompleted = (*env)->GetMethodID( env, LinuxInterfaceRequest, "setRequestCompleted", "(Z)V" );
-	setCompletionStatus = (*env)->GetMethodID( env, LinuxInterfaceRequest, "setCompletionStatus", "(I)V" );
-	linuxRequestProxy = (*env)->CallObjectMethod( env, linuxInterfaceRequest, getLinuxRequestProxy );
-	LinuxRequestProxy = (*env)->GetObjectClass( env, linuxRequestProxy );
-	getFileDescriptor = (*env)->GetMethodID( env, LinuxRequestProxy, "getFileDescriptor", "()I" );
-	fd = (int)(*env)->CallIntMethod( env, linuxRequestProxy, getFileDescriptor );
-	removePendingVector = (*env)->GetMethodID( env, LinuxRequestProxy, "removePendingVector", "(Lcom/ibm/jusb/os/linux/LinuxRequest;)V" );
-	requestCompleted = (*env)->GetMethodID( env, LinuxRequestProxy, "requestCompleted", "(Lcom/ibm/jusb/os/linux/LinuxRequest;)V" );
-	claimRequest = (*env)->CallBooleanMethod( env, linuxInterfaceRequest, isClaimRequest );
-	*interface = (int)(*env)->CallByteMethod( env, linuxInterfaceRequest, getInterfaceNumber );
-
-	dbg( MSG_DEBUG2, "nativeSubmitInterfaceRequest : %s interface %d\n", claimRequest ? "Claiming" : "Releasing", *interface );
-
-	(*env)->CallVoidMethod( env, linuxInterfaceRequest, setSubmissionStatus, 0 );
-	(*env)->CallVoidMethod( env, linuxInterfaceRequest, setSubmitCompleted, JNI_TRUE );
+	dbg( MSG_DEBUG2, "claim_interface : %s interface %d\n", claim ? "Claiming" : "Releasing", *interface );
 
 	errno = 0;
-	if (ioctl( fd, claimRequest ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
-		result = -errno;
+	if (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
+		ret = -errno;
 
-	if (result) {
-		dbg( MSG_ERROR, "nativeSubmitInterfaceRequest : Could not %s interface %d : errno %d\n",
-			claimRequest ? "claim" : "release", *interface, result );
-	} else {
-		dbg( MSG_DEBUG2, "nativeSubmitInterfaceRequest : %s interface %d\n",
-			claimRequest ? "Claimed" : "Released", *interface );
-	}
+	if (ret)
+		dbg( MSG_ERROR, "claim_interface : Could not %s interface %d : errno %d\n", claim ? "claim" : "release", *interface, ret );
+	else
+		dbg( MSG_DEBUG2, "claim_interface : %s interface %d\n", claim ? "Claimed" : "Released", *interface );
 
 	free(interface);
 
-	(*env)->CallVoidMethod( env, linuxRequestProxy, removePendingVector, linuxInterfaceRequest );
-	(*env)->CallVoidMethod( env, linuxInterfaceRequest, setCompletionStatus, result );
-	(*env)->CallVoidMethod( env, linuxInterfaceRequest, setRequestCompleted, JNI_TRUE );
-	(*env)->CallVoidMethod( env, linuxRequestProxy, requestCompleted, linuxInterfaceRequest );
+	return ret;
+}
+
+/**
+ * Check if an interface is claimed.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxRequest The LinuxRequest.
+ */
+int is_claimed( JNIEnv *env, int fd, jobject linuxRequest )
+{
+	struct usbdevfs_getdriver *gd;
+	int ret = 0;
+
+	jclass LinuxRequest;
+	jmethodID getInterfaceNumber, setClaimed;
+
+	LinuxRequest = (*env)->GetObjectClass( env, linuxRequest );
+	getInterfaceNumber = (*env)->GetMethodID( env, LinuxRequest, "getInterfaceNumber", "()I" );
+	setClaimed = (*env)->GetMethodID( env, LinuxRequest, "setClaimed", "(Z)V" );
+	(*env)->DeleteLocalRef( env, LinuxRequest );
+
+	if (!(gd = malloc(sizeof(*gd)))) {
+		dbg(MSG_CRITICAL, "is_claimed : Out of memory!\n");
+		return -ENOMEM;
+	}
+
+	memset(gd, 0, sizeof(*gd));
+
+	gd->interface = (*env)->CallIntMethod( env, linuxRequest, getInterfaceNumber );
+
+	errno = 0;
+	if (ioctl( fd, USBDEVFS_GETDRIVER, gd )) {
+		ret = -errno;
+
+		if (-NODATA == ret)
+			dbg( MSG_DEBUG3, "is_claimed : Interface %d is not claimed\n", gd->interface );
+		else
+			dbg( MSG_ERROR, "is_claimed : Could not determine if interface %d is claimed\n", gd->interface );
+	} else {
+		dbg( MSG_DEBUG3, "is_claimed : Interface %d is claimed by driver %s\n", gd->interface, gd->driver );
+	}
+
+	(*env)->CallVoidMethod( env, linuxRequest, setClaimed, (-ENODATA == ret ? JNI_TRUE : JNI_FALSE) );
+
+	free(gd);
+
+	return (-ENODATA == ret ? 0 : ret);
 }
 

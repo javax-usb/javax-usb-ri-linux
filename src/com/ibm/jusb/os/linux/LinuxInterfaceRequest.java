@@ -22,10 +22,10 @@ class LinuxInterfaceRequest extends LinuxRequest
 	public int getType() { return LinuxRequest.LINUX_INTERFACE_REQUEST; }
 
 	/** @return The interface number */
-	public byte getInterfaceNumber() { return interfaceNumber; }
+	public int getInterfaceNumber() { return interfaceNumber; }
 
 	/** @param number The interface number */
-	public void setInterfaceNumber( byte number ) { interfaceNumber = number; }
+	public void setInterfaceNumber( int number ) { interfaceNumber = number; }
 
 	/** @param error The number of the error that occurred. */
 	public void setError(int error) { errorNumber = error; }
@@ -42,7 +42,7 @@ class LinuxInterfaceRequest extends LinuxRequest
 	//*************************************************************************
 	// Instance variables
 
-	private byte interfaceNumber;
+	private int interfaceNumber;
 
 	private int errorNumber = 0;
 

@@ -20,12 +20,12 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetMsgLevel
 		msg_level = level;
 }
 
-inline __u16 bcd( __u8 msb, __u8 lsb ) 
+__u16 bcd( __u8 msb, __u8 lsb ) 
 {
     return ( (msb << 8) & 0xff00 ) | ( lsb & 0x00ff );
 }
 
-inline int open_device( JNIEnv *env, jstring javaKey, int oflag ) 
+int open_device( JNIEnv *env, jstring javaKey, int oflag ) 
 {
     const char *node;
     int filed;
@@ -37,13 +37,13 @@ inline int open_device( JNIEnv *env, jstring javaKey, int oflag )
     return filed;
 }
 
-inline int bus_node_to_name( int bus, int node, char *name )
+int bus_node_to_name( int bus, int node, char *name )
 {
 	sprintf( name, USBDEVFS_SPRINTF_NODE, bus, node );
 	return strlen( name );
 }
 
-inline int get_busnum_from_name( const char *name )
+int get_busnum_from_name( const char *name )
 {
 	int bus, node;
 	if (1 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
@@ -51,7 +51,7 @@ inline int get_busnum_from_name( const char *name )
 	else return bus;
 }
 
-inline int get_devnum_from_name( const char *name )
+int get_devnum_from_name( const char *name )
 {
 	int bus, node;
 	if (2 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
@@ -59,11 +59,11 @@ inline int get_devnum_from_name( const char *name )
 	else return node;
 }
 
-inline int select_dirent_dir( const struct dirent *dir ) { return select_dirent( dir, DT_DIR ); }
+int select_dirent_dir( const struct dirent *dir ) { return select_dirent( dir, DT_DIR ); }
 
-inline int select_dirent_reg( const struct dirent *reg ) { return select_dirent( reg, DT_REG ); }
+int select_dirent_reg( const struct dirent *reg ) { return select_dirent( reg, DT_REG ); }
 
-inline int select_dirent( const struct dirent *dir_ent, unsigned char type ) 
+int select_dirent( const struct dirent *dir_ent, unsigned char type ) 
 {
 	struct stat stbuf;
 	int n;
@@ -80,17 +80,3 @@ inline int select_dirent( const struct dirent *dir_ent, unsigned char type )
 	}
 	return 1;
 }
-
-inline void check_for_exception( JNIEnv *env ) 
-{
-	jthrowable e;
-
-	printf("Checking for exception (call number %d)\n", exception_check_num++);
-
-	if (!(e = (*env)->ExceptionOccurred( env ))) return;
-
-	dbg( MSG_CRITICAL, "Exception occured!\n" );
-
-	exit(1);
-}
-

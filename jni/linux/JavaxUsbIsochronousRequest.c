@@ -10,19 +10,66 @@
 
 #include "JavaxUsb.h"
 
-/*
- * JavaxUsbIsochronousRequest.c
- *
- * This handles I/O on an Isochronous pipe
- *
+/* simple isochronous functions */
+
+/**
+ * Submit a simple isochronous pipe request.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxPipeRequest The LinuxPipeRequest.
+ * @param usb The usbdevfs_urb.
+ * @return The error that occurred, or 0.
  */
+int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
+{
+	urb->type = USBDEVFS_URB_TYPE_ISO;
+	urb->flags |= USBDEVFS_URB_ISO_ASAP;
+	urb->number_of_packets = 1;
+	urb->iso_frame_desc[0].length = urb->buffer_length;
+
+	errno = 0;
+	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
+		return -errno;
+	else
+		return 0;
+}
+
+/**
+ * Complete a simple isochronous pipe request.
+ * @param env The JNIEnv.
+ * @param linuxPipeRequest The LinuxPipeRequest.
+ * @param urb the usbdevfs_usb.
+ * @return The error that occurred, or 0.
+ */
+int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
+{
+	jclass LinuxPipeRequest;
+	jmethodID setDataLength;
+
+	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
+	setDataLength = (*env)->GetMethodID( env, LinuxPipeRequest, "setDataLength", "(I)V" );
+	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
+
+	(*env)->CallVoidMethod( env, linuxPipeRequest, setDataLength, urb->iso_frame_desc[0].actual_length );
+
+	return urb->iso_frame_desc[0].status;
+}
+
+/* Complex isochronous functions */
 
 static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb );
 static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb );
 
-JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSubmitIsochronousRequest
-  ( JNIEnv *env, jclass JavaxUsb, jobject localLinuxIsochronousRequest, jbyte epAddress)
+/**
+ * Submit a complex isochronous pipe request.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxIsochronousRequest The LinuxIsochronousRequest.
+ * @return The error that occurred, or 0.
+ */
+int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 {
+/*
 	struct usbdevfs_urb *urb;
 	int result = 0, fd = -1, npackets, bufsize, urbsize;
 
@@ -80,9 +127,6 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSubmitIsochrono
 	dbg( MSG_DEBUG2, "nativeSubmitIsochronousRequest : Submitting URB\n" );
 
 	urb->type = USBDEVFS_URB_TYPE_ISO;
-#ifdef SIGSUSPEND_WORKS
-	urb->signr = URB_NOTIFY_SIGNAL;
-#endif /* SIGSUSPEND_WORKS */
 	urb->usercontext = linuxIsochronousRequest;
 	urb->endpoint = (unsigned char)epAddress;
 	urb->flags |= USBDEVFS_URB_ISO_ASAP;
@@ -107,11 +151,30 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSubmitIsochrono
 
 	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmissionStatus, result );
 	(*env)->CallVoidMethod( env, linuxIsochronousRequest, setSubmitCompleted, JNI_TRUE );
+*/
+return -ENOSYS;
 }
 
-JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeCompleteIsochronousRequest
-  ( JNIEnv *env, jclass JavaxUsb, jobject linuxIsochronousRequest )
+/**
+ * Cancel a complex isochronous request.
+ * @param env The JNIEnv.
+ * @param fd The file descriptor.
+ * @param linuxIsochronousRequest The LinuxIsochronousRequest.
+ */
+void cancel_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
 {
+//FIXME - implement
+}
+
+/**
+ * Complete a complex isochronous pipe request.
+ * @param env The JNIEnv.
+ * @param linuxIsochronousRequest The LinuxIsochronousRequest.
+ * @return The error that occurred, or 0.
+ */
+int complete_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
+{
+/*
 	struct usbdevfs_urb *urb;
 	int result;
 
@@ -156,10 +219,13 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeCompleteIsochro
 	free(urb);
 
 	dbg( MSG_DEBUG2, "nativeCompleteIsochronousRequest : Completed URB\n" );
+*/
+return -ENOSYS;
 }
 
 static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb )
 {
+/*
 	int i, offset = 0;
 
 	jclass LinuxIsochronousRequest;
@@ -192,10 +258,13 @@ static inline int create_iso_buffer( JNIEnv *env, jobject linuxIsochronousReques
 	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	return 0;
+*/
+return -ENOSYS;
 }
 
 static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousRequest, struct usbdevfs_urb *urb )
 {
+/*
 	int i, offset = 0;
 
 	jclass LinuxIsochronousRequest;
@@ -233,5 +302,7 @@ static inline int destroy_iso_buffer( JNIEnv *env, jobject linuxIsochronousReque
 	(*env)->DeleteLocalRef( env, LinuxIsochronousRequest );
 
 	return urb->status;
+*/
+return -ENOSYS;
 }
 

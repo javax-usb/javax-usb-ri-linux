@@ -54,11 +54,23 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @param pipe the assocaited LinuxPipeOsImp */
 	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
 
-	/** @return the address of the assocaited URB */
-	public int getUrbAddress() { return urbAddress; }
+	//****************************************************************************
+	// Private methods
 
-	/** @param address the address of the assocaited URB */
-	public void setUrbAddress( int address ) { urbAddress = address; }
+	/** @return The type of pipe */
+	private int getPipeType()
+	{
+		switch (getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getType()) {
+		case UsbInfoConst.ENDPOINT_TYPE_CONTROL: return PIPE_CONTROL;
+		case UsbInfoConst.ENDPOINT_TYPE_BULK: return PIPE_BULK;
+		case UsbInfoConst.ENDPOINT_TYPE_INTERRUPT: return PIPE_INTERRUPT;
+		case UsbInfoConst.ENDPOINT_TYPE_ISOCHRONOUS: return PIPE_ISOCHRONOUS;
+		default: /* log */ return 0;
+		}
+	}
+
+	/** @return the endpoint address */
+	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointAddress(); }
 
 	//*************************************************************************
 	// Instance variables
@@ -69,4 +81,9 @@ class LinuxPipeRequest extends LinuxRequest
 
 	private int urbAddress = 0;
 
+	/* These MUST match those defined in jni/linux/JavaxUsbRequest.c */
+	private static final int PIPE_CONTROL = 1;
+	private static final int PIPE_BULK = 2;
+	private static final int PIPE_INTERRUPT = 3;
+	private static final int PIPE_ISOCHRONOUS = 4;
 }

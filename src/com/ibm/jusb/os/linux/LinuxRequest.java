@@ -21,17 +21,11 @@ abstract class LinuxRequest
 	 */
 	public abstract int getType();
 
-	/**
-	 * Get the LinuxRequestProxy.
-	 * @return The LinuxRequestProxy.
+	/** 
+	 * Set the error that occurred.
+	 * @param The error that occcured.
 	 */
-	public LinuxRequestProxy getLinuxRequestProxy() { return linuxRequestProxy; }
-
-	/**
-	 * Set the LinuxRequestProxy.
-	 * @param proxy The LinuxRequestProxy.
-	 */
-	public void setLinuxRequestProxy(LinuxRequestProxy proxy) { linuxRequestProxy = proxy; }
+	public abstract void setError(int error);
 
 	/** Wait until completed. */
 	public void waitUntilCompleted()

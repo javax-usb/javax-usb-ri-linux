@@ -61,8 +61,6 @@
 #define MAX_PATH_LENGTH 255
 
 #define MAX_POLLING_ERRORS 64
-#define URB_NOTIFY_SIGNAL SIGRTMIN+13
-#define JAVA_NOTIFY_SIGNAL SIGRTMIN+14
 
 extern int msg_level;
 
@@ -121,21 +119,61 @@ struct jusb_string_descriptor {
 	unsigned char bString[254];
 };
 
-inline __u16 bcd( __u8 msb, __u8 lsb );
+/* Request methods */
 
-inline int open_device( JNIEnv *env, jstring jkey, int oflag );
+int pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
+int dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
+int isochronous_request( JNIEnv *env, int fd, jobject linuxRequest );
 
-inline int bus_node_to_name( int bus, int node, char *name );
-inline int get_busnum_from_name( const char *name );
-inline int get_devnum_from_name( const char *name );
+void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
+void cancel_dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
+void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxRequest );
 
-inline int select_dirent_dir( const struct dirent *dir );
-inline int select_dirent_reg( const struct dirent *reg );
-inline int select_dirent( const struct dirent *dir_ent, unsigned char type );
+void complete_pipe_request( JNIEnv *env, jobject linuxRequest );
+void complete_dcp_request( JNIEnv *env, jobject linuxRequest );
+void complete_isochronous_request( JNIEnv *env, jobject linuxRequest );
 
-inline void check_for_exception( JNIEnv *env );
+int set_configuration( JNIEnv *env, int fd, jobject linuxRequest );
+int set_interface( JNIEnv *env, int fd, jobject linuxRequest );
 
-inline void debug_urb( char *calling_method, struct usbdevfs_urb *urb );
+int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest );
+int is_claimed( JNIEnv *env, int fd, jobject linuxRequest );
+
+int control_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+
+int complete_control_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int complete_bulk_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int complete_interrupt_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
+
+/* Utility methods */
+
+__u16 bcd( __u8 msb, __u8 lsb );
+
+int open_device( JNIEnv *env, jstring jkey, int oflag );
+
+int bus_node_to_name( int bus, int node, char *name );
+int get_busnum_from_name( const char *name );
+int get_devnum_from_name( const char *name );
+
+int select_dirent_dir( const struct dirent *dir );
+int select_dirent_reg( const struct dirent *reg );
+int select_dirent( const struct dirent *dir_ent, unsigned char type );
+
+void debug_urb( char *calling_method, struct usbdevfs_urb *urb );
+
+void check_for_exception( JNIEnv *env ) 
+{
+	jthrowable e;
+
+	printf("Checking for exception (call number %d)\n", exception_check_num++);
+	if (!(e = (*env)->ExceptionOccurred( env ))) return;
+	dbg( MSG_CRITICAL, "Exception occured!\n" );
+	exit(1);
+}
 
 #endif /* _JAVAUSBUTIL_H */
 
