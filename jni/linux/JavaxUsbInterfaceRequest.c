@@ -99,7 +99,7 @@ int is_claimed( JNIEnv *env, int fd, jobject linuxRequest )
 		dbg( MSG_DEBUG3, "is_claimed : Interface %d is claimed by driver %s\n", gd->interface, gd->driver );
 	}
 
-	(*env)->CallVoidMethod( env, linuxRequest, setClaimed, (-ENODATA == ret ? JNI_TRUE : JNI_FALSE) );
+	(*env)->CallVoidMethod( env, linuxRequest, setClaimed, (ret ? JNI_FALSE : JNI_TRUE) );
 
 	free(gd);
 

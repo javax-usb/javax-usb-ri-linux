@@ -95,6 +95,11 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 
 		request.waitUntilCompleted();
 
+		if (0 != request.getError()) {
+//FIXME - log
+				return false;
+		}
+
 		return request.isClaimed();
 	}
 
