@@ -15,7 +15,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int show_urb_data;
+extern int trace_data;
+
+/* need to get away from tracing calls to Java - too expensive. */
+#define trace_urb_data(x...) printf(x)
 
 /*
  * Log to Java.

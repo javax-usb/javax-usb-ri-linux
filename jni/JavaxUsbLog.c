@@ -14,7 +14,16 @@
 
 static int fatalLogError = 0;
 
-int show_urb_data = 0;
+int trace_data = 0;
+
+JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceData
+(JNIEnv *env, jclass JavaxUsb, jboolean enable)
+{
+	if (JNI_TRUE == enable)
+		trace_data = 1;
+	else
+		trace_data = 0;
+}
 
 static inline void log_fatal(char *msg)
 {
