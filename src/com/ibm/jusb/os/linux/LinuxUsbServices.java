@@ -199,13 +199,36 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		UsbDeviceImp existingDevice = usbPortImp.getUsbDeviceImp();
 
-		if (existingDevice.equals(device)) {
+		if (isUsbDevicesEqual(existingDevice, device)) {
 			disconnected.remove(existingDevice);
 			return existingDevice;
 		} else {
 			connected.add(device);
 			device.setParentUsbPortImp(usbPortImp);
 			return device;
+		}
+	}
+
+	/**
+	 * Return if the specified devices appear to be equal.
+	 * <p>
+	 * If either of the device's descriptors are null, this returns false.
+	 * @param dev1 The first device.
+	 * @param dev2 The second device.
+	 * @return If the devices appear to be equal.
+	 */
+	protected boolean isUsbDevicesEqual(UsbDeviceImp dev1, UsbDeviceImp dev2)
+	{
+		try {
+			UsbDeviceDescriptor desc1 = dev1.getUsbDeviceDescriptor();
+			UsbDeviceDescriptor desc2 = dev2.getUsbDeviceDescriptor();
+
+			return
+				(dev1.isUsbHub() == dev1.isUsbHub()) &&
+				dev1.getSpeed() == dev2.getSpeed() &&
+				desc1.equals(desc2);
+		} catch ( NullPointerException npE ) {
+			return false;
 		}
 	}
 
