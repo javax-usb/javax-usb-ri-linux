@@ -108,12 +108,12 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 
 		if (UsbConst.REQUESTTYPE_RECIPIENT_INTERFACE == (byte)(UsbConst.REQUESTTYPE_RECIPIENT_MASK & irp.bmRequestType())) {
 			byte ifacenum = (byte)irp.wIndex();
-			UsbInterface iface = interfaceNumberToUsbInterface(ifacenum);
+			UsbInterfaceImp iface = interfaceNumberToUsbInterfaceImp(ifacenum);
 			String iStr = "0x" + UsbUtil.toHexString(ifacenum);
 			if (null == iface) {
 				IllegalArgumentException iaE = new IllegalArgumentException("No active interface with number " + iStr);
 				throw new UsbPlatformException("Request with recipient interface " + iStr + ", but no such interface in current active configuration", iaE);
-			} else if (!iface.isClaimed()) {
+			} else if (!iface.isJavaClaimed()) {
 				UsbNotClaimedException uncE = new UsbNotClaimedException("Interface " + iStr + " is not claimed");
 				throw new UsbPlatformException("Request with recipient interface " + iStr + ", but interface is not claimed", uncE);
 			}
@@ -123,12 +123,12 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 			byte epNum = (byte)irp.wIndex();
 			if (0 == epNum)
 				return;
-			UsbInterface iface = endpointAddressToUsbInterface(epNum);
+			UsbInterfaceImp iface = endpointAddressToUsbInterfaceImp(epNum);
 			String eStr = "0x" + UsbUtil.toHexString(epNum);
 			if (null == iface) {
 				IllegalArgumentException iaE = new IllegalArgumentException("No active enpoint with address " + eStr);
 				throw new UsbPlatformException("Request with recipient endpoint " + eStr + ", but no such endpoint in current active configuration and interfaces", iaE);
-			} else if (!iface.isClaimed()) {
+			} else if (!iface.isJavaClaimed()) {
 				String iStr = "0x" + UsbUtil.toHexString(iface.getUsbInterfaceDescriptor().bInterfaceNumber());
 				UsbNotClaimedException uncE = new UsbNotClaimedException("Interface " + iStr + ", which owns endpoint " + eStr + ", is not claimed");
 				throw new UsbPlatformException("Request with recipient endpoint " + eStr + " which belongs to interface " + iStr + ", but interface is not claimed", uncE);
@@ -136,19 +136,19 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 		}
 	}
 
-	protected UsbInterface interfaceNumberToUsbInterface(byte num)
+	protected UsbInterfaceImp interfaceNumberToUsbInterfaceImp(byte num)
 	{
-		return getUsbDeviceImp().getActiveUsbConfiguration().getUsbInterface(num);
+		return getUsbDeviceImp().getActiveUsbConfigurationImp().getUsbInterfaceImp(num);
 	}
 
-	protected UsbInterface endpointAddressToUsbInterface(byte addr)
+	protected UsbInterfaceImp endpointAddressToUsbInterfaceImp(byte addr)
 	{
-		List ifaces = getUsbDeviceImp().getActiveUsbConfiguration().getUsbInterfaces();
+		List ifaces = getUsbDeviceImp().getActiveUsbConfigurationImp().getUsbInterfaces();
 		for (int i=0; i<ifaces.size(); i++) {
-			UsbInterface iface = (UsbInterface)ifaces.get(i);
+			UsbInterfaceImp iface = (UsbInterfaceImp)ifaces.get(i);
 			List eps = iface.getUsbEndpoints();
 			for (int e=0; e<eps.size(); e++) {
-				UsbEndpoint ep = (UsbEndpoint)eps.get(e);
+				UsbEndpointImp ep = (UsbEndpointImp)eps.get(e);
 				if (ep.getUsbEndpointDescriptor().bEndpointAddress() == addr)
 					return iface;
 			}
