@@ -162,7 +162,7 @@
 	<!-- Cleans everything -->
 	<target name="clean">
 		<echo message="Cleaning everything."/>
-		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" failonerror="false">
+		<delete verbose="${jsr80.linux.verbose}" quiet="${jsr80.linux.quiet}" includeEmptyDirs="true" failonerror="false">
 			<fileset dir="${jsr80.linux.dest.dir}" includes="com/ibm/jusb/**/*.class"/>
 			<fileset dir="${jsr80.linux.jarfile.dir}" includes="${jsr80.linux.jarfile}"/>
 			<fileset dir="${jsr80.linux.jni.dest.dir}" includes="${jsr80.linux.jni.library}"/>
