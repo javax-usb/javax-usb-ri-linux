@@ -18,12 +18,10 @@ GCC development tools (make, gcc, ld, etc...)
 The ANT tool uses XML buildfiles to create the project.  Run ant in
 the toplevel directory to list all available targets.
 
-The "all" target creates everything.
-
 ****************
 * Installation *
 ****************
 
-Add the lib/jsr80_ri_linux.jar jarfile to your CLASSPATH.
-Add the lib/libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
+Add lib/jsr80_ri_linux.jar to your CLASSPATH.
+Add lib/libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
 
