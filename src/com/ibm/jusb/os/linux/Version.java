@@ -24,7 +24,7 @@ public class Version
 	}
 
 	public static final String LINUX_API_VERSION = "0.10.1";
-	public static final String LINUX_IMP_VERSION = "0.10.5-CVS";
+	public static final String LINUX_IMP_VERSION = "0.10.5";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "JSR80 : javax.usb"
 		+"\n"
