@@ -21,8 +21,7 @@ static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interfa
 
 static inline void *get_descriptor( JNIEnv *env, int fd );
 
-static int select_bus(const struct dirent *entry);
-static int select_dev(const struct dirent *entry);
+static int select_usbfs(const struct dirent *entry);
 
 /**
  * Update topology tree
@@ -45,7 +44,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	}
 
 	errno = 0;
-	if (0 > (busses = scandir(USBDEVFS_PATH, &buslist, select_bus, alphasort)) ) {
+	if (0 > (busses = scandir(USBDEVFS_PATH, &buslist, select_usbfs, alphasort)) ) {
 		log( LOG_ERROR, "Could not access %s : %s", USBDEVFS_PATH, strerror(errno) );
 		return -errno;
 	}
@@ -60,7 +59,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 		bus = atoi( buslist[port]->d_name );
 
 		errno = 0;
-		devs = scandir(busdir, &devlist, select_dev, alphasort);
+		devs = scandir(busdir, &devlist, select_usbfs, alphasort);
 
 		if (0 > devs) {
 			log( LOG_ERROR, "Could not access device nodes in %s : %s", busdir, strerror(errno) );
@@ -340,12 +339,16 @@ GET_DESCRIPTOR_EXIT:
 	return buffer;
 }
 
-static int select_bus(const struct dirent *entry)
+static int select_usbfs(const struct dirent *entry)
 {
-	return strcmp(".",entry->d_name) && strcmp("..",entry->d_name) && S_ISDIR(DTTOIF(entry->d_type));
-}
-
-static int select_dev(const struct dirent *entry)
-{
-	return S_ISREG(DTTOIF(entry->d_type));
+	/* This originally used entry->d_type, however Linux 2.4 doesn't implement d_type,
+	 * and POSIX apparently doesn't define it either.  So let's just do name matching.
+	 * Hope that doesn't change.
+	 */
+	int n = atoi(entry->d_name);
+	/* If the number conversion of the name is 1-999 and the name is 3 characters long (exactly),
+	 * it's (hopefully) ok.  Technically, the number should be no larger than 127, but let's not get
+	 * unnecessarily picky.
+	 */
+	return (0 < n) && (n < 1000) && (3 == strlen(entry->d_name));
 }
