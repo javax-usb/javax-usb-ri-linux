@@ -40,14 +40,6 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     //*************************************************************************
     // Public methods
 
-	/** Main method to print out version information */
-	public static void main(String[] argv)
-	{
-		System.out.println("javax.usb Linux implementation version " + LINUX_IMP_VERSION);
-		System.out.println("javax.usb Required Platform-Implementation version " + LINUX_API_VERSION + " (or later)");
-		System.out.println(LINUX_IMP_DESCRIPTION);
-	}
-
     /** @return The virtual USB root hub */
     public synchronized UsbHub getRootUsbHub() throws UsbException
 	{
@@ -71,13 +63,13 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	}
 
 	/** @return The minimum API version this supports. */
-	public String getApiVersion() { return LINUX_API_VERSION; }
+	public String getApiVersion() { return com.ibm.jusb.os.linux.Version.LINUX_API_VERSION; }
 
 	/** @return The version number of this implementation. */
-	public String getImpVersion() { return LINUX_IMP_VERSION; }
+	public String getImpVersion() { return com.ibm.jusb.os.linux.Version.LINUX_IMP_VERSION; }
 
 	/** @return Get a description of this UsbServices implementation. */
-	public String getImpDescription() { return LINUX_IMP_DESCRIPTION; }
+	public String getImpDescription() { return com.ibm.jusb.os.linux.Version.LINUX_IMP_DESCRIPTION; }
 
     //*************************************************************************
     // Private methods
@@ -318,23 +310,5 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	public static final String TRACE_DATA = "com.ibm.jusb.os.linux.LinuxUsbServices.trace_data";
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
-
-	public static final String LINUX_API_VERSION = "0.10.1";
-	public static final String LINUX_IMP_VERSION = "0.10.4-CVS";
-	public static final String LINUX_IMP_DESCRIPTION =
-		 "JSR80 : javax.usb"
-		+"\n"
-		+"\n"+"Implementation for the Linux kernel (2.4.x).\n"
-		+"\n"
-		+"\n"+"*"
-		+"\n"+"* Copyright (c) 1999 - 2001, International Business Machines Corporation."
-		+"\n"+"* All Rights Reserved."
-		+"\n"+"*"
-		+"\n"+"* This software is provided and licensed under the terms and conditions"
-		+"\n"+"* of the Common Public License:"
-		+"\n"+"* http://oss.software.ibm.com/developerworks/opensource/license-cpl.html"
-		+"\n"
-		+"\n"+"http://javax-usb.org/"
-		;
 
 }
