@@ -42,6 +42,18 @@ class LinuxIsochronousRequest extends LinuxRequest
 	public byte[] getData( int index ) { return getUsbIrpImp(index).getData(); }   
 
 	/**
+	 * Get the total size of all buffers in the List.
+	 * @return The total size of all buffers in the List.
+	 */
+	public int getBufferSize()
+	{
+		int totalSize = 0;
+		for (int i=0; i<getNumberOfPackets(); i++)
+			totalSize += getData(i).length;
+		return totalSize;
+	}
+
+	/**
 	 * Set the data length of the data at the specified index.
 	 * @param index The index of the data.
 	 * @param len The data length of the specified indexed data.
@@ -79,6 +91,12 @@ class LinuxIsochronousRequest extends LinuxRequest
 
 	/** @param address the address of the assocaited URB */
 	public void setUrbAddress( int address ) { urbAddress = address; }
+
+	//*************************************************************************
+	// Private methods
+
+	/** @return the endpoint address */
+	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointAddress(); }
 
 	//*************************************************************************
 	// Instance variables
