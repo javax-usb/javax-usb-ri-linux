@@ -57,6 +57,8 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	 */
 	public static UsbException errorToUsbException(int error)
 	{
+		error = Math.abs(error);
+
 		switch (error) {
 		case 32:
 			return new UsbStallException();
