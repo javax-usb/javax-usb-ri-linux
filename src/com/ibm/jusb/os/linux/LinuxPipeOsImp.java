@@ -72,6 +72,12 @@ public abstract class LinuxPipeOsImp implements UsbPipeOsImp
 	 */
 	public void close() { }
 
+	/** @return Not to accept byte[]s */
+	public boolean passBytes() { return false; }
+
+	/** @return Not to accept Lists */
+	public boolean passLists() { return false; }
+
 	/**
 	 * Synchonously submits this byte[] array to the UsbPipe
 	 * @param data the byte[] data

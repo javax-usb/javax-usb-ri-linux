@@ -28,5 +28,8 @@ class LinuxIsochronousPipeImp extends LinuxPipeOsImp
 	//*************************************************************************
 	// Public methods
 
+	/** @return To accept Lists */
+	public boolean passLists() { return true; }
+
 }
 
