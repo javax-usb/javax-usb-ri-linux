@@ -49,7 +49,7 @@
 	<property name="jsr80.linux.jni.src.dir" value="${Jsr80Env.JSR80_LINUX_JNI_SRC_DIR}"/>
 	<property name="jsr80.linux.jni.dest.dir" value="${Jsr80Env.JSR80_LINUX_JNI_DEST_DIR}"/>
 	<property name="jsr80.linux.jni.library" value="libJavaxUsb.so"/>
-	<property name="jsr80.linux.properties" value="jsr80.properties"/>
+	<property name="jsr80.linux.properties" value="javax.usb.properties"/>
 	<property name="jsr80.linux.properties.dir" value="${Jsr80Env.JSR80_LINUX_PROPERTIES_DIR}"/>
 	<property name="jsr80.linux.jarfile" value="${Jsr80Env.JSR80_LINUX_JARFILE}"/>
 	<property name="jsr80.linux.jarfile.dir" value="${Jsr80Env.JSR80_LINUX_JARFILE_DIR}"/>
