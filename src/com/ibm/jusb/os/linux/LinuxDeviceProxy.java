@@ -52,7 +52,7 @@ class LinuxDeviceProxy extends LinuxRequestProxy
 		}
 
 		if (0 != startError)
-			throw new UsbException("Could not connect to USB device : " + JavaxUsb.nativeGetErrorMessage(startError));
+			throw JavaxUsb.errorToUsbException(startError, "Could not connect to USB device");
 		else
 			thread = t;
 	}

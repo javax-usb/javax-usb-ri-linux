@@ -69,7 +69,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 		request.waitUntilCompleted();
 
 		if (0 != request.getError())
-			throw new UsbException("Could not claim interface : " + JavaxUsb.nativeGetErrorMessage(request.getError()));
+			throw JavaxUsb.errorToUsbException(request.getError(), "Could not claim interface");
 	}
 
 	/**
@@ -85,7 +85,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 		request.waitUntilCompleted();
 
 		if (0 != request.getError())
-			throw new UsbException("Could not claim interface : " + JavaxUsb.nativeGetErrorMessage(request.getError()));
+			throw JavaxUsb.errorToUsbException(request.getError(), "Could not claim interface");
 	}
 
 	/**

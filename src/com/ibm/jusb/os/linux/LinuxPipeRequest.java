@@ -81,7 +81,7 @@ class LinuxPipeRequest extends LinuxRequest
 	{
 //FIXME - do this here?  in other Thread?  Also, handle errors better.
 		if (0 != getError())
-			getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(getError())) );
+			getUsbIrpImp().setUsbException( JavaxUsb.errorToUsbException(getError(), "Error submitting IRP") );
 		getUsbIrpImp().setActualLength(actualLength);
 		getUsbIrpImp().complete();
 	}

@@ -55,25 +55,7 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	 * @param error The error code.
 	 * @return A UsbException.
 	 */
-	public static UsbException errorToUsbException(int error)
-	{
-		error = Math.abs(error);
-
-		switch (error) {
-		case 32:
-			return new UsbStallException();
-		case 71:
-			return new UsbBitStuffException();
-		case 75:
-			return new UsbBabbleException();
-		case 84:
-			return new UsbCRCException();
-		case 121:
-			return new UsbShortPacketException();
-		default:
-			return new UsbPlatformException(nativeGetErrorMessage(error));
-		}
-	}
+	public static UsbException errorToUsbException(int error) { return errorToUsbException(error, ""); }
 
 	/**
 	 * Convert the error code to a UsbException using the specified text.
@@ -86,7 +68,25 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	 */
 	public static UsbException errorToUsbException(int error, String string)
 	{
-		return new UsbException(string + " : " + nativeGetErrorMessage(error));
+		error = Math.abs(error);
+
+		if (0 < string.length())
+			string += " : ";
+
+		switch (error) {
+		case 32:
+			return new UsbStallException(string + "UsbStallException");
+		case 71:
+			return new UsbBitStuffException(string + "UsbBitStuffException");
+		case 75:
+			return new UsbBabbleException(string + "UsbBabbleException");
+		case 84:
+			return new UsbCRCException(string + "UsbCRCException");
+		case 121:
+			return new UsbShortPacketException(string + "UsbShortPacketException");
+		default:
+			return new UsbPlatformException(string + nativeGetErrorMessage(error));
+		}
 	}
 
 	//*************************************************************************
@@ -139,7 +139,7 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	 * @param error the error number
 	 * @return the message associated with the specified error number
 	 */
-	static native String nativeGetErrorMessage( int error );
+	static private native String nativeGetErrorMessage( int error );
 
 	//*************************************************************************
 	// Creation methods
