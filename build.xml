@@ -17,7 +17,7 @@
 	<property name="Jsr80Env.JSR80_LINUX_JARFILE_DIR" value="${Jsr80Env.JSR80_LINUX_LIB_DIR}"/>
 	<property name="Jsr80Env.JSR80_LINUX_JDOC_DIR" value="docs/jdoc"/>
 
-	<property name="Jsr80Env.JSR80_LINUX_DEBUG" value="no"/>
+	<property name="Jsr80Env.JSR80_LINUX_DEBUG" value="yes"/>
 	<property name="Jsr80Env.JSR80_LINUX_OPTIMIZE" value="yes"/>
 	<property name="Jsr80Env.JSR80_LINUX_DEPRECATION" value="yes"/>
 	<property name="Jsr80Env.JSR80_LINUX_VERBOSE" value="no"/>
