@@ -22,9 +22,6 @@ class LinuxControlRequest extends LinuxPipeRequest
 {
 	public LinuxControlRequest() { super(UsbConst.ENDPOINT_TYPE_CONTROL,(byte)0x00); }
 
-	/** @return This request's type. */
-	public int getType() { return LinuxRequest.LINUX_CONTROL_REQUEST; }
-
 	/** @param irp The (Control)UsbIrpImp */
 	public void setUsbIrpImp( UsbIrpImp irp ) { setUsbIrpImp((ControlUsbIrpImp)irp); }
 

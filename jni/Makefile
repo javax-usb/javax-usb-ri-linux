@@ -16,7 +16,7 @@ OBJECTS = \
 	JavaxUsbUtil.o \
 	JavaxUsbTopologyUpdater.o JavaxUsbTopologyListener.o JavaxUsbActive.o \
 	JavaxUsbDeviceProxy.o \
-	JavaxUsbPipeRequest.o JavaxUsbInterfaceRequest.o JavaxUsbDcpRequest.o \
+	JavaxUsbPipeRequest.o JavaxUsbInterfaceRequest.o \
 	JavaxUsbControlRequest.o JavaxUsbBulkRequest.o JavaxUsbInterruptRequest.o JavaxUsbIsochronousRequest.o \
 	JavaxUsbError.o
 HEADER = com_ibm_jusb_os_linux_JavaxUsb.h

@@ -86,7 +86,7 @@ int complete_control_pipe_request( JNIEnv *env, jobject linuxControlRequest, str
 
 	(*env)->SetByteArrayRegion( env, data, offset, urb->actual_length, urb->buffer + 8 );
 
-	(*env)->CallVoidMethod( env, linuxPipeRequest, setActualLength, urb->actual_length );
+	(*env)->CallVoidMethod( env, linuxControlRequest, setActualLength, urb->actual_length );
 
 	if (data) (*env)->DeleteLocalRef( env, data );
 	if (urb->buffer) free(urb->buffer);

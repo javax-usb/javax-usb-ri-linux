@@ -94,13 +94,12 @@ abstract class LinuxRequest
 
 	/* These MUST be the same as those defined in jni/linux/JavaxUsbDeviceProxy.c */
 	public static final int LINUX_PIPE_REQUEST = 1;
-	public static final int LINUX_CONTROL_REQUEST = 2;
-	public static final int LINUX_SET_INTERFACE_REQUEST = 3;
-	public static final int LINUX_SET_CONFIGURATION_REQUEST = 4;
-	public static final int LINUX_CLAIM_INTERFACE_REQUEST = 5;
-	public static final int LINUX_IS_CLAIMED_INTERFACE_REQUEST = 6;
-	public static final int LINUX_RELEASE_INTERFACE_REQUEST = 7;
-	public static final int LINUX_ISOCHRONOUS_REQUEST = 8;
+	public static final int LINUX_SET_INTERFACE_REQUEST = 2;
+	public static final int LINUX_SET_CONFIGURATION_REQUEST = 3;
+	public static final int LINUX_CLAIM_INTERFACE_REQUEST = 4;
+	public static final int LINUX_IS_CLAIMED_INTERFACE_REQUEST = 5;
+	public static final int LINUX_RELEASE_INTERFACE_REQUEST = 6;
+	public static final int LINUX_ISOCHRONOUS_REQUEST = 7;
 
 	public static interface Completion
 	{ public void linuxRequestComplete(LinuxRequest request); }
