@@ -185,7 +185,7 @@ static int config_ask_device( JNIEnv *env, int fd )
 {
 	int ret = 0;
 
-	struct usbdevfs_ctrltransfer *ctrl = NULL;
+	struct javaxusb_usbdevfs_ctrltransfer *ctrl = NULL;
 	unsigned char *actconfig = NULL;
 
 	if (!(ctrl = malloc(sizeof(*ctrl))) || !(actconfig = malloc(1))) {
@@ -196,11 +196,11 @@ static int config_ask_device( JNIEnv *env, int fd )
 
 	*actconfig = 0;
 
-	ctrl->requesttype = (__u8)0x80;
-	ctrl->request = 0x08;
-	ctrl->value = 0x00;
-	ctrl->index = 0x00;
-	ctrl->length = 1;
+	ctrl->bmRequestType = (__u8)0x80;
+	ctrl->bRequest = 0x08;
+	ctrl->wValue = 0x00;
+	ctrl->wIndex = 0x00;
+	ctrl->wLength = 1;
 	ctrl->timeout = CONFIG_ASK_DEVICE_TIMEOUT;
 	ctrl->data = actconfig;
 
@@ -227,7 +227,7 @@ static int interface_ask_device( JNIEnv *env, int fd, __u8 interface )
 {
 	int ret = 0;
 
-	struct usbdevfs_ctrltransfer *ctrl = NULL;
+	struct javaxusb_usbdevfs_ctrltransfer *ctrl = NULL;
 	unsigned char *actsetting = NULL;
 
 	if (!(ctrl = malloc(sizeof(*ctrl))) || !(actsetting = malloc(1))) {
@@ -238,11 +238,11 @@ static int interface_ask_device( JNIEnv *env, int fd, __u8 interface )
 
 	*actsetting = 0;
 
-	ctrl->requesttype = (__u8)0x81;
-	ctrl->request = 0x0a;
-	ctrl->value = 0x00;
-	ctrl->index = interface;
-	ctrl->length = 1;
+	ctrl->bmRequestType = (__u8)0x81;
+	ctrl->bRequest = 0x0a;
+	ctrl->wValue = 0x00;
+	ctrl->wIndex = interface;
+	ctrl->wLength = 1;
 	ctrl->timeout = INTERFACE_ASK_DEVICE_TIMEOUT;
 	ctrl->data = actsetting;
 

@@ -18,6 +18,18 @@
 #include <linux/usbdevice_fs.h>
 #include <linux/usb.h>
 
+// The names of this struct's fields change from 2.4 to 2.6.
+// But it's binary compatible, so let's just define it here.
+struct javaxusb_usbdevfs_ctrltransfer {
+	__u8 bmRequestType;
+	__u8 bRequest;
+	__u16 wValue;
+	__u16 wIndex;
+	__u16 wLength;
+	__u32 timeout;  /* in milliseconds */
+	void *data;
+};
+
 // This is defined only in later kernel versions
 #ifndef USBDEVFS_DISCONNECT
 #define USBDEVFS_DISCONNECT        _IO('U', 22)
