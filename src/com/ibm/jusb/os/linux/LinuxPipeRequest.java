@@ -32,14 +32,14 @@ class LinuxPipeRequest extends LinuxRequest
 	/** @return if Short Packet Detection should be enabled */
 	public boolean getAcceptShortPacket() { return getUsbIrpImp().getAcceptShortPacket(); }
 
-	/** @param len The data's length. */
-	public void setDataLength(int len) { getUsbIrpImp().setDataLength(len); }
+	/** @param len The actual length. */
+	public void setActualLength(int len) { getUsbIrpImp().setActualLength(len); }
 
 	/** @param error The number of the error that occurred. */
 	public void setError(int error)
 	{
 //FIXME - improve error number handling
-		getUsbIrpImp().setUsbException(new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error),error));
+		getUsbIrpImp().setUsbException(new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error)));
 	}
 
 	/** @return the assocaited UsbIrpImp */
@@ -78,16 +78,16 @@ class LinuxPipeRequest extends LinuxRequest
 	private int getPipeType()
 	{
 		switch (getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getType()) {
-		case UsbInfoConst.ENDPOINT_TYPE_CONTROL: return PIPE_CONTROL;
-		case UsbInfoConst.ENDPOINT_TYPE_BULK: return PIPE_BULK;
-		case UsbInfoConst.ENDPOINT_TYPE_INT: return PIPE_INTERRUPT;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOC: return PIPE_ISOCHRONOUS;
+		case UsbConst.ENDPOINT_TYPE_CONTROL: return PIPE_CONTROL;
+		case UsbConst.ENDPOINT_TYPE_BULK: return PIPE_BULK;
+		case UsbConst.ENDPOINT_TYPE_INTERRUPT: return PIPE_INTERRUPT;
+		case UsbConst.ENDPOINT_TYPE_ISOCHRONOUS: return PIPE_ISOCHRONOUS;
 		default: /* log */ return 0;
 		}
 	}
 
 	/** @return the endpoint address */
-	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointAddress(); }
+	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointDescriptor().bEndpointAddress(); }
 
 	//*************************************************************************
 	// Instance variables

@@ -29,7 +29,7 @@ class LinuxDcpRequest extends LinuxRequest
 	/** @param error The error. */
 	public void setError(int error)
 	{
-		requestImp.setUsbException( new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error), error ) );
+		controlUsbIrpImp.setUsbException( new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error) ) );
 	}
 
 	/** @return this request's data buffer */
@@ -39,16 +39,16 @@ class LinuxDcpRequest extends LinuxRequest
 	public void setData( byte[] data ) { dataBuffer = data; }
 
 	/** @return this request's data buffer valid length */
-	public int getDataLength() { return getRequestImp().getDataLength(); }
+	public int getLength() { return getControlUsbIrpImp().getLength(); }
 
-	/** @param len the data buffer valid length (minus 8 for setup packet) */
-	public void setDataLength( int len ) { getRequestImp().setDataLength(len - 8); }
+	/** @param len the data buffer valid length */
+	public void setActualLength( int len ) { getControlUsbIrpImp().setActualLength(len); }
 
-	/** @return The RequestImp */
-	public RequestImp getRequestImp() { return requestImp; }
+	/** @return The UsbIrpImp.ControlUsbIrpImp */
+	public UsbIrpImp.ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
 
-	/** @param request The RequestImp. */
-	public void setRequestImp(RequestImp request) { requestImp = request; }
+	/** @param irp The UsbIrpImp.ControlUsbIrpImp. */
+	public void setControlUsbIrpImp(UsbIrpImp.ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
 
 	/** @return the address of the assocaited URB */
 	public int getUrbAddress() { return urbAddress; }
@@ -60,8 +60,8 @@ class LinuxDcpRequest extends LinuxRequest
 	public void setCompleted(boolean c)
 	{
 		if (c) {
-			System.arraycopy(dataBuffer, 8, getRequestImp().getData(), 0, getDataLength());
-			getRequestImp().complete();
+			System.arraycopy(dataBuffer, 8, getControlUsbIrpImp().getData(), 0, getLength());
+			getControlUsbIrpImp().complete();
 		}
 
 		super.setCompleted(c);
@@ -72,7 +72,7 @@ class LinuxDcpRequest extends LinuxRequest
 
 	private byte[] dataBuffer = null;
 
-	private RequestImp requestImp = null;
+	private UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp = null;
 
 	private int urbAddress = 0;
 

@@ -103,7 +103,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 		return request.isClaimed();
 	}
 
-	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceNumber(); }
+	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceDescriptor().bInterfaceNumber(); }
 
 	//**************************************************************************
 	// Package methods

@@ -58,7 +58,7 @@ class LinuxIsochronousRequest extends LinuxRequest
 	 * @param index The index of the data.
 	 * @param len The data length of the specified indexed data.
 	 */
-	public void setStatus( int index, int len ) { getUsbIrpImp(index).setDataLength(len); }
+	public void setStatus( int index, int len ) { getUsbIrpImp(index).setActualLength(len); }
 
 	/**
 	 * Set the error of the data at the specified index.
@@ -68,7 +68,7 @@ class LinuxIsochronousRequest extends LinuxRequest
 	public void setError( int index, int error )
 	{
 //FIXME - improve message and/or set correct error number?
-		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMessage(error),error));
+		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMessage(error)));
 	}
 
 	/** @return The number of 'packets' */
@@ -96,7 +96,7 @@ class LinuxIsochronousRequest extends LinuxRequest
 	// Private methods
 
 	/** @return the endpoint address */
-	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointAddress(); }
+	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointDescriptor().bEndpointAddress(); }
 
 	//*************************************************************************
 	// Instance variables

@@ -62,15 +62,15 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	/** @param proxy The LinuxDeviceProxy */
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
 
-	/** AsyncSubmit a RquestImp */
-	public void asyncSubmit( RequestImp request ) throws UsbException
+	/** AsyncSubmit a ControlUsbIrpImp */
+	public void asyncSubmit( UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp ) throws UsbException
 	{
-		if (request.isSetConfigurationRequest())
-			submit(requestImpToLinuxSetConfigurationRequest(request));
-		else if (request.isSetInterfaceRequest())
-			submit(requestImpToLinuxSetInterfaceRequest(request));
+		if (controlUsbIrpImp.isSetConfiguration())
+			submit(controlUsbIrpImpToLinuxSetConfigurationRequest(controlUsbIrpImp));
+		else if (controlUsbIrpImp.isSetInterface())
+			submit(controlUsbIrpImpToLinuxSetInterfaceRequest(controlUsbIrpImp));
 		else
-			submit(requestImpToLinuxDcpRequest(request));
+			submit(controlUsbIrpImpToLinuxDcpRequest(controlUsbIrpImp));
 	}
 
 	//**************************************************************************
@@ -90,31 +90,31 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	//**************************************************************************
 	// Protected methods
 
-	/** Convert a RequestImp to a LinuxSetConfigurationRequest */
-	protected LinuxSetConfigurationRequest requestImpToLinuxSetConfigurationRequest(RequestImp request)
+	/** Convert a ControlUsbIrpImp to a LinuxSetConfigurationRequest */
+	protected LinuxSetConfigurationRequest controlUsbIrpImpToLinuxSetConfigurationRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxSetConfigurationRequest configRequest = new LinuxSetConfigurationRequest();
-		configRequest.setConfiguration((byte)request.getValue());
-		configRequest.setRequestImp(request);
+		configRequest.setConfiguration((byte)controlUsbIrpImp.getValue()); /* use only lower byte */
+		configRequest.setControlUsbIrpImp(controlUsbIrpImp);
 		return configRequest;
 	}
 
-	/** Convert a RequestImp to a LinuxSetInterfaceRequest */
-	protected LinuxSetInterfaceRequest requestImpToLinuxSetInterfaceRequest(RequestImp request)
+	/** Convert a ControlUsbIrpImp to a LinuxSetInterfaceRequest */
+	protected LinuxSetInterfaceRequest controlUsbIrpImpToLinuxSetInterfaceRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxSetInterfaceRequest interfaceRequest = new LinuxSetInterfaceRequest();
-		interfaceRequest.setInterface((byte)request.getIndex());
-		interfaceRequest.setSetting((byte)request.getValue());
-		interfaceRequest.setRequestImp(request);
+		interfaceRequest.setInterface(controlUsbIrpImp.getIndex());
+		interfaceRequest.setSetting(controlUsbIrpImp.getValue());
+		interfaceRequest.setControlUsbIrpImp(controlUsbIrpImp);
 		return interfaceRequest;
 	}
 
-	/** Convert a RequestImp to a LinuxDcpRequest */
-	protected LinuxDcpRequest requestImpToLinuxDcpRequest(RequestImp request)
+	/** Convert a ControlUsbIrpImp to a LinuxDcpRequest */
+	protected LinuxDcpRequest controlUsbIrpImpToLinuxDcpRequest(UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp)
 	{
 		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
-		dcpRequest.setData(request.toBytes());
-		dcpRequest.setRequestImp(request);
+		dcpRequest.setData(controlUsbIrpImp.getData());
+		dcpRequest.setControlUsbIrpImp(controlUsbIrpImp);
 		return dcpRequest;
 	}
 

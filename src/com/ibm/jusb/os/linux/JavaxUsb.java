@@ -19,13 +19,11 @@ import com.ibm.jusb.os.*;
 import com.ibm.jusb.util.*;
 
 /**
- * Provides package visible native methods
- * Provides private static methods for native code to call
+ * Interface to/from JNI.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-class JavaxUsb {
-
+class JavaxUsb
+{
 	//*************************************************************************
 	// Public methods
 
@@ -47,9 +45,8 @@ class JavaxUsb {
 		msgLevelTable.put( MSG_DEBUG2, new Integer(6) );
 		msgLevelTable.put( MSG_DEBUG3, new Integer(7) );
 
-		UsbProperties usbProperties = UsbHostManager.getInstance().getUsbProperties();
-		if ( usbProperties.isPropertyDefined( MSG_ENV_NAME ) )
-			setMsgLevel( usbProperties.getPropertyString( MSG_ENV_NAME ) );
+		if ( null != System.getProperties().getProperty( MSG_ENV_NAME ) )
+			setMsgLevel( System.getProperties().getProperty( MSG_ENV_NAME ) );
 	}
 
 	/**
@@ -102,20 +99,8 @@ class JavaxUsb {
 	 */
 	static native void nativeDeviceProxy( LinuxDeviceProxy proxy );
 
-	/**
-	 * @param pid the process ID to signal
-	 * @param sig the signal to use
-	 */
-	static native void nativeSignalPID( int pid, int sig );
-
 		//*********************************
 		// JavaxUsbError methods
-
-	/**
-	 * @param error the error number
-	 * @return if the specified error is serious (continued error condition)
-	 */
-	static native boolean nativeIsErrorSerious( int error );
 
 	/**
 	 * @param error the error number
@@ -125,28 +110,6 @@ class JavaxUsb {
 
 	//*************************************************************************
 	// Creation methods
-
-	/** @return A new UsbRootHubImp */
-	private static UsbRootHubImp createUsbRootHubImp( String key )
-	{
-		UsbRootHubImp hub = new UsbRootHubImp( null, null );
-
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(key) );
-		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
-
-		return hub;
-	}
-
-	/** @return A new UsbRootHubImp with max ports */
-	private static UsbRootHubImp createUsbRootHubImp( String key, int maxPorts )
-	{
-		UsbRootHubImp hub = new UsbRootHubImp( maxPorts, null, null );
-
-		LinuxDeviceOsImp linuxDeviceOsImp = new LinuxDeviceOsImp( hub, new LinuxDeviceProxy(key) );
-		hub.setUsbDeviceOsImp( linuxDeviceOsImp );
-
-		return hub;
-	}
 
 	/** @return A new UsbHubImp with max ports */
 	private static UsbHubImp createUsbHubImp( String key, int maxPorts )
@@ -223,9 +186,9 @@ class JavaxUsb {
 
 		/* If the config is not active, neither are its interface settings */
 		if (config.isActive() && active)
-			iface.setActiveAlternateSettingNumber( iface.getAlternateSettingNumber() );
+			iface.setActiveSettingNumber( iface.getInterfaceDescriptor().bAlternateSetting() );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbDeviceImp().getUsbDeviceOsImp();
+		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbConfigImp().getUsbDeviceImp().getUsbDeviceOsImp();
 		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );
 		iface.setUsbInterfaceOsImp( linuxInterfaceOsImp );
 
@@ -254,16 +217,16 @@ class JavaxUsb {
 
 		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)iface.getUsbInterfaceOsImp();
 		switch (ep.getType()) {
-		case UsbInfoConst.ENDPOINT_TYPE_CONTROL:
+		case UsbConst.ENDPOINT_TYPE_CONTROL:
 			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( pipe, linuxInterfaceOsImp ) );
 			break;
-		case UsbInfoConst.ENDPOINT_TYPE_BULK:
+		case UsbConst.ENDPOINT_TYPE_BULK:
 			pipe.setUsbPipeOsImp( new LinuxBulkPipeImp( pipe, linuxInterfaceOsImp ) );
 			break;
-		case UsbInfoConst.ENDPOINT_TYPE_INT:
+		case UsbConst.ENDPOINT_TYPE_INTERRUPT:
 			pipe.setUsbPipeOsImp( new LinuxInterruptPipeImp( pipe, linuxInterfaceOsImp ) );
 			break;
-		case UsbInfoConst.ENDPOINT_TYPE_ISOC:
+		case UsbConst.ENDPOINT_TYPE_ISOCHRONOUS:
 			pipe.setUsbPipeOsImp( new LinuxIsochronousPipeImp( pipe, linuxInterfaceOsImp ) );
 			break;
 		default:
@@ -281,7 +244,7 @@ class JavaxUsb {
 		byte length, byte type,
 		byte deviceClass, byte deviceSubClass, byte deviceProtocol, byte maxDefaultEndpointSize,
 		byte manufacturerIndex, byte productIndex, byte serialNumberIndex, byte numConfigs, short vendorId,
-		short productId, short bcdDevice, short bcdUsb, String speedString )
+		short productId, short bcdDevice, short bcdUsb, int speed )
 	{
 		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
 		/* Email ddstreet@ieee.org for more info */
@@ -300,14 +263,21 @@ class JavaxUsb {
 		bcdDevice += 0;
 		bcdUsb += 0;
 
-		speedString = speedString.trim();
-
 		DeviceDescriptorImp desc = new DeviceDescriptorImp( length, type,
-			deviceClass, deviceSubClass, deviceProtocol, maxDefaultEndpointSize, manufacturerIndex,
-			productIndex, serialNumberIndex, numConfigs, vendorId, productId, bcdDevice, bcdUsb );
+			bcdUsb, deviceClass, deviceSubClass, deviceProtocol, maxDefaultEndpointSize, vendorId, productId,
+			bcdDevice, manufacturerIndex, productIndex, serialNumberIndex, numConfigs );
 
 		targetDevice.setDeviceDescriptor(desc);
-		targetDevice.setSpeedString(speedString);
+
+		switch (speed) {
+		case SPEED_LOW:
+			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_LOW);
+		case SPEED_FULL:
+			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_FULL);
+		default:
+			/* log */
+			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_UNKNOWN);
+		}
 	}
 
 	//*************************************************************************
@@ -337,4 +307,7 @@ class JavaxUsb {
 	static final String MSG_DEBUG3 = "DEBUG3";
 
 	private static final String INVALID_MSG_LEVEL = "Invalid message level";
+
+	private static final int SPEED_LOW = 1;
+	private static final int SPEED_FULL = 2;
 }

@@ -33,10 +33,10 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	public int getSetting() { return interfaceSetting; }
 
 	/** @param number The interface number */
-	public void setInterface( byte number ) { interfaceNumber = UsbUtil.unsignedInt(number); }
+	public void setInterface( short number ) { interfaceNumber = UsbUtil.unsignedInt(number); }
 
 	/** @param setting The interface setting */
-	public void setSetting( byte setting ) { interfaceSetting = UsbUtil.unsignedInt(setting); }
+	public void setSetting( short setting ) { interfaceSetting = UsbUtil.unsignedInt(setting); }
 
 	/** @return The error that occured, or 0 if none occurred. */
 	public int getError() { return errorNumber; }
@@ -44,17 +44,17 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	/** @param error The number of the error that occurred. */
 	public void setError(int error) { errorNumber = error; }
 
-	/** @return The RequestImp */
-	public RequestImp getRequestImp() { return requestImp; }
+	/** @return The ControlUsbIrpImp */
+	public UsbIrpImp.ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
 
-	/** @param request The RequestImp. */
-	public void setRequestImp(RequestImp request) { requestImp = request; }
+	/** @param irp The ControlUsbIrpImp. */
+	public void setControlUsbIrpImp(UsbIrpImp.ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
 
 	/** @param c If this is completed. */
 	public void setCompleted(boolean c)
 	{
 		if (c)
-			getRequestImp().complete();
+			getControlUsbIrpImp().complete();
 
 		super.setCompleted(c);
 	}		
@@ -62,7 +62,7 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	//*************************************************************************
 	// Instance variables
 
-	private RequestImp requestImp = null;
+	private UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp = null;
 
 	private int interfaceNumber;
 	private int interfaceSetting;

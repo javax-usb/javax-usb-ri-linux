@@ -38,17 +38,17 @@ public class LinuxSetConfigurationRequest extends LinuxRequest
 	/** @param error The number of the error that occurred. */
 	public void setError(int error) { errorNumber = error; }
 
-	/** @return The RequestImp */
-	public RequestImp getRequestImp() { return requestImp; }
+	/** @return The UsbIrpImp.ControlUsbIrpImp */
+	public UsbIrpImp.ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
 
-	/** @param request The RequestImp. */
-	public void setRequestImp(RequestImp request) { requestImp = request; }
+	/** @param irp The UsbIrpImp.ControlUsbIrpImp. */
+	public void setControlUsbIrpImp(UsbIrpImp.ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
 
 	/** @param c If this is completed. */
 	public void setCompleted(boolean c)
 	{
 		if (c)
-			getRequestImp().complete();
+			getControlUsbIrpImp().complete();
 
 		super.setCompleted(c);
 	}		
@@ -56,7 +56,7 @@ public class LinuxSetConfigurationRequest extends LinuxRequest
 	//*************************************************************************
 	// Instance variables
 
-	private RequestImp requestImp = null;
+	private UsbIrpImp.ControlUsbIrpImp controlUsbIrpImp = null;
 
 	private int configuration;
 

@@ -12,7 +12,6 @@ package com.ibm.jusb.os.linux;
 import java.util.*;
 
 import javax.usb.*;
-import javax.usb.os.*;
 import javax.usb.event.*;
 import javax.usb.util.*;
 
@@ -35,7 +34,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     // Public methods
 
     /** @return The virtual USB root hub */
-    public synchronized UsbRootHub getUsbRootHub() throws UsbException
+    public synchronized UsbHub getRootUsbHub() throws UsbException
 	{
 		JavaxUsb.loadLibrary(); 
 
@@ -51,11 +50,11 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 			}
 		}
 
-        if ( 0 != topologyListenerError ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM, topologyListenerError );
+        if ( 0 != topologyListenerError ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM + " : " + topologyListenerError );
 
-		if ( 0 != topologyUpdateResult ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM, topologyUpdateResult );
+		if ( 0 != topologyUpdateResult ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM + " : " + topologyUpdateResult );
 
-		return getUsbRootHubImp();
+		return getRootUsbHubImp();
 	}
 
 	/** @return The minimum API version this supports. */
@@ -132,9 +131,10 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		if (device.isUsbHub()) {
 			UsbHubImp hub = (UsbHubImp)device;
 
-			UsbInfoListIterator iterator = hub.getAttachedUsbDevices();
+//FIXME - Iterators can throw ConcurrentModificationException!
+			Iterator iterator = hub.getAttachedUsbDevices().iterator();
 			while (iterator.hasNext())
-				fillDeviceList( (UsbDeviceImp)iterator.nextUsbInfo(), list );
+				fillDeviceList( (UsbDeviceImp)iterator.next(), list );
 		}
 	}
 
@@ -144,8 +144,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		List connectedDevices = new ArrayList();
 		List disconnectedDevices = new ArrayList();
 
-		fillDeviceList(getUsbRootHubImp(), disconnectedDevices);
-		disconnectedDevices.remove(getUsbRootHubImp());
+		fillDeviceList(getRootUsbHubImp(), disconnectedDevices);
+		disconnectedDevices.remove(getRootUsbHubImp());
 
 		topologyUpdateResult = JavaxUsb.nativeTopologyUpdater( this, connectedDevices, disconnectedDevices );
 
@@ -154,21 +154,17 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		for (int i=0; i<connectedDevices.size(); i++) {
 			UsbDeviceImp device = (UsbDeviceImp)connectedDevices.get(i);
-			device.getUsbPortImp().attachUsbDeviceImp(device);
+			device.getParentUsbPortImp().attachUsbDeviceImp(device);
 		}
 
 		if ( !disconnectedDevices.isEmpty() ) {
-			UsbInfoList usbInfoList = new DefaultUsbInfoList();
 			for (int i=0; i<disconnectedDevices.size(); i++)
-				usbInfoList.addUsbInfo((UsbInfo)disconnectedDevices.get(i));
-			fireUsbDeviceDetachedEvent( usbInfoList );
+				listenerImp.usbDeviceDetached(new UsbServicesEvent(this, (UsbDevice)disconnectedDevices.get(i)));
 		}
 
 		if ( !connectedDevices.isEmpty() ) {
-			UsbInfoList usbInfoList = new DefaultUsbInfoList();
 			for (int i=0; i<connectedDevices.size(); i++)
-				usbInfoList.addUsbInfo((UsbInfo)connectedDevices.get(i));
-			fireUsbDeviceAttachedEvent( usbInfoList );
+				listenerImp.usbDeviceAttached(new UsbServicesEvent(this, (UsbDevice)connectedDevices.get(i)));
 		}
 
 		synchronized (topologyLock) {
@@ -191,19 +187,17 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	 */
 	private UsbDeviceImp checkUsbDeviceImp( UsbHubImp hub, int p, UsbDeviceImp device, List connected, List disconnected )
 	{
-		UsbPortImp usbPortImp = null;
 		byte port = (byte)p;
+		UsbPortImp usbPortImp = hub.getUsbPortImp(port);
 
-		try {
-			usbPortImp = hub.getUsbPortImp(port);
-		} catch ( UsbRuntimeException urE ) {
+		if (null == usbPortImp) {
 			hub.resize(port);
 			usbPortImp = hub.getUsbPortImp(port);
 		}
 
 		if (!usbPortImp.isUsbDeviceAttached()) {
 			connected.add(device);
-			device.setUsbPortImp(usbPortImp);
+			device.setParentUsbPortImp(usbPortImp);
 			return device;
 		}
 
@@ -214,29 +208,9 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 			return existingDevice;
 		} else {
 			connected.add(device);
-			device.setUsbPortImp(usbPortImp);
+			device.setParentUsbPortImp(usbPortImp);
 			return device;
 		}
-	}
-
-    /**
-     * Fires UsbServicesEvent to all listeners on getTopologyHelper()
-	 * @param usbDevices the attached devices
-     */
-    private void fireUsbDeviceAttachedEvent( UsbInfoList usbDevices )
-	{
-		UsbServicesEvent event = new UsbServicesEvent( this, usbDevices );
-        fireDeviceAttachedEvent( event );
-	}
-
-    /**
-     * Fires UsbServicesEvent to all listeners on getTopologyHelper()
-	 * @param usbDevices the detached devices
-     */
-    private void fireUsbDeviceDetachedEvent( UsbInfoList usbDevices )
-	{
-		UsbServicesEvent event = new UsbServicesEvent( this, usbDevices );
-        fireDeviceDetachedEvent( event );
 	}
 
     //*************************************************************************
@@ -256,7 +230,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
 	public static final String LINUX_API_VERSION = com.ibm.jusb.Version.getApiVersion();
-	public static final String LINUX_IMP_VERSION = "0.9.3";
+	public static final String LINUX_IMP_VERSION = "0.10.0";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "\t"+"JSR80 : javax.usb"
 		+"\n"
