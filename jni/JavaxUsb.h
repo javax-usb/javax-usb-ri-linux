@@ -279,7 +279,6 @@ static inline int select_dirent_reg( const struct dirent *reg ) { return select_
  */
 static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs_urb *urb )
 {
-	static char hex[] = "0123456789abcdef";  
 //FIXME - add device number and/or other dev info
 	log( LOG_XFER_OTHER, "%s : URB endpoint = %x", calling_method, urb->endpoint );
 	log( LOG_XFER_OTHER, "%s : URB status = %d", calling_method, urb->status );
@@ -287,12 +286,13 @@ static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs
 	log( LOG_XFER_OTHER, "%s : URB buffer length = %d", calling_method, urb->buffer_length );
 	log( LOG_XFER_OTHER, "%s : URB actual length = %d", calling_method, urb->actual_length );
 #ifdef DEBUG_URB_DATA
- 	if (urb->buffer) { 
- 		int i, loglen = strlen(calling_method) + (3*urb->buffer_length) + 15; 
- 		char logbuf[loglen], *bufp = logbuf; 
+	if (urb->buffer) { 
+		static char hex[] = "0123456789abcdef";  
+		int i, loglen = strlen(calling_method) + (3*urb->buffer_length) + 15; 
+		char logbuf[loglen], *bufp = logbuf; 
 		char* p = (char *)urb->buffer;
- 		bufp += sprintf(bufp, "%s : URB data = ", calling_method );
- 		for (i=0; i<urb->buffer_length; i++) { 
+		bufp += sprintf(bufp, "%s : URB data = ", calling_method );
+		for (i=0; i<urb->buffer_length; i++) { 
 			int c = *p++;
 			*bufp++ = hex[(c>>4)&0xf]; // index to array
 			*bufp++ = hex[c&0xf]; // index to array
