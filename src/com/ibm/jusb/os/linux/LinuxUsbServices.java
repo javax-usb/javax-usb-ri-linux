@@ -33,8 +33,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		checkProperties();
 
-		/* Startup listener/poller...FIXME - manage the listener/poller better */
-		getRootUsbHub();
+		startTopologyListener();
 	}
 
     //*************************************************************************
@@ -43,22 +42,6 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     /** @return The virtual USB root hub */
     public synchronized UsbHub getRootUsbHub() throws UsbException
 	{
-		synchronized (topologyLock) {
-			if (!isListening()) {
-				startTopologyListener();
-
-				try {
-					topologyLock.wait();
-				} catch ( InterruptedException iE ) {
-					throw new UsbException("Interrupted while enumerating USB devices, try again");
-				}
-			}
-		}
-
-        if ( 0 != topologyListenerError ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM + " : " + topologyListenerError );
-
-		if ( 0 != topologyUpdateResult ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM + " : " + topologyUpdateResult );
-
 		return getRootUsbHubImp();
 	}
 
@@ -84,6 +67,11 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		try {
 			if (p.containsKey(TOPOLOGY_UPDATE_DELAY_KEY))
 				topologyUpdateDelay = Integer.decode(p.getProperty(TOPOLOGY_UPDATE_DELAY_KEY)).intValue();
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TOPOLOGY_UPDATE_NEW_DEVICE_DELAY_KEY))
+				topologyUpdateNewDeviceDelay = Integer.decode(p.getProperty(TOPOLOGY_UPDATE_NEW_DEVICE_DELAY_KEY)).intValue();
 		} catch ( Exception e ) { }
 
 		try {
@@ -207,8 +195,13 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		for (int i=0; i<disconnectedDevices.size(); i++)
 			listenerImp.usbDeviceDetached(new UsbServicesEvent(this, (UsbDevice)disconnectedDevices.get(i)));
 
-		for (int i=0; i<connectedDevices.size(); i++)
+		for (int i=0; i<connectedDevices.size(); i++) {
+			/* Let's wait a bit before each new device's event, so its driver can have some time to
+			 * talk to it without interruptions.
+			 */
+			try { Thread.sleep(topologyUpdateNewDeviceDelay); } catch ( InterruptedException iE ) { }
 			listenerImp.usbDeviceAttached(new UsbServicesEvent(this, (UsbDevice)connectedDevices.get(i)));
+		}
 
 		synchronized (topologyLock) {
 			topologyLock.notifyAll();
@@ -292,6 +285,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 	protected boolean topologyUpdateUsePolling = TOPOLOGY_UPDATE_USE_POLLING;
 	protected int topologyUpdateDelay = TOPOLOGY_UPDATE_DELAY;
+	protected int topologyUpdateNewDeviceDelay = TOPOLOGY_UPDATE_NEW_DEVICE_DELAY;
 
 	//*************************************************************************
 	// Class constants
@@ -302,13 +296,17 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	public static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
 	public static final String TOPOLOGY_UPDATE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateDelay";
 
+	/* This is a delay when new devices are found, before sending the notification event that there is a new device.
+	 * This delay is per-device.
+	 */
+	public static final int TOPOLOGY_UPDATE_NEW_DEVICE_DELAY = 2000; /* 2 second per device */
+	public static final String TOPOLOGY_UPDATE_NEW_DEVICE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateNewDeviceDelay";
+
 	/* Whether to use polling to wait for connect/disconnect notification */
 	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = true;
 	public static final String TOPOLOGY_UPDATE_USE_POLLING_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateUsePolling";
 
 	/* This enables (or disables) JNI tracing of data. */
 	public static final String TRACE_DATA = "com.ibm.jusb.os.linux.LinuxUsbServices.trace_data";
-
-    public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
 }
