@@ -14,17 +14,19 @@
 #include "JavaxUsb.h"
 
 #ifdef CONFIG_SETTING_USE_DEVICES_FILE
-static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev, unsigned char config )
+static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev )
 {
 	FILE *file = NULL;
 #define LINELEN 1024
 	size_t linelen, len;
-	char *line = NULL, busstr[32], devstr[32], cfgstr[32];
+	char *line = NULL, busstr[32], devstr[32];
 	int in_dev = 0;
 	int ret = -1;
+	int config;
 
 	if (!(line = malloc(LINELEN))) {
 		log( LOG_CRITICAL, "Out of memory!" );
+		ret = -ENOMEM;
 		goto end;
 	}
 
@@ -32,11 +34,12 @@ static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned cha
 
 	sprintf(busstr, "Bus=%2.2d", bus);
 	sprintf(devstr, "Dev#=%3d", dev);
-	sprintf(cfgstr, "Cfg#=%2d", config);
+#define cfgstr "Cfg#=%2d"
 
 	errno = 0;
 	if (!(file = fopen(USBDEVFS_DEVICES, "r"))) {
-		log( LOG_HOTPLUG_ERROR, "Could not open %s : %d", USBDEVFS_DEVICES, -errno);
+		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+		ret = -errno
 		goto end;
 	}
 
@@ -47,18 +50,21 @@ static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned cha
 
 		errno = 0;
 		if (0 > (len = getline(&line, &linelen, file))) {
-			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %d", USBDEVFS_DEVICES, -errno);
+			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+			ret = -errno;
 			break;
 		}
 
 		if (!len) {
 			log( LOG_HOTPLUG_ERROR, "No device matching %s/%s found!", busstr, devstr );
+			ret = -ENODEV;
 			break;
 		}
 
 		if (strstr(line, "T:")) {
 			if (in_dev) {
-				log( LOG_HOTPLUG_ERROR, "No config matching %s found in device %s/%s!", cfgstr, busstr, devstr );
+				log( LOG_HOTPLUG_ERROR, "No active config found in device %s/%s!", cfgstr, busstr, devstr );
+				ret = -EINVAL;
 				break;
 			}
 			if (strstr(line, busstr) && strstr(line, devstr)) {
@@ -68,9 +74,11 @@ static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned cha
 			}
 		}
 
-		if (in_dev && strstr(line, cfgstr)) {
-			ret = strstr(line, "C:*") ? 0 : 1;
-			break;
+		if (in_dev && strstr(line, "C:*")) {
+			if (1 == sscanf(line, cfgstr, config)) {
+				ret = config;
+				break;
+			}
 		}
 	}
 
@@ -83,7 +91,7 @@ end:
 #endif /* CONFIG_SETTING_USE_DEVICES_FILE */
 
 #ifdef INTERFACE_SETTING_USE_DEVICES_FILE
-static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev, __u8 interface, __u8 setting )
+static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev, __u8 interface )
 {
 	FILE *file = NULL;
 #define LINELEN 1024
@@ -91,6 +99,7 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 	char *line = NULL, busstr[32], devstr[32], cfgstr[32], ifstr[32];
 	int in_dev = 0, in_cfg = 0;
 	int ret = -1;
+	int setting;
 
 	if (!(line = malloc(LINELEN))) {
 		log( LOG_CRITICAL, "Out of memory!" );
@@ -101,11 +110,13 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 
 	sprintf(busstr, "Bus=%2.2d", bus);
 	sprintf(devstr, "Dev#=%3d", dev);
-	sprintf(ifstr, "If#=%2d Alt=%2d", interface, setting );
+	sprintf(ifstr, "If#=%2d", interface );
+#define setstr "Alt=%2d"
 
 	errno = 0;
 	if (!(file = fopen(USBDEVFS_DEVICES, "r"))) {
-		log( LOG_HOTPLUG_ERROR, "Could not open %s : %d", USBDEVFS_DEVICES, -errno);
+		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+		ret = -errno;
 		goto end;
 	}
 
@@ -116,18 +127,21 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 
 		errno = 0;
 		if (0 > (len = getline(&line, &linelen, file))) {
-			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %d", USBDEVFS_DEVICES, -errno);
+			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+			ret = -errno;
 			break;
 		}
 
 		if (!len) {
 			log( LOG_HOTPLUG_ERROR, "No device matching %s/%s found!", busstr, devstr );
+			ret = -ENODEV;
 			break;
 		}
 
 		if (strstr(line, "T:")) {
 			if (in_dev) {
 				log( LOG_HOTPLUG_ERROR, "No config matching %s found in device %s/%s!", cfgstr, busstr, devstr );
+				ret = -EINVAL;
 				break;
 			}
 			if (strstr(line, busstr) && strstr(line, devstr)) {
@@ -144,12 +158,15 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 
 		if (in_cfg) {
 			if (strstr(line, "C:")) {
-				log( LOG_HOTPLUG_ERROR, "No interface matching %s found in device %s/%s for active config!", ifstr, busstr, devstr );
+				log( LOG_HOTPLUG_ERROR, "No active interface matching %s found in device %s/%s for active config!", ifstr, busstr, devstr );
+				ret = -EINVAL;
 				break;
 			}
-			if (strstr(line, ifstr)) {
-				ret = (strstr(line, "I:*") ? 0 : 1);
-				break;
+			if (strstr(line, ifstr) && strstr(line, "I:*")) {
+				if (1 == sscanf(line, setstr, setting)) {
+					ret = setting;
+					break;
+				}
 			}
 		}
 	}
@@ -164,7 +181,7 @@ end:
 
 #ifdef CONFIG_SETTING_ASK_DEVICE
 #define CONFIG_ASK_DEVICE_TIMEOUT 500 /* ms */
-static int config_ask_device( JNIEnv *env, int fd, unsigned char config )
+static int config_ask_device( JNIEnv *env, int fd )
 {
 	int ret = 0;
 
@@ -188,14 +205,12 @@ static int config_ask_device( JNIEnv *env, int fd, unsigned char config )
 	ctrl->data = actconfig;
 
 	errno = 0;
-	if (ioctl(fd, USBDEVFS_CONTROL, ctrl))
+	if (0 > (ioctl(fd, USBDEVFS_CONTROL, ctrl))) {
+		log( LOG_HOTPLUG_ERROR, "Could not get active configuration from device : %s", strerror(errno) );
 		ret = -errno;
-
-	if (ret) {
-		log( LOG_HOTPLUG_ERROR, "Could not get active configuration from device : %d", ret );
 	} else {
 		log( LOG_HOTPLUG_OTHER, "Active device configuration is %d", *actconfig );
-		ret = (*actconfig == config ? 0 : 1);
+		ret = *actconfig;
 	}
 
 CONFIG_ASK_DEVICE_END:
@@ -208,7 +223,7 @@ CONFIG_ASK_DEVICE_END:
 
 #ifdef INTERFACE_SETTING_ASK_DEVICE
 #define INTERFACE_ASK_DEVICE_TIMEOUT 500 /* ms */
-static int interface_ask_device( JNIEnv *env, int fd, __u8 interface, __u8 setting )
+static int interface_ask_device( JNIEnv *env, int fd, __u8 interface )
 {
 	int ret = 0;
 
@@ -231,15 +246,13 @@ static int interface_ask_device( JNIEnv *env, int fd, __u8 interface, __u8 setti
 	ctrl->timeout = INTERFACE_ASK_DEVICE_TIMEOUT;
 	ctrl->data = actsetting;
 
-	errno  = 0;
-	if (ioctl(fd, USBDEVFS_CONTROL, ctrl))
+	errno = 0;
+	if (0 > (ioctl(fd, USBDEVFS_CONTROL, ctrl))) {
+		log( LOG_HOTPLUG_ERROR, "Could not get active interface %d setting from device : %s", interface, strerror(errno) );
 		ret = -errno;
-
-	if (ret) {
-		log( LOG_HOTPLUG_ERROR, "Could not get active interface %d setting from device : %d", interface, ret );
 	} else {
 		log( LOG_HOTPLUG_OTHER, "Active interface %d setting is %d", interface, *actsetting );
-		ret = (*actsetting == setting ? 0 : 1);
+		ret = *actsetting;
 	}
 
 INTERFACE_ASK_DEVICE_END:
@@ -250,53 +263,130 @@ INTERFACE_ASK_DEVICE_END:
 }
 #endif /* INTERFACE_SETTING_ASK_DEVICE */
 
-jboolean isConfigActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, unsigned char config )
+int getActiveConfig( JNIEnv *env, int fd, unsigned char bus, unsigned char dev )
 {
-	int ret = -1; /* -1 = failure, 0 = active, 1 = inactive */
+	int ret = -1; /* -1 = failure */
 
 #ifdef CONFIG_SETTING_ASK_DEVICE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Checking config %d using GET_CONFIGURATION standard request.", config );
-		ret = config_ask_device( env, fd, config );
-		log( LOG_HOTPLUG_OTHER, "Device returned %s.", (0>ret?"failure":(ret?"inactive":"active")));
+		log( LOG_HOTPLUG_OTHER, "Getting active config using GET_CONFIGURATION standard request." );
+		ret = config_ask_device( env, fd );
+		log( LOG_HOTPLUG_OTHER, "Device returned %d%s.", ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 #ifdef CONFIG_SETTING_USE_DEVICES_FILE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Checking config %d using %s.", config, USBDEVFS_DEVICES );
-		ret = config_use_devices_file( env, bus, dev, config );
-		log( LOG_HOTPLUG_OTHER, "%s returned %s", USBDEVFS_DEVICES, (0>ret?"failure":(ret?"inactive":"active")) );
+		log( LOG_HOTPLUG_OTHER, "Getting active config using %s.", USBDEVFS_DEVICES );
+		ret = config_use_devices_file( env, bus, dev );
+		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", USBDEVFS_DEVICES, ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 #ifdef CONFIG_SETTING_1_ALWAYS_ACTIVE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Config %d%s set to active; no checking.", config, 1 == config ? "" : " NOT" );
-		ret = ( 1 == config ? 0 : -1 );
+		log( LOG_HOTPLUG_OTHER, "Returning config 1 as active; no checking." );
+		ret = 1;
 	}
 #endif
 
-	return (!ret ? JNI_TRUE : JNI_FALSE); /* failure defaults to inactive */
+	return ret;
 }
 
-jboolean isInterfaceSettingActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface, __u8 setting )
+int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface )
 {
-	int ret = -1; /* -1 = failure, 0 = active, 1 = inactive */
+	int ret = -1; /* -1 = failure  */
 
 #ifdef INTERFACE_SETTING_ASK_DEVICE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Checking interface %d setting %d using GET_INTERFACE standard request.", interface, setting );
-		ret = interface_ask_device( env, fd, interface, setting );
-		log( LOG_HOTPLUG_OTHER, "Device returned %s.", (0>ret?"failure":(ret?"inactive":"active")));
+		log( LOG_HOTPLUG_OTHER, "Getting active interface %d setting using GET_INTERFACE standard request.", interface );
+		ret = interface_ask_device( env, fd, interface );
+		log( LOG_HOTPLUG_OTHER, "Device returned %d%s.", ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 #ifdef INTERFACE_SETTING_USE_DEVICES_FILE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Checking interface %d setting %d using %s.", interface, setting, USBDEVFS_DEVICES );
-		ret = interface_use_devices_file( env, bus, dev, interface, setting );
-		log( LOG_HOTPLUG_OTHER, "%s returned %s.", USBDEVFS_DEVICES, (0>ret?"failure":(ret?"inactive":"active")) );
+		log( LOG_HOTPLUG_OTHER, "Getting active interface %d setting using %s.", interface, USBDEVFS_DEVICES );
+		ret = interface_use_devices_file( env, bus, dev, interface );
+		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", USBDEVFS_DEVICES, ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 
-	return (!ret ? JNI_TRUE : JNI_FALSE); /* failure defaults to inactive */
+	return ret;
 }
 
+JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeGetActiveConfigurationNumber
+(JNIEnv *env, jclass JavaxUsb, jobject linuxDeviceOsImp)
+{
+	int fd;
+	unsigned char busnum, devnum;
+	int configNumber;
+
+	jclass LinuxDeviceOsImp = NULL, LinuxDeviceProxy = NULL;
+	jobject linuxDeviceProxy = NULL;
+	jfieldID linuxDeviceProxyID;
+	jmethodID getKey;
+	jstring jname = NULL;
+
+	LinuxDeviceOsImp = CheckedGetObjectClass( env, linuxDeviceOsImp );
+	linuxDeviceProxyID = CheckedGetFieldID( env, LinuxDeviceOsImp, "linuxDeviceProxy", "Lcom/ibm/jusb/os/linux/LinuxDeviceProxy;" );
+	linuxDeviceProxy = (*env)->GetObjectField( env, linuxDeviceOsImp, linuxDeviceProxyID );
+	LinuxDeviceProxy = CheckedGetObjectClass( env, linuxDeviceProxy );
+	getKey = CheckedGetMethodID( env, LinuxDeviceProxy, "getKey", "()Ljava/lang/String;" );
+	jname = (jstring)CheckedCallObjectMethod( env, linuxDeviceProxy, getKey );
+	(*env)->DeleteLocalRef( env, LinuxDeviceProxy );
+	(*env)->DeleteLocalRef( env, linuxDeviceProxy );
+	(*env)->DeleteLocalRef( env, LinuxDeviceOsImp );
+
+	if (0 > (fd = open_device( env, jname, O_RDWR ))) {
+		(*env)->DeleteLocalRef( env, jname );
+		return errno ? -errno : -1;
+	}
+
+	busnum = (unsigned char)get_busnum_from_jname( env, jname );
+	devnum = (unsigned char)get_devnum_from_jname( env, jname );
+
+	configNumber = getActiveConfig( env, fd, busnum, devnum );
+
+	close(fd);
+	(*env)->DeleteLocalRef( env, jname );
+
+	return (jint)configNumber;
+}
+
+JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeGetActiveInterfaceSettingNumber
+(JNIEnv *env, jclass JavaxUsb, jobject linuxDeviceOsImp, jint interfaceNumber)
+{
+	int fd;
+	unsigned char busnum, devnum;
+	int settingNumber;
+
+	jclass LinuxDeviceOsImp = NULL, LinuxDeviceProxy = NULL;
+	jobject linuxDeviceProxy = NULL;
+	jfieldID linuxDeviceProxyID;
+	jmethodID getKey;
+	jstring jname = NULL;
+
+	LinuxDeviceOsImp = CheckedGetObjectClass( env, linuxDeviceOsImp );
+	linuxDeviceProxyID = CheckedGetFieldID( env, LinuxDeviceOsImp, "linuxDeviceProxy", "Lcom/ibm/jusb/os/linux/LinuxDeviceProxy;" );
+	linuxDeviceProxy = (*env)->GetObjectField( env, linuxDeviceOsImp, linuxDeviceProxyID );
+	LinuxDeviceProxy = CheckedGetObjectClass( env, linuxDeviceProxy );
+	getKey = CheckedGetMethodID( env, LinuxDeviceProxy, "getKey", "()Ljava/lang/String;" );
+	jname = (jstring)CheckedCallObjectMethod( env, linuxDeviceProxy, getKey );
+	(*env)->DeleteLocalRef( env, LinuxDeviceProxy );
+	(*env)->DeleteLocalRef( env, linuxDeviceProxy );
+	(*env)->DeleteLocalRef( env, LinuxDeviceOsImp );
+
+	if (0 > (fd = open_device( env, jname, O_RDWR ))) {
+		(*env)->DeleteLocalRef( env, jname );
+		return errno ? -errno : -1;
+	}
+
+	busnum = (unsigned char)get_busnum_from_jname( env, jname );
+	devnum = (unsigned char)get_devnum_from_jname( env, jname );
+
+	settingNumber = getActiveInterfaceSetting( env, fd, busnum, devnum, (__u8)interfaceNumber );
+
+	close(fd);
+	(*env)->DeleteLocalRef( env, jname );
+
+	return (jint)settingNumber;	
+}

@@ -111,6 +111,21 @@ class JavaxUsb
 	 */
 	static native int nativeTopologyUpdater( LinuxUsbServices services, List connected, List disconnected );
 
+	/**
+	 * Get the current active configuration number.
+	 * @param device The LinuxDeviceOsImp.
+	 * @return The active configuration number.
+	 */
+	static native int nativeGetActiveConfigurationNumber( LinuxDeviceOsImp device );
+
+	/**
+	 * Get the current active interface setting for the specified interface.
+	 * @param device The LinuxDeviceOsImp.
+	 * @param interfaceNumber The interface number to check.
+	 * @return The active interface number.
+	 */
+	static native int nativeGetActiveInterfaceSettingNumber( LinuxDeviceOsImp device, int interfaceNumber );
+
 		//*********************************
 		// JavaxUsbTopologyListener methods
 
@@ -168,7 +183,7 @@ class JavaxUsb
 	private static UsbConfigurationImp createUsbConfigurationImp( UsbDeviceImp device,
 		byte length, byte type, short totalLen,
 		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
-		byte maxPowerNeeded, boolean active )
+		byte maxPowerNeeded )
 	{
 		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
 		/* Email ddstreet@ieee.org for more info */
@@ -185,9 +200,6 @@ class JavaxUsb
 
 		UsbConfigurationImp config = new UsbConfigurationImp( device, desc );
 
-		if (active)
-			device.setActiveUsbConfigurationNumber(configValue);
-
 		return config;
 	}
 
@@ -195,7 +207,7 @@ class JavaxUsb
 	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigurationImp config,
 		byte length, byte type,
 		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
-		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex, boolean active )
+		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex )
 	{
 		/* BUG - Java (IBM JVM at least) does not handle certain JNI byte -> Java byte (or shorts) */
 		/* Email ddstreet@ieee.org for more info */
@@ -214,10 +226,6 @@ class JavaxUsb
 			interfaceProtocol, interfaceIndex );
 
 		UsbInterfaceImp iface = new UsbInterfaceImp( config, desc );
-
-		/* If the config is not active, neither are its interface settings */
-		if (config.isActive() && active)
-			iface.setActiveSettingNumber( iface.getUsbInterfaceDescriptor().bAlternateSetting() );
 
 		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbConfigurationImp().getUsbDeviceImp().getUsbDeviceOsImp();
 		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );

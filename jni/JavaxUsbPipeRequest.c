@@ -155,6 +155,6 @@ void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest )
 	}
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_DISCARDURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_DISCARDURB, urb )))
 		log( LOG_XFER_ERROR, "Could not unlink urb %#x (error %d)", (unsigned int)urb, -errno );
 }

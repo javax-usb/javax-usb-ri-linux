@@ -51,7 +51,7 @@ int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, str
 	debug_urb( env, "isochronous_pipe_request", urb );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_SUBMITURB, urb )))
 		ret = -errno;
 
 END_SUBMIT:
@@ -161,7 +161,7 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	debug_urb( env, "isochronous_request", urb );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_SUBMITURB, urb )))
 		ret = -errno;
 
 	if (ret) {
@@ -210,7 +210,7 @@ void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRe
 	}
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_DISCARDURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_DISCARDURB, urb )))
 		log( LOG_XFER_ERROR, "Could not unlink urb %p (error %d)", urb, -errno );
 }
 

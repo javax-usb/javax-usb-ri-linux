@@ -196,8 +196,8 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
 #undef INTERFACE_SETTING_ASK_DEVICE
 #undef INTERFACE_SETTING_USE_DEVICES_FILE
 
-jboolean isConfigActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, unsigned char config );
-jboolean isInterfaceSettingActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface, __u8 setting );
+int getActiveConfig( JNIEnv *env, int fd, unsigned char bus, unsigned char dev );
+int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface );
 
 //******************************************************************************
 // Utility methods
@@ -209,14 +209,15 @@ static inline __u16 bcd( __u8 msb, __u8 lsb )
 
 static inline int open_device( JNIEnv *env, jstring javaKey, int oflag ) 
 {
-    const char *node;
-    int filed;
+	const char *node;
+	int filed;
 
-    node = (*env)->GetStringUTFChars( env, javaKey, NULL );
-    log( LOG_INFO, "Opening node %s", node );
-    filed = open( node, oflag );
-    (*env)->ReleaseStringUTFChars( env, javaKey, node );
-    return filed;
+	node = (*env)->GetStringUTFChars( env, javaKey, NULL );
+	log( LOG_INFO, "Opening node %s", node );
+	if (0 > (filed = open( node, oflag )))
+		log( LOG_ERROR, "Could not open node %s : %s", node, strerror(errno) );
+	(*env)->ReleaseStringUTFChars( env, javaKey, node );
+	return filed;
 }
 
 static inline int bus_node_to_name( int bus, int node, char *name )
@@ -233,12 +234,28 @@ static inline int get_busnum_from_name( const char *name )
 	else return bus;
 }
 
+static inline int get_busnum_from_jname( JNIEnv *env, jstring jname )
+{
+	const char *name = (*env)->GetStringUTFChars( env, jname, NULL );
+	int busnum = get_busnum_from_name( name );
+	(*env)->ReleaseStringUTFChars( env, jname, name );
+	return busnum;
+}
+
 static inline int get_devnum_from_name( const char *name )
 {
 	int bus, node;
 	if (2 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
 		return -1;
 	else return node;
+}
+
+static inline int get_devnum_from_jname( JNIEnv *env, jstring jname )
+{
+	const char *name = (*env)->GetStringUTFChars( env, jname, NULL );
+	int devnum = get_devnum_from_name( name );
+	(*env)->ReleaseStringUTFChars( env, jname, name );
+	return devnum;
 }
 
 /**

@@ -37,7 +37,7 @@ void disconnect_interface_driver(JNIEnv *env, int fd, int interface)
 	disc_ioctl->data = NULL;
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_IOCTL, disc_ioctl )) {
+	if (0 > (ioctl( fd, USBDEVFS_IOCTL, disc_ioctl ))) {
 		if (ENODATA == errno)
 			log( LOG_ERROR, "No driver associated with interface %d.", interface );
 		else if (ENOSYS == errno)
@@ -87,7 +87,7 @@ int claim_interface( JNIEnv *env, int fd, int claim, jobject linuxRequest )
 		log( LOG_FUNC, "%s interface %d", claim ? "Claiming" : "Releasing", *interface );
 
 		errno = 0;
-		if (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface ))
+		if (0 > (ioctl( fd, claim ? USBDEVFS_CLAIMINTERFACE : USBDEVFS_RELEASEINTERFACE, interface )))
 			ret = -errno;
 
 		if (ret)
@@ -136,7 +136,7 @@ int is_claimed( JNIEnv *env, int fd, jobject linuxRequest )
 	gd->interface = CheckedCallIntMethod( env, linuxRequest, getInterfaceNumber );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_GETDRIVER, gd )) {
+	if (0 > (ioctl( fd, USBDEVFS_GETDRIVER, gd ))) {
 		ret = -errno;
 
 		if (-ENODATA == ret)

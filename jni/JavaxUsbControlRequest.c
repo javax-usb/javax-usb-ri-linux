@@ -57,7 +57,7 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	debug_urb( env, "control_pipe_request", urb );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_SUBMITURB, urb )))
 		ret = -errno;
 
 END_SUBMIT:
@@ -133,7 +133,7 @@ int set_configuration( JNIEnv *env, int fd, jobject linuxSetConfigurationRequest
 	log( LOG_XFER_META, "Setting configuration to %d", *configuration );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SETCONFIGURATION, configuration ))
+	if (0 > (ioctl( fd, USBDEVFS_SETCONFIGURATION, configuration )))
 		ret = -errno;
 
 	if (ret)
@@ -177,7 +177,7 @@ int set_interface( JNIEnv *env, int fd, jobject linuxSetInterfaceRequest )
 	log( LOG_XFER_META, "Setting interface %d to setting %d", interface->interface, interface->altsetting );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SETINTERFACE, interface ))
+	if (0 > (ioctl( fd, USBDEVFS_SETINTERFACE, interface )))
 		ret = -errno;
 
 	if (ret)

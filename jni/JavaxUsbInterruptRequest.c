@@ -47,7 +47,7 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 	debug_urb( env, "interrupt_pipe_request", urb );
 
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))
+	if (0 > (ioctl( fd, USBDEVFS_SUBMITURB, urb )))
 		ret = -errno;
 
 END_SUBMIT:

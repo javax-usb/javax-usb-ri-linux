@@ -144,7 +144,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 
 	connectinfo = malloc(sizeof(*connectinfo));
 	errno = 0;
-	if (ioctl( fd, USBDEVFS_CONNECTINFO, connectinfo )) {
+	if (0 > (ioctl( fd, USBDEVFS_CONNECTINFO, connectinfo ))) {
 		log( LOG_ERROR, "Could not get connectinfo from device, error = %d", errno );
 		goto BUILD_DEVICE_EXIT;
 	} else {
@@ -206,25 +206,23 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 	unsigned int pos;
 	jobject config = NULL, interface = NULL;
 	jmethodID createUsbConfigurationImp;
-	jboolean isActive = JNI_FALSE;
 
 	if (!(cfg_desc = get_descriptor( env, fd ))) {
 		log( LOG_ERROR, "Short read on config desriptor." );
 		goto BUILD_CONFIG_EXIT;
 	}
 
-	createUsbConfigurationImp = CheckedGetStaticMethodID( env, JavaxUsb, "createUsbConfigurationImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBSBBBBBZ)Lcom/ibm/jusb/UsbConfigurationImp;" );
+	createUsbConfigurationImp = CheckedGetStaticMethodID( env, JavaxUsb, "createUsbConfigurationImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBSBBBBB)Lcom/ibm/jusb/UsbConfigurationImp;" );
 
 	log( LOG_HOTPLUG_OTHER, "Building config %d", cfg_desc->bConfigurationValue );
 
 	wTotalLength = cfg_desc->wTotalLength;
 	pos = cfg_desc->bLength;
 
-	isActive = isConfigActive( env, fd, bus, dev, cfg_desc->bConfigurationValue );
 	config = CheckedCallStaticObjectMethod( env, JavaxUsb, createUsbConfigurationImp, device,
 		cfg_desc->bLength, cfg_desc->bDescriptorType, wTotalLength,
 		cfg_desc->bNumInterfaces, cfg_desc->bConfigurationValue, cfg_desc->iConfiguration,
-		cfg_desc->bmAttributes, cfg_desc->bMaxPower, isActive );
+		cfg_desc->bmAttributes, cfg_desc->bMaxPower );
 
 	while (pos < wTotalLength) {
 		desc = get_descriptor( env, fd );
@@ -273,17 +271,15 @@ BUILD_CONFIG_EXIT:
 static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc, unsigned char bus, unsigned char dev )
 {
 	jobject interface;
-	jboolean isActive;
 
-	jmethodID createUsbInterfaceImp = CheckedGetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigurationImp;BBBBBBBBBZ)Lcom/ibm/jusb/UsbInterfaceImp;" );
+	jmethodID createUsbInterfaceImp = CheckedGetStaticMethodID( env, JavaxUsb, "createUsbInterfaceImp", "(Lcom/ibm/jusb/UsbConfigurationImp;BBBBBBBBB)Lcom/ibm/jusb/UsbInterfaceImp;" );
 
 	log( LOG_HOTPLUG_OTHER, "Building interface %d", if_desc->bInterfaceNumber );
 
-	isActive = isInterfaceSettingActive( env, fd, bus, dev, if_desc->bInterfaceNumber, if_desc->bAlternateSetting );
 	interface = CheckedCallStaticObjectMethod( env, JavaxUsb, createUsbInterfaceImp, config,
 		if_desc->bLength, if_desc->bDescriptorType,
 		if_desc->bInterfaceNumber, if_desc->bAlternateSetting, if_desc->bNumEndpoints, if_desc->bInterfaceClass,
-		if_desc->bInterfaceSubClass, if_desc->bInterfaceProtocol, if_desc->iInterface, isActive );
+		if_desc->bInterfaceSubClass, if_desc->bInterfaceProtocol, if_desc->iInterface );
 
 	return interface;
 }

@@ -222,6 +222,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		for (int i=0; i<connectedDevices.size(); i++) {
 			UsbDeviceImp device = (UsbDeviceImp)connectedDevices.get(i);
+			setActiveConfigAndInterfaceSettings(device);
 			device.getParentUsbPortImp().attachUsbDeviceImp(device);
 		}
 
@@ -303,6 +304,36 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 				desc1.equals(desc2);
 		} catch ( NullPointerException npE ) {
 			return false;
+		}
+	}
+
+	/**
+	 * Find and set the active config and interface settings for this device.
+	 * @param device The UsbDeviceImp.
+	 */
+	protected void setActiveConfigAndInterfaceSettings(UsbDeviceImp device)
+	{
+		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)device.getUsbDeviceOsImp();
+		int config = JavaxUsb.nativeGetActiveConfigurationNumber(linuxDeviceOsImp);
+
+		if (0 < config)
+			device.setActiveUsbConfigurationNumber((byte)config);
+		else
+			return; /* either the device is unconfigured or there was an error, so we can't continue */
+
+		Iterator interfaces = device.getActiveUsbConfiguration().getUsbInterfaces().iterator();
+		while (interfaces.hasNext()) {
+			UsbInterfaceImp usbInterfaceImp = (UsbInterfaceImp)interfaces.next();
+			int setting = 0;
+			if (1 < usbInterfaceImp.getNumSettings()) {
+				byte interfaceNumber = usbInterfaceImp.getUsbInterfaceDescriptor().bInterfaceNumber();
+				setting = JavaxUsb.nativeGetActiveInterfaceSettingNumber(linuxDeviceOsImp, UsbUtil.unsignedInt(interfaceNumber));
+				if (0 <= setting)
+					usbInterfaceImp.setActiveSettingNumber( (byte)setting );
+			} else {
+				/* If there is only one setting, just set it to the active setting. */
+				usbInterfaceImp.setActiveSettingNumber( usbInterfaceImp.getUsbInterfaceDescriptor().bAlternateSetting() );
+			}
 		}
 	}
 
