@@ -14,31 +14,30 @@
  * Listener for connect/disconnect events
  * @author Dan Streetman
  */
-JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListener
-			( JNIEnv *env, jclass JavaxUsb, jobject linuxTopologyListener ) {
+JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListener
+			( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbServices ) {
 	struct pollfd devpoll;
 	int poll_timeout = -1;
 	int descriptor = 0;
+	int error = 0;
 	unsigned int pollingError = 0;
 
-	jclass LinuxTopologyListener = (*env)->GetObjectClass( env, linuxTopologyListener );
+	jclass LinuxUsbServices = (*env)->GetObjectClass( env, linuxUsbServices );
 
-	jmethodID setListening = (*env)->GetMethodID( env, LinuxTopologyListener, "setListening", "(Z)V" );
-	jmethodID isListening = (*env)->GetMethodID( env, LinuxTopologyListener, "isListening", "()Z" );
-	jmethodID topologyChange = (*env)->GetMethodID( env, LinuxTopologyListener, "topologyChange", "()V" );
+	jmethodID topologyChange = (*env)->GetMethodID( env, LinuxUsbServices, "topologyChange", "()V" );
 
+	errno = 0;
 	descriptor = open( USBDEVFS_DEVICES, O_RDONLY, 0 );
 	if ( 0 >= descriptor ) {
 		dbg( MSG_ERROR, "TopologyListener : Could not open %s\n", USBDEVFS_DEVICES );
+		error = errno;
 		goto TOPOLOGY_LISTENER_CLEANUP;
 	}
 
 	devpoll.fd = descriptor;
 	devpoll.events = POLLIN;
 
-	(*env)->CallVoidMethod( env, linuxTopologyListener, setListening, JNI_TRUE );
-
-	while ( JNI_TRUE == (*env)->CallBooleanMethod( env, linuxTopologyListener, isListening ) ) {
+	while ( 1 ) {
 		poll(&devpoll, 1, poll_timeout);
 
 		// Skip empty wake-ups
@@ -49,6 +48,7 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 			dbg( MSG_ERROR, "TopologyListener : Topology Polling error.\n" );
 			if (MAX_POLLING_ERRORS < ++pollingError) {
 				dbg( MSG_CRITICAL, "TopologyListener : %d polling errors; aborting!\n", pollingError );
+				error = -ENOLINK; /* gotta pick one of 'em */
 				break;
 			} else continue;
 		}
@@ -56,7 +56,7 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 		// Connect/Disconnect event...
 		if ( devpoll.revents & POLLIN ) {
 			dbg( MSG_DEBUG3, "TopologyListener : Got topology change event\n" );
-			(*env)->CallVoidMethod( env, linuxTopologyListener, topologyChange );
+			(*env)->CallVoidMethod( env, linuxUsbServices, topologyChange );
 			continue;
 		}
 
@@ -65,11 +65,12 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 	}
 
 	// Clean up
-	(*env)->CallVoidMethod( env, linuxTopologyListener, setListening, JNI_FALSE );
 	dbg( MSG_DEBUG1, "TopologyListener : Exiting.\n" );
 	close( descriptor );
 
 TOPOLOGY_LISTENER_CLEANUP:
-	(*env)->DeleteLocalRef( env, LinuxTopologyListener );
+	(*env)->DeleteLocalRef( env, LinuxUsbServices );
+
+	return error;
 }
 

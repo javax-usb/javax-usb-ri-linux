@@ -26,94 +26,92 @@ import com.ibm.jusb.util.*;
  */
 public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 {
+	public LinuxUsbServices()
+	{
+		topologyUpdateManager.setMaxSize(Long.MAX_VALUE);
+	}
+
     //*************************************************************************
     // Public methods
 
-    /**
-	 * Get the root hub
-	 * <p>
-     * The root hub contains all the correct USB devices currently connected
-     * the the hub including all USB devices and other hubs.
-     * @return the root USB hub on this system
-     * @exception javax.usb.UsbException in case something goes wrong trying to get the root hub
-     */
+    /** @return The virtual USB root hub */
     public synchronized UsbRootHub getUsbRootHub() throws UsbException
 	{
 		JavaxUsb.loadLibrary(); 
 
-		if (!topologyListener.isListening())
-			startTopologyListener();
+		if (!isListening()) {
+			synchronized (topologyLock) {
+				startTopologyListener();
 
-//HACK - WAIT FOR LISTENER TO STARTUP
-try { Thread.currentThread().sleep( 1000 ); }
-catch ( InterruptedException iE ) { }
-
-		if (0 >= totalDevices)
-			totalDevices = JavaxUsb.nativeTopologyUpdater( topologyUpdater );
+				try {
+					topologyLock.wait();
+				} catch ( InterruptedException iE ) {
+					throw new UsbException("Interrupted while enumerating USB devices, try again");
+				}
+			}
+		}
 
         if ( 0 > totalDevices ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM );
-        if ( 0 == totalDevices ) throw new UsbException( NO_USB_DEVICES_FOUND );
 
         return JavaxUsb.getRootHub();
 	}
 
-	/**
-	 * Get the (minimum) version number of the javax.usb API
-	 * that this UsbServices implements.
-	 * <p>
-	 * This should correspond to the output of (some version of) the
-	 * {@link javax.usb.Version#getApiVersion() javax.usb.Version}.
-	 */
+	/** @return The minimum API version this supports. */
 	public String getApiVersion() { return LINUX_API_VERSION; }
 
-	/**
-	 * Get the version number of the UsbServices implementation.
-	 * <p>
-	 * The format should be <major>.<minor>.<revision>
-	 */
+	/** @return The version number of this implementation. */
 	public String getImpVersion() { return LINUX_IMP_VERSION; }
 
-	/**
-	 * Get a description of this UsbServices implementation.
-	 * <p>
-	 * The format is implementation-specific, but should include at least
-	 * the following:
-	 * <ul>
-	 * <li>The company or individual author(s).</li>
-	 * <li>The license, or license header.</li>
-	 * <li>Contact information.</li>
-	 * <li>The minimum or expected version of Java.</li>
-	 * <li>The Operating System(s) supported (usually one per implementation).</li>
-	 * <li>Any other useful information.</li>
-	 * </ul>
-	 */
+	/** @return Get a description of this UsbServices implementation. */
 	public String getImpDescription() { return LINUX_IMP_DESCRIPTION; }
 
     //*************************************************************************
     // Private methods
 
+	/** @return If the topology listener is listening */
+	private boolean isListening()
+	{
+		try { return topologyListener.isAlive(); }
+		catch ( NullPointerException npE ) { return false; }
+	}
+
 	/** Start Topology Change Listener Thread */
 	private void startTopologyListener()
 	{
-		topologyListener.thread = new Thread( topologyListenerRunnable ); 
+		Runnable r = new Runnable() {
+				public void run()
+				{ topologyListenerExit(JavaxUsb.nativeTopologyListener(LinuxUsbServices.this)); }
+			};
 
-		topologyListener.thread.setDaemon( true );
-		topologyListener.thread.setName( "javax.usb Topology Listener Thread" );
-		topologyListener.thread.start();
+		topologyListener = new Thread(r);
+
+		topologyListener.setDaemon(true);
+		topologyListener.setName("javax.usb Linux implementation Topology Listener");
+		topologyListener.start();
+	}
+
+	/**
+	 * Called when the topology listener exits.
+	 * @param error The return code of the topology listener.
+	 */
+	private void topologyListenerExit(int error)
+	{
+//FIXME - disconnet all devices
+
+		synchronized (topologyLock) {
+			topologyLock.notifyAll();
+		}
 	}
 
 	/** Enqueue an update topology request */
 	private void topologyChange()
 	{
 		Runnable r = new Runnable() {
-			public void run()
-			{ LinuxUsbServices.this.updateTopology(); }
-		};
+				public void run()
+				{ updateTopology(); }
+			};
 
-		Thread t = new Thread(r);
-
-		t.setDaemon(true);
-		t.start();
+		topologyUpdateManager.add(r);
 	}
 
 	/** Update the topology and fire connect/disconnect events */
@@ -132,6 +130,10 @@ catch ( InterruptedException iE ) { }
 		if ( !disconnectedDevices.isEmpty() ) {
 			fireUsbDeviceDetachedEvent( disconnectedDevices.copy() );
 			disconnectedDevices.clear();
+		}
+
+		synchronized (topologyLock) {
+			topologyLock.notifyAll();
 		}
 	}
 
@@ -158,16 +160,12 @@ catch ( InterruptedException iE ) { }
     //*************************************************************************
     // Instance variables
 
-	private LinuxTopologyListener topologyListener = new LinuxTopologyListener() {
-			public void topologyChange() { LinuxUsbServices.this.topologyChange(); }
-		};
-
+	private RunnableManager topologyUpdateManager = new RunnableManager();
 
 	private LinuxTopologyUpdater topologyUpdater = new LinuxTopologyUpdater();
 
-    private Runnable topologyListenerRunnable = new Runnable() {
-        public void run() { JavaxUsb.nativeTopologyListener( LinuxUsbServices.this.topologyListener ); }
-	};
+	private Thread topologyListener = null;
+	private Object topologyLock = new Object();
 
     private int totalDevices = 0;
 
@@ -201,27 +199,6 @@ catch ( InterruptedException iE ) { }
 	// Inner interfaces
 
 	/**
-	 * Linux topology listener, should be passed to native code which will callback the methods
-	 * @author Dan Streetman
-	 * @vesion 0.0.1 (JDK 1.1.x)
-	 */
-	public class LinuxTopologyListener
-	{
-
-		/** A topology change has occured */
-		public void topologyChange() { }
-
-		/** Check if this listener is listening */
-        public boolean isListening() { return (listening && thread.isAlive()); }
-
-		/** Set if this is listening */
-		public void setListening( boolean listen ) { listening = listen; }
-
-		public Thread thread = null;
-		private boolean listening = false;
-	}
-
-	/**
 	 * Linux topology updater
 	 * @author Dan Streetman
 	 * @version 0.0.1 (JDK 1.1.x)
@@ -235,17 +212,15 @@ catch ( InterruptedException iE ) { }
 		 * @param key the device's key
 		 * @return the device already in the topology, or the newly added device (param 1)
 		 */
-		private UsbDevice addUsbDevice( UsbDevice device, String key )
+		private UsbDeviceImp addUsbDeviceImp( UsbDeviceImp device, String key )
 		{
-/*
 			allDeviceKeys.addElement( key );
-			UsbDevice oldDevice = JavaxUsb.getUsbDevice( key );
+			UsbDeviceImp oldDevice = JavaxUsb.getUsbDeviceImp( key );
 			if ( null != oldDevice) return oldDevice;
 
 			connectedDevices.addUsbInfo( device );
-			JavaxUsb.addUsbDevice( device, key );
+			JavaxUsb.addUsbDeviceImp( device, key );
 			return device;
-*/return null;
 		}
 
 		/**
@@ -254,7 +229,6 @@ catch ( InterruptedException iE ) { }
 		 */
 		private void updateTopology()
 		{
-/*
 			Enumeration oldKeys = JavaxUsb.getUsbDeviceKeyEnumeration();
 
 			while (oldKeys.hasMoreElements()) {
@@ -262,14 +236,13 @@ catch ( InterruptedException iE ) { }
 
 				if (allDeviceKeys.contains(key)) continue;
 
-				UsbDevice device = JavaxUsb.getUsbDevice( key );
-				JavaxUsb.removeUsbDevice( device );
-				JavaxUsb.disconnectUsbDevice( device );
+				UsbDeviceImp device = JavaxUsb.getUsbDeviceImp( key );
+				JavaxUsb.removeUsbDeviceImp( device );
+				JavaxUsb.disconnectUsbDeviceImp( device );
 				disconnectedDevices.addUsbInfo( device );
 			}
 
 			allDeviceKeys.removeAllElements();
-*/
 		}
 
 		public UsbInfoList getConnectedDevices() { return connectedDevices; }
