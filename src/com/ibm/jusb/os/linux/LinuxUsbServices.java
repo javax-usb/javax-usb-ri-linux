@@ -55,7 +55,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 		if ( 0 != topologyUpdateResult ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM, topologyUpdateResult );
 
-		return usbRootHubImp;
+		return getUsbRootHubImp();
 	}
 
 	/** @return The minimum API version this supports. */
@@ -144,8 +144,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		List connectedDevices = new ArrayList();
 		List disconnectedDevices = new ArrayList();
 
-		fillDeviceList(usbRootHubImp, disconnectedDevices);
-		disconnectedDevices.remove(usbRootHubImp);
+		fillDeviceList(getUsbRootHubImp(), disconnectedDevices);
+		disconnectedDevices.remove(getUsbRootHubImp());
 
 		topologyUpdateResult = JavaxUsb.nativeTopologyUpdater( this, connectedDevices, disconnectedDevices );
 
@@ -241,8 +241,6 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
     //*************************************************************************
     // Instance variables
-
-	private UsbRootHubImp usbRootHubImp = new VirtualUsbRootHubImp();
 
 	private RunnableManager topologyUpdateManager = new RunnableManager();
 
