@@ -60,6 +60,30 @@ class JavaxUsb
 			throw new UsbException( INVALID_MSG_LEVEL + " : " + level );
 	}
 
+	/**
+	 * Convert the error code to a UsbException.
+	 * @param error The error code.
+	 * @return A UsbException.
+	 */
+	public static UsbException errorToUsbException(int error)
+	{
+		return new UsbException(nativeGetErrorMessage(error));
+	}
+
+	/**
+	 * Convert the error code to a UsbException using the specified text.
+	 * <p>
+	 * The string is prepended to the detail message with a colon separating
+	 * the specified text from the error message.
+	 * @param error The error code.
+	 * @param string The string to use in the UsbException.
+	 * @return A UsbException.
+	 */
+	public static UsbException errorToUsbException(int error, String string)
+	{
+		return new UsbException(string + " : " + nativeGetErrorMessage(error));
+	}
+
 	//*************************************************************************
 	// Native methods
 
