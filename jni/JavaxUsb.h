@@ -175,7 +175,7 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
  * device to appear as Not Configured.
  */
 #define CONFIG_SETTING_ASK_DEVICE
-#undef CONFIG_SETTING_USE_DEVICES_FILE
+#define CONFIG_SETTING_USE_DEVICES_FILE
 #define CONFIG_SETTING_1_ALWAYS_ACTIVE
 
 /* Pick a way to determine active interface alternate setting.
@@ -194,10 +194,10 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
  * If none are defined (or all fail) then the result will be first setting is active.
  */
 #define INTERFACE_SETTING_ASK_DEVICE
-#undef INTERFACE_SETTING_USE_DEVICES_FILE
+#define INTERFACE_SETTING_USE_DEVICES_FILE
 
 jboolean isConfigActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, unsigned char config );
-jboolean isInterfaceSettingActive( JNIEnv *env, int fd, __u8 interface, __u8 setting );
+jboolean isInterfaceSettingActive( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface, __u8 setting );
 
 //******************************************************************************
 // Utility methods

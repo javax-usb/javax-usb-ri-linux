@@ -15,7 +15,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 
 static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject device, unsigned char bus, unsigned char dev );
 
-static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc );
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc, unsigned char bus, unsigned char dev );
 
 static inline void build_endpoint( JNIEnv *env, jclass JavaxUsb, jobject interface, struct jusb_endpoint_descriptor *ep_desc );
 
@@ -251,7 +251,7 @@ static inline int build_config( JNIEnv *env, jclass JavaxUsb, int fd, jobject de
 
 			case USB_DT_INTERFACE:
 				if (interface) CheckedDeleteLocalRef( env, interface );
-				interface = build_interface( env, JavaxUsb, fd, config, (struct jusb_interface_descriptor*)desc );
+				interface = build_interface( env, JavaxUsb, fd, config, (struct jusb_interface_descriptor*)desc, bus, dev );
 				break;
 
 			case USB_DT_ENDPOINT:
@@ -277,7 +277,7 @@ BUILD_CONFIG_EXIT:
 	return result;
 }
 
-static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc )
+static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, jobject config, struct jusb_interface_descriptor *if_desc, unsigned char bus, unsigned char dev )
 {
 	jobject interface;
 	jboolean isActive;
@@ -286,7 +286,7 @@ static inline jobject build_interface( JNIEnv *env, jclass JavaxUsb, int fd, job
 
 	log( LOG_HOTPLUG_OTHER, "Building interface %d", if_desc->bInterfaceNumber );
 
-	isActive = isInterfaceSettingActive( env, fd, if_desc->bInterfaceNumber, if_desc->bAlternateSetting );
+	isActive = isInterfaceSettingActive( env, fd, bus, dev, if_desc->bInterfaceNumber, if_desc->bAlternateSetting );
 	interface = CheckedCallStaticObjectMethod( env, JavaxUsb, createUsbInterfaceImp, config,
 		if_desc->bLength, if_desc->bDescriptorType,
 		if_desc->bInterfaceNumber, if_desc->bAlternateSetting, if_desc->bNumEndpoints, if_desc->bInterfaceClass,
