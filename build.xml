@@ -74,7 +74,7 @@
 	<property name="jsr80.linux.jdoc.package" value="yes"/>
 	<property name="jsr80.linux.jdoc.private" value="no"/>
 
-	<property name="jsr80.linux.jdoc.path" value="${Jsr80Env.JSR80_JDOC_PATH"/>
+	<property name="jsr80.linux.jdoc.path" value="${Jsr80Env.JSR80_JDOC_PATH}"/>
 
 	<!-- Show help -->
 	<target name="help">
