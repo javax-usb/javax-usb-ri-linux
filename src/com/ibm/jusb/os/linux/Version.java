@@ -23,12 +23,12 @@ public class Version
 		System.out.println(LINUX_IMP_DESCRIPTION);
 	}
 
-	public static final String LINUX_API_VERSION = "0.10.3";
-	public static final String LINUX_IMP_VERSION = "0.10.7";
+	public static final String LINUX_API_VERSION = "1.0.0";
+	public static final String LINUX_IMP_VERSION = "1.0.0";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "JSR80 : javax.usb"
 		+"\n"
-		+"\n"+"Implementation for the Linux kernel (2.4.x).\n"
+		+"\n"+"Implementation for the Linux kernel (2.4/2.6).\n"
 		+"\n"
 		+"\n"+"*"
 		+"\n"+"* Copyright (c) 1999 - 2001, International Business Machines Corporation."
