@@ -25,16 +25,6 @@ abstract class DefaultLinuxRequest implements LinuxRequest
 	// Public methods
 
 	/**
-	 * Get the pre-execution Task object.
-	 */
-	public Task getPreTask() { return nullTask; }
-
-	/**
-	 * Get the post-execution Task object.
-	 */
-	public Task getPostTask() { return nullTask; }
-
-	/**
 	 * Wait until the request is submitted.
 	 * <p>
 	 * This returns when isSubmitCompleted() becomes true
@@ -243,11 +233,4 @@ abstract class DefaultLinuxRequest implements LinuxRequest
 	private int submissionWaiters = 0;
 	private int completionWaiters = 0;
 
-	protected Task nullTask = new Task() {
-		public void execute() { }
-	};
-
-	protected Task recycleTask = new Task() {
-		public void execute() { DefaultLinuxRequest.this.recycle(); }
-	};
 }

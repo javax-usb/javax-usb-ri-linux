@@ -31,10 +31,11 @@ class JavaxUsb {
 	public static void loadLibrary() throws UsbException
 	{
 		if ( libraryLoaded ) return;
-		try { System.loadLibrary( LinuxUsbConst.SHARED_LIBRARY_NAME ); }
-		catch ( Exception e ) { throw new UsbException( LinuxUsbConst.EXCEPTION_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LinuxUsbConst.SHARED_LIBRARY_NAME ) + " : " + e.getMessage() ); }
-		catch ( Error e ) { throw new UsbException( LinuxUsbConst.ERROR_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LinuxUsbConst.SHARED_LIBRARY_NAME ) + " : " + e.getMessage() ); }
+		try { System.loadLibrary( LIBRARY_NAME ); }
+		catch ( Exception e ) { throw new UsbException( EXCEPTION_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
+		catch ( Error e ) { throw new UsbException( ERROR_WHILE_LOADING_SHARED_LIBRARY + " " + System.mapLibraryName( LIBRARY_NAME ) + " : " + e.getMessage() ); }
 
+//FIXME - change to real tracing
 		msgLevelTable.put( MSG_CRITICAL, new Integer(0) );
 		msgLevelTable.put( MSG_ERROR, new Integer(1) );
 		msgLevelTable.put( MSG_WARNING, new Integer(2) );
@@ -296,7 +297,8 @@ class JavaxUsb {
 	 */
 	private static UsbRootHub createUsbRootHub()
 	{
-		return getUsbInfoFactory().createUsbRootHub();
+		UsbDeviceOsImp osImp = new LinuxDeviceOsImp();
+		return new UsbRootHubImp(
 	}
 
 	/**
@@ -306,7 +308,7 @@ class JavaxUsb {
 	 */
 	private static UsbRootHub createUsbRootHub( int maxPorts )
 	{
-		return getUsbInfoFactory().createUsbRootHub( maxPorts );
+return null;
 	}
 
 	/**
@@ -316,7 +318,7 @@ class JavaxUsb {
 	 */
 	private static UsbHub createUsbHub( int maxPorts )
 	{
-		return getUsbInfoFactory().createUsbHub( maxPorts );
+return null;
 	}
 
 	/**
@@ -328,12 +330,7 @@ class JavaxUsb {
 	 */
 	private static UsbHub createUsbHub( UsbHub parentHub, byte parentPort, int maxPorts )
 	{
-		try {
-			return getUsbInfoFactory().createUsbHub( parentHub, parentPort, maxPorts );
-		} catch ( UsbException uE ) {
-			System.err.println( "Could not create hub : " + uE.getMessage() );
-			return null;
-		}
+return null;
 	}
 
 	/**
@@ -342,7 +339,7 @@ class JavaxUsb {
 	 */
 	private static UsbDevice createUsbDevice( )
 	{
-		return getUsbInfoFactory().createUsbDevice( );
+return null;
 	}
 
 	/**
@@ -353,12 +350,7 @@ class JavaxUsb {
 	 */
 	private static UsbDevice createUsbDevice( UsbHub parentHub, byte parentPort )
 	{
-		try {
-			return getUsbInfoFactory().createUsbDevice( parentHub, parentPort );
-		} catch ( UsbException uE ) {
-			System.err.println( "Could not create device : " + uE.getMessage() );
-			return null;
-		}
+return null;
 	}
 
 	/**
@@ -368,7 +360,7 @@ class JavaxUsb {
 	 */
 	private static UsbConfig createUsbConfig( UsbDevice device )
 	{
-		return getUsbInfoFactory().createUsbConfig( device );
+return null;
 	}
 
 	/**
@@ -378,7 +370,7 @@ class JavaxUsb {
 	 */
 	private static UsbInterface createUsbInterface( UsbConfig config )
 	{
-		return getUsbInfoFactory().createUsbInterface( config );
+return null;
 	}
 
 	/**
@@ -388,13 +380,13 @@ class JavaxUsb {
 	 */
 	private static UsbEndpoint createUsbEndpoint( UsbInterface iface )
 	{
-		return getUsbInfoFactory().createUsbEndpoint( iface );
+return null;
 	}
 
 	//*************************************************************************
 	// Setup methods
 
-	private static void configureUsbDevice( UsbDevice targetDevice,
+	private static void configureUsbDevice( UsbDeviceImp targetDevice,
 		byte length, byte type,
 		byte deviceClass, byte deviceSubClass, byte deviceProtocol, byte maxDefaultEndpointSize,
 		byte manufacturerIndex, byte productIndex, byte serialNumberIndex, byte numConfigs, short vendorId,
@@ -417,17 +409,17 @@ class JavaxUsb {
 		bcdDevice += 0;
 		bcdUsb += 0;
 
-		speedString = ( null == speedString ? "" : speedString.trim() );
+		speedString = speedString.trim();
 
-		DeviceDescriptor desc = getDescriptorFactory().createDeviceDescriptor( length, type,
+		DeviceDescriptor desc = new DeviceDescriptor( length, type,
 			deviceClass, deviceSubClass, deviceProtocol, maxDefaultEndpointSize, manufacturerIndex,
 			productIndex, serialNumberIndex, numConfigs, vendorId, productId, bcdDevice, bcdUsb );
 
-		targetDevice.accept( getInitUsbInfoV() );
-		getInitUsbInfoV().setUsbDeviceInfo( desc, speedString );
+		targetDevice.setDeviceDescriptor(desc);
+		targetDevice.setSpeedString(speedString);
 	}
 
-	private static void configureUsbConfig( UsbConfig targetConfig,
+	private static void configureUsbConfig( UsbConfigImp targetConfig,
 		byte length, byte type,
 		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
 		byte maxPowerNeeded, boolean active )
@@ -442,19 +434,16 @@ class JavaxUsb {
 		attributes += 0;
 		maxPowerNeeded += 0;
 
-		ConfigDescriptor desc = getDescriptorFactory().createConfigDescriptor( length, type,
+		ConfigDescriptor desc = new ConfigDescriptor( length, type,
 			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
 
-		targetConfig.accept( getInitUsbInfoV() );
-		getInitUsbInfoV().setUsbConfigInfo( desc );
+		targetConfig.setConfigDescriptor(desc);
 
-		if (active) {
-			targetConfig.getUsbDevice().accept( getInitUsbInfoV() );
-			getInitUsbInfoV().setActiveUsbConfigNumber( configValue );
-		}
+		if (active)
+			targetConfig.getUsbDeviceImp().setActiveUsbConfigNumber(configValue);
 	}
 
-	private static void configureUsbInterface( UsbInterface targetInterface,
+	private static void configureUsbInterface( UsbInterfaceImp targetInterface,
 		byte length, byte type,
 		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
 		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex )
@@ -471,15 +460,14 @@ class JavaxUsb {
 		interfaceProtocol += 0;
 		interfaceIndex += 0;
 
-		InterfaceDescriptor desc = getDescriptorFactory().createInterfaceDescriptor( length, type,
+		InterfaceDescriptor desc = new InterfaceDescriptor( length, type,
 			interfaceNumber, alternateNumber, numEndpoints, interfaceClass, interfaceSubClass,
 			interfaceProtocol, interfaceIndex );
 
-		targetInterface.accept( getInitUsbInfoV() );
-		getInitUsbInfoV().setUsbInterfaceInfo( desc );
+		targetInterface.setInterfaceDescriptor(desc);
 	}
 
-	private static void configureUsbEndpoint( UsbEndpoint targetEndpoint,
+	private static void configureUsbEndpoint( UsbEndpointImp targetEndpoint,
 		byte length, byte type,
 		byte endpointAddress, byte attributes, byte interval, short maxPacketSize )
 	{
@@ -492,14 +480,13 @@ class JavaxUsb {
 		interval += 0;
 		maxPacketSize += 0;
 
-		EndpointDescriptor desc = getDescriptorFactory().createEndpointDescriptor( length, type,
+		EndpointDescriptor desc = new EndpointDescriptor( length, type,
 			endpointAddress, attributes, interval, maxPacketSize );
 
-		targetEndpoint.accept( getInitUsbInfoV() );
-		getInitUsbInfoV().setUsbEndpointInfo( desc );
+		targetEndpoint.setEndpointDescriptor(desc);
 	}
 
-	private static void configureStringDescriptor( UsbDevice device,
+	private static void configureStringDescriptor( UsbDeviceImp device,
 		byte length, byte type,
 		byte index, String newString )
 	{
@@ -509,64 +496,37 @@ class JavaxUsb {
 		type += 0;
 		index += 0;
 
-		StringDescriptor desc = getDescriptorFactory().createStringDescriptor( length, type, newString );
+		StringDescriptor desc = new StringDescriptor( length, type, newString );
 
-		device.accept( getInitUsbInfoV() );
-		getInitUsbInfoV().setUsbDeviceStringDescriptor( index, desc );
+		device.setStringDescriptor(index,desc);
 	}
 
 	//*************************************************************************
 	// Topology updating methods
 
 	/**
-	 * Connect a UsbDevice to its parent UsbHub
-	 * @param usbDevice the UsbDevice to connect
-	 * @param usbHub the parent UsbHub
+	 * Connect a UsbDeviceImp to its parent UsbHubImp.
+	 * @param device the UsbDevice to connect
+	 * @param hub the parent UsbHub
 	 * @param port the port the UsbDevice is connected on
 	 */
-	static void connectUsbDevice( UsbDevice usbDevice, UsbHub usbHub, byte port )
+	static void connectUsbDevice( UsbDeviceImp device, UsbHubImp hub, byte port )
 	{
-		usbDevice.accept( getInitUsbInfoV() );
 		try {
-			getInitUsbInfoV().connect( usbHub, port );
+			device.connect( hub, port );
 		} catch ( UsbException uE ) {
-			/* This is not the correct exception handling */
-			System.err.println( "Could not connect UsbDevice : " + uE.getMessage() );
+//FIXME - add error handling!
+throw new UsbRuntimeException("Could not attach UsbDeviceImp to parent UsbHubImp : " + uE.getMessage());
 		}
 	}
 
 	/**
-	 * Disconnect a UsbDevice
-	 * @param usbDevice the UsbDevice to disconnect
+	 * Disconnect a UsbDeviceImp.
+	 * @param device the UsbDevice to disconnect
 	 */
-	static void disconnectUsbDevice( UsbDevice usbDevice )
+	static void disconnectUsbDevice( UsbDeviceImp device )
 	{
-		usbDevice.accept( getInitUsbInfoV() );
-		try {
-			getInitUsbInfoV().disconnect();
-		} catch ( UsbException uE ) {
-			/* This is not the correct exception handling */
-			System.err.println( "Could not disconnect UsbDevice: " + uE.getMessage() );
-		}
-	}
-
-	//*************************************************************************
-	// Getter methods (for use by creation/setup methods in this class)
-
-	private static DescriptorFactory getDescriptorFactory()
-	{
-		return LinuxUsbServices.getLinuxInstance().getHelper().getDescriptorFactory();
-	}
-
-	private static UsbInfoFactory getUsbInfoFactory()
-	{
-		return LinuxUsbServices.getLinuxInstance().getHelper().getUsbInfoFactory();
-	}
-
-	private static InitUsbInfoV getInitUsbInfoV()
-	{
-		if ( null == initUsbInfoV ) initUsbInfoV = new InitUsbInfoV();
-		return initUsbInfoV;
+		device.disconnect();
 	}
 
 	//*************************************************************************
@@ -580,47 +540,14 @@ class JavaxUsb {
 	 */
 	private static UsbRootHub getVirtualRootHub()
 	{
-		if (null == virtualRootHub)
-			virtualRootHub = createVirtualRootHub();
-
 		return virtualRootHub;
-	}
-
-	/** Create a 'fake' virtual root hub */
-	private static UsbRootHub createVirtualRootHub()
-	{
-		UsbRootHub usbRootHub = getUsbInfoFactory().createUsbRootHub();
-		String manufacturerString = LinuxUsbConst.VIRTUAL_ROOT_HUB_MANUFACTURER;
-		String productString = LinuxUsbConst.VIRTUAL_ROOT_HUB_PRODUCT;
-		String serialNumberString = LinuxUsbConst.VIRTUAL_ROOT_HUB_SERIALNUMBER;
-
-		configureUsbDevice( usbRootHub, (byte)0x09, DescriptorConst.DESCRIPTOR_TYPE_DEVICE,
-			(byte)0x09, (byte)0, (byte)0, (byte)8, (byte)1, (byte)2, (byte)3, (byte)1,
-			(short)0x0000, (short)0x0000, (short)0x0000, (short)0x0100, "12 Mbps" );
-		UsbConfig config = createUsbConfig( usbRootHub );
-		configureUsbConfig( config, (byte)0x09, DescriptorConst.DESCRIPTOR_TYPE_CONFIG,
-			(byte)1, (byte)0, (byte)0, (byte)0x80, (byte)0, true );
-		UsbInterface iface = createUsbInterface( config );
-		configureUsbInterface( iface, (byte)0x09, DescriptorConst.DESCRIPTOR_TYPE_INTERFACE,
-			(byte)0, (byte)0, (byte)0, (byte)0x09, (byte)0, (byte)0, (byte)0 );
-		configureStringDescriptor( usbRootHub, (byte)manufacturerString.length(),
-			DescriptorConst.DESCRIPTOR_TYPE_STRING, (byte)1, manufacturerString );
-		configureStringDescriptor( usbRootHub, (byte)productString.length(),
-			DescriptorConst.DESCRIPTOR_TYPE_STRING, (byte)2, productString );
-		configureStringDescriptor( usbRootHub, (byte)serialNumberString.length(),
-			DescriptorConst.DESCRIPTOR_TYPE_STRING, (byte)3, serialNumberString );
-			
-
-		return usbRootHub;
 	}
 
 	//*************************************************************************
 	// Class variables
 
 	private static UsbRootHub rootHub = null;
-	private static UsbRootHub virtualRootHub = null;
-
-	private static InitUsbInfoV initUsbInfoV = null;
+	private static UsbRootHub virtualRootHub = new VirtualUsbRootHub();
 
 	private static Hashtable usbDeviceTable = new Hashtable();
 	private static Hashtable usbDeviceKeyTable = new Hashtable();

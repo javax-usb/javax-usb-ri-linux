@@ -12,15 +12,15 @@ package com.ibm.jusb.os.linux;
 import com.ibm.jusb.*;
 
 /**
- * Bulk parameters to pass to native code
+ * LinuxPipeImp implementation for Bulk pipe.
+ * <p>
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
 class LinuxBulkPipeImp extends LinuxPipeImp
 {
-
 	/** Constructor */
-    public LinuxBulkPipeImp( UsbPipeAbstraction abstraction ) { super( abstraction ); }
+    public LinuxBulkPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
 
 	//*************************************************************************
 	// Public methods
@@ -28,7 +28,7 @@ class LinuxBulkPipeImp extends LinuxPipeImp
 	/** Submit a request natively */
 	public void submitNative( LinuxPipeRequest request )
 	{
-		JavaxUsb.nativeSubmitBulkRequest( request, getUsbPipeAbstraction().getEndpointAddress() );
+		JavaxUsb.nativeSubmitBulkRequest( request, getUsbPipeImp().getEndpointAddress() );
 	}
 
 	/** Complete a request natively */

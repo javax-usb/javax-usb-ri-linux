@@ -37,16 +37,6 @@ interface LinuxRequest extends Recyclable
 	public void completeNative();
 
 	/**
-	 * Get the pre-execution Task object.
-	 */
-	public Task getPreTask();
-
-	/**
-	 * Get the post-execution Task object.
-	 */
-	public Task getPostTask();
-
-	/**
 	 * Wait until the request is submitted.
 	 * <p>
 	 * This returns when isSubmitCompleted() becomes true

@@ -12,15 +12,15 @@ package com.ibm.jusb.os.linux;
 import com.ibm.jusb.*;
 
 /**
- * Interrupt parameters to pass to native code
+ * LinuxPipeImp imeplementation for Interrupt pipe.
+ * <p>
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
 class LinuxInterruptPipeImp extends LinuxPipeImp
 {
-
 	/** Constructor */
-	public LinuxInterruptPipeImp( UsbPipeAbstraction abstraction ) { super( abstraction ); }
+	public LinuxInterruptPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
 
 	//*************************************************************************
 	// Public methods
@@ -28,7 +28,7 @@ class LinuxInterruptPipeImp extends LinuxPipeImp
 	/** Submit a request natively */
 	public void submitNative( LinuxPipeRequest request )
 	{
-		JavaxUsb.nativeSubmitInterruptRequest( request, getUsbPipeAbstraction().getEndpointAddress() );
+		JavaxUsb.nativeSubmitInterruptRequest( request, getUsbPipeImp().getEndpointAddress() );
 	}
 
 	/** Complete a request natively */

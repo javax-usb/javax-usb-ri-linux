@@ -16,14 +16,14 @@ import com.ibm.jusb.*;
 
 /**
  * Control parameters to pass to native code
+ * <p>
+ * This must be set up before use.  See {@link com.ibm.jusb.os.linux.LinuxPipeImp LinuxPipeImp} for details.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
 class LinuxControlPipeImp extends LinuxPipeImp
 {
-
 	/** Constructor */
-	public LinuxControlPipeImp( UsbPipeAbstraction abstraction ) { super( abstraction ); }
+	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
 
 	//*************************************************************************
 	// Public methods
@@ -31,7 +31,7 @@ class LinuxControlPipeImp extends LinuxPipeImp
 	/** Submit a request natively */
 	public void submitNative( LinuxPipeRequest request )
 	{
-		JavaxUsb.nativeSubmitControlRequest( request, getUsbPipeAbstraction().getEndpointAddress() );
+		JavaxUsb.nativeSubmitControlRequest( request, getUsbPipeImp().getEndpointAddress() );
 	}
 
 	/** Complete a request natively */
@@ -65,13 +65,7 @@ class LinuxControlPipeImp extends LinuxPipeImp
 		if (data.length < 8)
 			throw new UsbException( "Control pipe submission header too short" );
 
-		/*
-		 * The USB Spec is vague on this point; however, this is only important on platforms that
-		 * 'claim' interfaces (or endpoints).  So, on Linux this currently will not work
-		 * (the kernel will insist that the caller have the destination interface 'claimed').
-		 * Roger Lindsjo says he talked to Tom Sailer (the Linux userspace USB interface author),
-		 * and Tom agrees with Roger that this should go into the kernel; however it's not in yet.
-		 */
+		/** Vendor requests have no format limitations */
 		if (RequestConst.REQUESTTYPE_TYPE_VENDOR == (data[0] & RequestConst.REQUESTTYPE_TYPE_MASK))
 			return;
 
@@ -93,7 +87,7 @@ class LinuxControlPipeImp extends LinuxPipeImp
 		UsbConfig config;
 
 		try {
-			config = getUsbPipeAbstraction().getUsbDevice().getActiveUsbConfig();
+			config = getUsbPipeImp().getUsbDevice().getActiveUsbConfig();
 		} catch ( UsbRuntimeException urE ) {
 			throw new UsbException( "Device is not configured.", UsbInfoConst.USB_INFO_ERR_NOT_CONFIGURED );
 		}

@@ -14,43 +14,20 @@ import java.util.*;
 import javax.usb.*;
 import javax.usb.os.*;
 import javax.usb.event.*;
-import javax.usb.util.UsbInfoList;
-import javax.usb.util.DefaultUsbInfoList;
+import javax.usb.util.*;
 
 import com.ibm.jusb.*;
+import com.ibm.jusb.os.*;
 import com.ibm.jusb.util.*;
 
 /**
- * Basic set of Linux native services
- * @author E. Michael Maximilien
+ * UsbServices implementation for Linux platform.
  * @author Dan Streetman
- * @version 0.0.1 (JDK 1.1.x)
  */
-public class LinuxUsbServices extends AbstractUsbServices implements UsbServices, UsbTopologyServices
+public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 {
-
-    public LinuxUsbServices()
-	{
-		linuxUsbServices = this;
-	}
-
     //*************************************************************************
     // Public methods
-
-    /**
-     * Accepts a DescriptorVisitor objects
-     * @param visitor the OSServicesVisitor object
-     */
-    public void accept( UsbServicesVisitor visitor ) { visitor.visitLinuxUsbServices( this ); }
-
-	/** @return the AbstractUsbServices.AbstractHelper object */
-	public AbstractHelper getHelper() { return helper; }
-
-	/** @return the LinuxUsbServices.LinuxHelper object */
-	public LinuxHelper getLinuxHelper() { return helper; }
-
-	/** @deprecated use getUsbRootHub() */
-    public synchronized UsbHub getRootUsbHub() throws UsbException { return getUsbRootHub(); }
 
     /**
 	 * Get the root hub
@@ -74,8 +51,8 @@ catch ( InterruptedException iE ) { }
 		if (0 >= totalDevices)
 			totalDevices = JavaxUsb.nativeTopologyUpdater( topologyUpdater );
 
-        if ( 0 > totalDevices ) throw new UsbException( LinuxUsbConst.COULD_NOT_ACCESS_USB_SUBSYSTEM );
-        if ( 0 == totalDevices ) throw new UsbException( LinuxUsbConst.NO_USB_DEVICES_FOUND );
+        if ( 0 > totalDevices ) throw new UsbException( COULD_NOT_ACCESS_USB_SUBSYSTEM );
+        if ( 0 == totalDevices ) throw new UsbException( NO_USB_DEVICES_FOUND );
 
         return JavaxUsb.getRootHub();
 	}
@@ -87,14 +64,14 @@ catch ( InterruptedException iE ) { }
 	 * This should correspond to the output of (some version of) the
 	 * {@link javax.usb.Version#getApiVersion() javax.usb.Version}.
 	 */
-	public String getApiVersion() { return LinuxUsbConst.API_VERSION; }
+	public String getApiVersion() { return LINUX_API_VERSION; }
 
 	/**
 	 * Get the version number of the UsbServices implementation.
 	 * <p>
 	 * The format should be <major>.<minor>.<revision>
 	 */
-	public String getImpVersion() { return LinuxUsbConst.IMP_VERSION; }
+	public String getImpVersion() { return LINUX_IMP_VERSION; }
 
 	/**
 	 * Get a description of this UsbServices implementation.
@@ -110,19 +87,7 @@ catch ( InterruptedException iE ) { }
 	 * <li>Any other useful information.</li>
 	 * </ul>
 	 */
-	public String getImpDescription() { return LinuxUsbConst.IMP_DESCRIPTION; }
-
-    //*************************************************************************
-    // Package methods
-
-    /**
-     * Get current instance of this
-     * @return The current UsbServices instance
-     */
-    static LinuxUsbServices getLinuxInstance()
-	{
-        return linuxUsbServices;
-	}
+	public String getImpDescription() { return LINUX_IMP_DESCRIPTION; }
 
     //*************************************************************************
     // Private methods
@@ -142,14 +107,15 @@ catch ( InterruptedException iE ) { }
 	/** Enqueue an update topology request */
 	private void topologyChange()
 	{
-		Task update = new Task() {
-			public void execute()
+		Runnable r = new Runnable() {
+			public void run()
 			{ LinuxUsbServices.this.updateTopology(); }
 		};
 
-		topologyChangeScheduler.start();
-		topologyChangeScheduler.resume();
-		topologyChangeScheduler.post( update );
+		Thread t = new Thread(r);
+
+		t.setDaemon(true);
+		t.start();
 	}
 
 	/** Update the topology and fire connect/disconnect events */
@@ -205,82 +171,38 @@ catch ( InterruptedException iE ) { }
         public void run() { JavaxUsb.nativeTopologyListener( LinuxUsbServices.this.topologyListener ); }
 	};
 
-	private TaskScheduler topologyChangeScheduler = new FifoScheduler();
-
     private int totalDevices = 0;
 
-    private UsbPipeImpFactory usbPipeImpFactory = new LinuxPipeImpFactory();
-	private UsbInfoImpFactory usbInfoImpFactory = new LinuxInfoImpFactory();
+	//*************************************************************************
+	// Class constants
 
-	private LinuxRequestFactory linuxPipeRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxPipeRequest( LinuxUsbServices.this.linuxPipeRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxIsochronousRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxIsochronousRequest( LinuxUsbServices.this.linuxIsochronousRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxIsochronousCompositeRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxIsochronousCompositeRequest( LinuxUsbServices.this.linuxIsochronousCompositeRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxInterfaceRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxInterfaceRequest( LinuxUsbServices.this.linuxInterfaceRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxDcpRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxDcpRequest( LinuxUsbServices.this.linuxDcpRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxSetConfigurationRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxSetConfigurationRequest( LinuxUsbServices.this.linuxSetConfigurationRequestFactory ); }
-	};
-	private LinuxRequestFactory linuxSetInterfaceRequestFactory = new LinuxRequestFactory() {
-		public Recyclable createRecyclable() { return new LinuxSetInterfaceRequest( LinuxUsbServices.this.linuxSetInterfaceRequestFactory ); }
-	};
+    public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
+    public static final String NO_USB_DEVICES_FOUND = "No USB devices found.";
+    public static final String ERROR_WHILE_LOADING_SHARED_LIBRARY = "Error while loading shared library";
+    public static final String EXCEPTION_WHILE_LOADING_SHARED_LIBRARY = "Exception while loading shared library";
 
-	private MethodHandlerFactory methodHandlerFactory = new MethodHandlerFactory();
+	public static final String LINUX_API_VERSION = "0.9.1";
+	public static final String LINUX_IMP_VERSION = "0.9.1";
+	public static final String LINUX_IMP_DESCRIPTION =
+		 "\t"+"JSR80 : javax.usb"
+		+"\n"
+		+"\n"+"Implementation for the Linux kernel (2.4.x).\n"
+		+"\n"
+		+"\n"+"*"
+		+"\n"+"* Copyright (c) 1999 - 2001, International Business Machines Corporation."
+		+"\n"+"* All Rights Reserved."
+		+"\n"+"*"
+		+"\n"+"* This software is provided and licensed under the terms and conditions"
+		+"\n"+"* of the Common Public License:"
+		+"\n"+"* http://oss.software.ibm.com/developerworks/opensource/license-cpl.html"
+		+"\n"
+		+"\n"+"http://javax-usb.org/"
+		+"\n"+"\n"
+		;
 
-    private LinuxHelper helper = new LinuxHelper();
-            
-    //*************************************************************************
-    // Class variables
-
-    private static LinuxUsbServices linuxUsbServices = null;
 
 	//*************************************************************************
 	// Inner interfaces
-
-	/**
-	 * Helper class
-	 */
-	public class LinuxHelper extends AbstractHelper
-	{
-		/** @return a UsbPipeImpFactory instance */
-		public UsbPipeImpFactory getUsbPipeImpFactory() { return LinuxUsbServices.this.usbPipeImpFactory; }
-
-		/** @return a UsbInfoImpFactory instance */
-		public UsbInfoImpFactory getUsbInfoImpFactory() { return LinuxUsbServices.this.usbInfoImpFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxPipeRequests */
-		public LinuxRequestFactory getLinuxPipeRequestFactory() { return LinuxUsbServices.this.linuxPipeRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxIsochronousRequests */
-		public LinuxRequestFactory getLinuxIsochronousRequestFactory() { return LinuxUsbServices.this.linuxIsochronousRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxIsochronousCompositeRequests */
-		public LinuxRequestFactory getLinuxIsochronousCompositeRequestFactory() { return LinuxUsbServices.this.linuxIsochronousCompositeRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxInterfaceRequests */
-		public LinuxRequestFactory getLinuxInterfaceRequestFactory() { return LinuxUsbServices.this.linuxInterfaceRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxDcpRequests */
-		public LinuxRequestFactory getLinuxDcpRequestFactory() { return LinuxUsbServices.this.linuxDcpRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxSetConfigurationRequests */
-		public LinuxRequestFactory getLinuxSetConfigurationRequestFactory() { return LinuxUsbServices.this.linuxSetConfigurationRequestFactory; }
-
-		/** @return a LinuxRequestFactory instance for LinuxSetInterfaceRequests */
-		public LinuxRequestFactory getLinuxSetInterfaceRequestFactory() { return LinuxUsbServices.this.linuxSetInterfaceRequestFactory; }
-
-		/** @return a MethodHandlerFactory instance */
-		public MethodHandlerFactory getMethodHandlerFactory() { return LinuxUsbServices.this.methodHandlerFactory; }
-	}
 
 	/**
 	 * Linux topology listener, should be passed to native code which will callback the methods
