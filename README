@@ -34,3 +34,16 @@ Add lib/jsr80_linux.jar to your CLASSPATH.
 Add the directory containing javax.usb.properties to your CLASSPATH.
 Add the directory containing libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
 
+This implementation uses the "usbfs" filesystem to access the USB topology.  You will need
+permission to access the device nodes in that filesystem in order to use javax.usb.  Specifically
+you need read-write access to the nodes /proc/bus/usb/NNN/NNN where NNN is a 0-9 digit.  To
+change the permissions of the device nodes, you can remount the filesystem with the option
+"devmode=666".  If you have an entry in your /etc/fstab file for usbfs (or usbdevfs) then you
+can add the option to that file.  If not, your distribution probably explictly mounts the
+filesystem in a startup script, so you may have to re-mount it by hand with the devmode option,
+or edit a startup script to remount it with the devmode option.
+
+NOTE that by changing the permissions of this filesystem to 666 you are allowing ANYONE on
+your system full access to all of your USB devices.  To improve security you should set the
+permissions more restrictive and give read-write access to only a specific user or specific group.
+
