@@ -14,6 +14,8 @@
 
 static int fatalLogError = 0;
 
+int show_urb_data = 0;
+
 static inline void log_fatal(char *msg)
 {
 	if (!fatalLogError) {

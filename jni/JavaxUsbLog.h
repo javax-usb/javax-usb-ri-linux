@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern int show_urb_data;
+
 /*
  * Log to Java.
  *
