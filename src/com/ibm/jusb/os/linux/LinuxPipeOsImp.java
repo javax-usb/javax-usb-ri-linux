@@ -112,7 +112,7 @@ public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,
 	protected byte getEndpointAddress()
 	{
 		if (0 == endpointAddress)
-			endpointAddress = usbPipeImp.getUsbEndpointImp().getEndpointDescriptor().bEndpointAddress();
+			endpointAddress = usbPipeImp.getUsbEndpointImp().getUsbEndpointDescriptor().bEndpointAddress();
 
 		return endpointAddress;
 	}

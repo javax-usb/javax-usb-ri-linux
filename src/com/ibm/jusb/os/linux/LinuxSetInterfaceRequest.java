@@ -29,8 +29,8 @@ public class LinuxSetInterfaceRequest extends LinuxControlRequest
 	/** @return The interface setting */
 	public int getSetting() { return interfaceSetting; }
 
-	/** @param irp The ControlUsbIrpImp */
-	public void setUsbIrpImp(ControlUsbIrpImp irp)
+	/** @param irp The UsbControlIrpImp */
+	public void setUsbIrpImp(UsbControlIrpImp irp)
 	{
 		super.setUsbIrpImp(irp);
 		interfaceNumber = UsbUtil.unsignedInt(irp.wIndex());

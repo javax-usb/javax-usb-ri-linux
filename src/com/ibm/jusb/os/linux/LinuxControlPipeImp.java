@@ -27,11 +27,11 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	/**
-	 * Asynchronous submission using a ControlUsbIrpImp.
-	 * @param irp the ControlUsbIrpImp to use for this submission
+	 * Asynchronous submission using a UsbControlIrpImp.
+	 * @param irp the UsbControlIrpImp to use for this submission
      * @exception UsbException If any error occurrs.
 	 */
-	public void asyncSubmit( ControlUsbIrpImp irp ) throws UsbException
+	public void asyncSubmit( UsbControlIrpImp irp ) throws UsbException
 	{
 //FIXME - a check could be added here to verify claimed interface, if appropriate, as the kernel errors are generic
 

@@ -23,10 +23,10 @@ class LinuxControlRequest extends LinuxPipeRequest
 	public LinuxControlRequest() { super(UsbConst.ENDPOINT_TYPE_CONTROL,(byte)0x00); }
 
 	/** @param irp The (Control)UsbIrpImp */
-	public void setUsbIrpImp( UsbIrpImp irp ) { setUsbIrpImp((ControlUsbIrpImp)irp); }
+	public void setUsbIrpImp( UsbIrpImp irp ) { setUsbIrpImp((UsbControlIrpImp)irp); }
 
-	/** @param irp The ControlUsbIrpImp */
-	public void setUsbIrpImp( ControlUsbIrpImp irp )
+	/** @param irp The UsbControlIrpImp */
+	public void setUsbIrpImp( UsbControlIrpImp irp )
 	{
 		super.setUsbIrpImp(irp);
 

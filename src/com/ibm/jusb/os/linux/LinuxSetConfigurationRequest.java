@@ -26,8 +26,8 @@ public class LinuxSetConfigurationRequest extends LinuxControlRequest
 	/** @return The configuration number */
 	public int getConfiguration() { return configuration; }
 
-	/** @param irp The ControlUsbIrpImp */
-	public void setUsbIrpImp(ControlUsbIrpImp irp)
+	/** @param irp The UsbControlIrpImp */
+	public void setUsbIrpImp(UsbControlIrpImp irp)
 	{
 		super.setUsbIrpImp(irp);
 		configuration = UsbUtil.unsignedInt((byte)irp.wValue());

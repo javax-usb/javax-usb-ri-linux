@@ -62,19 +62,19 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	/** @param proxy The LinuxDeviceProxy */
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
 
-	/** AsyncSubmit a ControlUsbIrpImp */
-	public void asyncSubmit( ControlUsbIrpImp controlUsbIrpImp ) throws UsbException
+	/** AsyncSubmit a UsbControlIrpImp */
+	public void asyncSubmit( UsbControlIrpImp usbControlIrpImp ) throws UsbException
 	{
 		LinuxControlRequest request = null;
 
-		if (controlUsbIrpImp.isSetConfiguration())
+		if (usbControlIrpImp.isSetConfiguration())
 			request = new LinuxSetConfigurationRequest();
-		else if (controlUsbIrpImp.isSetInterface())
+		else if (usbControlIrpImp.isSetInterface())
 			request = new LinuxSetInterfaceRequest();
 		else
 			request = new LinuxControlRequest();
 
-		request.setUsbIrpImp(controlUsbIrpImp);
+		request.setUsbIrpImp(usbControlIrpImp);
 
 		submit(request);
 	}

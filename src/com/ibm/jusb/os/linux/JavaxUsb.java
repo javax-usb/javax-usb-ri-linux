@@ -157,8 +157,8 @@ class JavaxUsb
 		return device;
 	}
 
-	/** @return A new UsbConfigImp */
-	private static UsbConfigImp createUsbConfigImp( UsbDeviceImp device,
+	/** @return A new UsbConfigurationImp */
+	private static UsbConfigurationImp createUsbConfigurationImp( UsbDeviceImp device,
 		byte length, byte type, short totalLen,
 		byte numInterfaces, byte configValue, byte configIndex, byte attributes,
 		byte maxPowerNeeded, boolean active )
@@ -173,19 +173,19 @@ class JavaxUsb
 		attributes += 0;
 		maxPowerNeeded += 0;
 
-		ConfigDescriptorImp desc = new ConfigDescriptorImp( length, type, totalLen,
+		UsbConfigurationDescriptorImp desc = new UsbConfigurationDescriptorImp( length, type, totalLen,
 			numInterfaces, configValue, configIndex, attributes, maxPowerNeeded );
 
-		UsbConfigImp config = new UsbConfigImp( device, desc );
+		UsbConfigurationImp config = new UsbConfigurationImp( device, desc );
 
 		if (active)
-			device.setActiveUsbConfigNumber(configValue);
+			device.setActiveUsbConfigurationNumber(configValue);
 
 		return config;
 	}
 
 	/** @return A new UsbInterfaceImp */
-	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigImp config,
+	private static UsbInterfaceImp createUsbInterfaceImp( UsbConfigurationImp config,
 		byte length, byte type,
 		byte interfaceNumber, byte alternateNumber, byte numEndpoints,
 		byte interfaceClass, byte interfaceSubClass, byte interfaceProtocol, byte interfaceIndex, boolean active )
@@ -202,7 +202,7 @@ class JavaxUsb
 		interfaceProtocol += 0;
 		interfaceIndex += 0;
 
-		InterfaceDescriptorImp desc = new InterfaceDescriptorImp( length, type,
+		UsbInterfaceDescriptorImp desc = new UsbInterfaceDescriptorImp( length, type,
 			interfaceNumber, alternateNumber, numEndpoints, interfaceClass, interfaceSubClass,
 			interfaceProtocol, interfaceIndex );
 
@@ -210,9 +210,9 @@ class JavaxUsb
 
 		/* If the config is not active, neither are its interface settings */
 		if (config.isActive() && active)
-			iface.setActiveSettingNumber( iface.getInterfaceDescriptor().bAlternateSetting() );
+			iface.setActiveSettingNumber( iface.getUsbInterfaceDescriptor().bAlternateSetting() );
 
-		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbConfigImp().getUsbDeviceImp().getUsbDeviceOsImp();
+		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)iface.getUsbConfigurationImp().getUsbDeviceImp().getUsbDeviceOsImp();
 		LinuxInterfaceOsImp linuxInterfaceOsImp = new LinuxInterfaceOsImp( iface, linuxDeviceOsImp );
 		iface.setUsbInterfaceOsImp( linuxInterfaceOsImp );
 
@@ -233,7 +233,7 @@ class JavaxUsb
 		interval += 0;
 		maxPacketSize += 0;
 
-		EndpointDescriptorImp desc = new EndpointDescriptorImp( length, type,
+		UsbEndpointDescriptorImp desc = new UsbEndpointDescriptorImp( length, type,
 			endpointAddress, attributes, interval, maxPacketSize );
 
 		UsbEndpointImp ep = new UsbEndpointImp( iface, desc );
@@ -242,8 +242,8 @@ class JavaxUsb
 		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)iface.getUsbInterfaceOsImp();
 		switch (ep.getType()) {
 		case UsbConst.ENDPOINT_TYPE_CONTROL:
-			pipe = new ControlUsbPipeImp( ep, null );
-			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( (ControlUsbPipeImp)pipe, linuxInterfaceOsImp ) );
+			pipe = new UsbControlPipeImp( ep, null );
+			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( (UsbControlPipeImp)pipe, linuxInterfaceOsImp ) );
 			break;
 		case UsbConst.ENDPOINT_TYPE_BULK:
 			pipe = new UsbPipeImp( ep, null );
@@ -291,11 +291,11 @@ class JavaxUsb
 		bcdDevice += 0;
 		bcdUsb += 0;
 
-		DeviceDescriptorImp desc = new DeviceDescriptorImp( length, type,
+		UsbDeviceDescriptorImp desc = new UsbDeviceDescriptorImp( length, type,
 			bcdUsb, deviceClass, deviceSubClass, deviceProtocol, maxDefaultEndpointSize, vendorId, productId,
 			bcdDevice, manufacturerIndex, productIndex, serialNumberIndex, numConfigs );
 
-		targetDevice.setDeviceDescriptor(desc);
+		targetDevice.setUsbDeviceDescriptor(desc);
 
 		switch (speed) {
 		case SPEED_LOW:

@@ -48,7 +48,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 		usbInterfaceImp = iface;
 
 		try {
-			interfaceNumber = usbInterfaceImp.getInterfaceDescriptor().bInterfaceNumber();
+			interfaceNumber = usbInterfaceImp.getUsbInterfaceDescriptor().bInterfaceNumber();
 		} catch ( NullPointerException npE ) {
 			/* wait 'til usbInterfaceImp is non-null */
 		}
