@@ -29,8 +29,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	{
 		topologyUpdateManager.setMaxSize(Long.MAX_VALUE);
 
-		try { setTopologyUpdateDelay(); }
-		catch ( Exception e ) { /* use hardcoded default TOPOLOGY_UPDATE_DELAY */ }
+		checkProperties();
 	}
 
     //*************************************************************************
@@ -80,12 +79,22 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     //*************************************************************************
     // Private methods
 
-	/** Set the topologyUpdateDelay variable from user-specified property */
-	private void setTopologyUpdateDelay() throws Exception
+	/** Set variables from user-specified properties */
+	private void checkProperties()
 	{
-		String delay = UsbHostManager.getProperties().getProperty(TOPOLOGY_UPDATE_DELAY_KEY);
-		Integer delayInt = Integer.decode(delay);
-		topologyUpdateDelay = delayInt.intValue();
+		Properties p = null;
+
+		try { p = UsbHostManager.getProperties(); } catch ( Exception e ) { return; }
+
+		try {
+			if (p.containsKey(TOPOLOGY_UPDATE_DELAY_KEY))
+				topologyUpdateDelay = Integer.decode(p.getProperty(TOPOLOGY_UPDATE_DELAY_KEY)).intValue();
+		} catch ( Exception e ) { }
+
+		try {
+			if (p.containsKey(TOPOLOGY_UPDATE_USE_POLLING_KEY))
+				topologyUpdateUsePolling = Boolean.valueOf(p.getProperty(TOPOLOGY_UPDATE_USE_POLLING_KEY)).booleanValue();
+		} catch ( Exception e ) { }
 	}
 
 	/** @return If the topology listener is listening */
@@ -98,15 +107,32 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	/** Start Topology Change Listener Thread */
 	private void startTopologyListener()
 	{
-		Runnable r = new Runnable() {
-				public void run()
-				{ topologyListenerExit(JavaxUsb.nativeTopologyListener(LinuxUsbServices.this)); }
-			};
+		Runnable r = null;
+		String threadName = null;
+
+		if (topologyUpdateUsePolling) {
+			threadName = "javax.usb Linux implementation Topology Poller";
+			r = new Runnable() {
+					public void run()
+					{
+						while (true) {
+							try { Thread.sleep(topologyUpdateDelay); } catch ( InterruptedException iE ) { }
+							updateTopology();
+						}
+					}
+				};
+		} else {
+			threadName = "javax.usb Linux implementation Topology Listener";
+			r = new Runnable() {
+					public void run()
+					{ topologyListenerExit(JavaxUsb.nativeTopologyListener(LinuxUsbServices.this)); }
+				};
+		}
 
 		topologyListener = new Thread(r);
 
 		topologyListener.setDaemon(true);
-		topologyListener.setName("javax.usb Linux implementation Topology Listener");
+		topologyListener.setName(threadName);
 
 		topologyListenerError = 0;
 		topologyListener.start();
@@ -264,14 +290,21 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
     private int topologyListenerError = 0;
 	private int topologyUpdateResult = 0;
 
+	protected boolean topologyUpdateUsePolling = TOPOLOGY_UPDATE_USE_POLLING;
 	protected int topologyUpdateDelay = TOPOLOGY_UPDATE_DELAY;
 
 	//*************************************************************************
 	// Class constants
 
-	/* TOPOLOGY_UPDATE_DELAY is overridden by value of TOPOLOGY_UPDATE_DELAY_KEY property (if set) */
+	/* If not polling, this is the delay in ms after getting a connect/disconnect notification
+	 * before checking for device updates.  If polling, this is the number of ms between polls.
+	 */
 	public static final int TOPOLOGY_UPDATE_DELAY = 1000; /* 1 second */
 	public static final String TOPOLOGY_UPDATE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateDelay";
+
+	/* Whether to use polling to wait for connect/disconnect notification */
+	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = false;
+	public static final String TOPOLOGY_UPDATE_USE_POLLING_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateUsePolling";
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
