@@ -257,8 +257,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
     public static final String COULD_NOT_ACCESS_USB_SUBSYSTEM = "Could not access USB subsystem.";
 
-	public static final String LINUX_API_VERSION = "0.9.1";
-	public static final String LINUX_IMP_VERSION = "0.9.2";
+	public static final String LINUX_API_VERSION = com.ibm.jusb.Version.getApiVersion();
+	public static final String LINUX_IMP_VERSION = "0.9.3";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "\t"+"JSR80 : javax.usb"
 		+"\n"
