@@ -69,6 +69,8 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 	{
 		LinuxControlRequest request = null;
 
+		checkUnclaimedInterface(usbControlIrpImp);
+
 		if (usbControlIrpImp.isSetConfiguration())
 			request = new LinuxSetConfigurationRequest();
 		else if (usbControlIrpImp.isSetInterface())
@@ -90,6 +92,28 @@ class LinuxDeviceOsImp extends DefaultUsbDeviceOsImp implements UsbDeviceOsImp
 		/* Ignore proxy-starting exception, it should already be started */
 		try { getLinuxDeviceProxy().cancel(request); }
 		catch ( UsbException uE ) { }
+	}
+
+	/**
+	 * If this is a request to an unclaimed interface, throw an exception.
+	 * @param irp The UsbControlIrpImp.
+	 * @exception UsbNotClaimedException If the recipient interface is unclaimed.
+	 */
+	protected void checkUnclaimedInterface(UsbControlIrpImp irp)
+	{
+		/* Ignore "recipient" of Vendor requests */
+		if (UsbConst.REQUESTTYPE_TYPE_VENDOR == (byte)(UsbConst.REQUESTTYPE_TYPE_MASK & irp.bmRequestType()))
+			return;
+
+		if (UsbConst.REQUESTTYPE_RECIPIENT_INTERFACE == (byte)(UsbConst.REQUESTTYPE_RECIPIENT_MASK & irp.bmRequestType())) {
+			byte ifacenum = (byte)irp.wIndex();
+/* FIXME - find iface and check for claim */
+		}
+
+		if (UsbConst.REQUESTTYPE_RECIPIENT_ENDPOINT == (byte)(UsbConst.REQUESTTYPE_RECIPIENT_MASK & irp.bmRequestType())) {
+			byte epNum = (byte)irp.wIndex();
+/* FIXME - find iface and check for claim */
+		}
 	}
 
 	private UsbDeviceImp usbDeviceImp = null;
