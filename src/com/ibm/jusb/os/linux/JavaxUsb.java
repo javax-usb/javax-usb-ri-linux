@@ -57,7 +57,20 @@ if (null != System.getProperty("JAVAX_USB_MSG_LEVEL")) System.err.println("LOG:[
 	 */
 	public static UsbException errorToUsbException(int error)
 	{
-		return new UsbException(nativeGetErrorMessage(error));
+		switch (error) {
+		case 32:
+			return new UsbStallException();
+		case 71:
+			return new UsbBitStuffException();
+		case 75:
+			return new UsbBabbleException();
+		case 84:
+			return new UsbCRCException();
+		case 121:
+			return new UsbShortPacketException();
+		default:
+			return new UsbPlatformException(nativeGetErrorMessage(error));
+		}
 	}
 
 	/**

@@ -30,11 +30,8 @@ JNIEXPORT jstring JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeGetErrorMess
 		case -EBUSY			: return CheckedNewStringUTF( env, "Device or resource busy" );
 		case -ENODEV		: return CheckedNewStringUTF( env, "Device removed (or no such device)" );
 		case -EINVAL		: return CheckedNewStringUTF( env, "Invalid" );
-		case -EPIPE			: return CheckedNewStringUTF( env, "Broken or stalled pipe" );
 		case -ENOSYS		: return CheckedNewStringUTF( env, "Function not implemented" );
 		case -ENODATA		: return CheckedNewStringUTF( env, "No data available" );
-		case -EPROTO		: return CheckedNewStringUTF( env, "Protocol error" );
-		case -EILSEQ		: return CheckedNewStringUTF( env, "Illegal byte sequence" );
 		case -ERESTART		: return CheckedNewStringUTF( env, "Interrupted system call should be restarted" );
 		case -EOPNOTSUPP	: return CheckedNewStringUTF( env, "Operation not supported on transport endpoint" );
 		case -ECONNRESET	: return CheckedNewStringUTF( env, "Connection reset by peer" );
