@@ -46,20 +46,20 @@
 
 /* Log data transfers */
 #define log_xfer(level,args...) log_named(level,"xfer",args)
-#define LOG_XFER_CRITICAL  (LOG_XFER_FLAG & 0x00) /* critical xfers errors */
-#define LOG_XFER_ERROR     (LOG_XFER_FLAG & 0x01) /* xfer errors */
-#define LOG_XFER_DATA      (LOG_XFER_FLAG & 0x02) /* raw data only */
-#define LOG_XFER_META      (LOG_XFER_FLAG & 0x03) /* metadata (device, endpoint, setup, etc) */
-#define LOG_XFER_REQUEST   (LOG_XFER_FLAG & 0x04) /* request received or completed */
-#define LOG_XFER_OTHER     (LOG_XFER_FLAG & 0x05) /* all other transfer logging */
+#define LOG_XFER_CRITICAL  (LOG_XFER_FLAG | 0x00) /* critical xfers errors */
+#define LOG_XFER_ERROR     (LOG_XFER_FLAG | 0x01) /* xfer errors */
+#define LOG_XFER_DATA      (LOG_XFER_FLAG | 0x02) /* raw data only */
+#define LOG_XFER_META      (LOG_XFER_FLAG | 0x03) /* metadata (device, endpoint, setup, etc) */
+#define LOG_XFER_REQUEST   (LOG_XFER_FLAG | 0x04) /* request received or completed */
+#define LOG_XFER_OTHER     (LOG_XFER_FLAG | 0x05) /* all other transfer logging */
 
 /* Log hotplug / initialization */
 #define log_hotplug(level,args...) log_named(level,"hotplug",args)
-#define LOG_HOTPLUG_CRITICAL (LOG_HOTPLUG_FLAG & 0x00) /* critical hotplug errors */
-#define LOG_HOTPLUG_ERROR    (LOG_HOTPLUG_FLAG & 0x01) /* hotplug errors */
-#define LOG_HOTPLUG_CHANGE   (LOG_HOTPLUG_FLAG & 0x02) /* connect/disconnect notices */
-#define LOG_HOTPLUG_DEVICE   (LOG_HOTPLUG_FLAG & 0x03) /* device information */
-#define LOG_HOTPLUG_OTHER    (LOG_HOTPLUG_FLAG & 0x04) /* all other logging */
+#define LOG_HOTPLUG_CRITICAL (LOG_HOTPLUG_FLAG | 0x00) /* critical hotplug errors */
+#define LOG_HOTPLUG_ERROR    (LOG_HOTPLUG_FLAG | 0x01) /* hotplug errors */
+#define LOG_HOTPLUG_CHANGE   (LOG_HOTPLUG_FLAG | 0x02) /* connect/disconnect notices */
+#define LOG_HOTPLUG_DEVICE   (LOG_HOTPLUG_FLAG | 0x03) /* device information */
+#define LOG_HOTPLUG_OTHER    (LOG_HOTPLUG_FLAG | 0x04) /* all other logging */
 
 /* log_named() should not be directly used */
 #define DEFAULT_LOG_LEN 256
