@@ -28,5 +28,6 @@ JSR80_LINUX_JDOC_PATH to both the API and common RI src/ directories separated w
 ****************
 
 Add lib/jsr80_linux.jar to your CLASSPATH.
+Add the directory containing javax.usb.properties to your CLASSPATH.
 Add the directory containing libJavaxUsb.so to your LD_LIBARRY_PATH or /etc/ld.so.conf file.
 
