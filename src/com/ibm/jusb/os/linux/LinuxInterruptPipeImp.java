@@ -20,21 +20,9 @@ import com.ibm.jusb.*;
 class LinuxInterruptPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
-	public LinuxInterruptPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
+	public LinuxInterruptPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	//*************************************************************************
 	// Public methods
-
-	/** Submit a request natively */
-	public void submitNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeSubmitInterruptRequest( request, getUsbPipeImp().getEndpointAddress() );
-	}
-
-	/** Complete a request natively */
-	public void completeNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeCompleteInterruptRequest( request );
-	}
 
 }

@@ -142,7 +142,7 @@ catch ( InterruptedException iE ) { }
     private void fireUsbDeviceAttachedEvent( UsbInfoList usbDevices )
 	{
 		UsbServicesEvent event = new UsbServicesEvent( this, usbDevices );
-        getTopologyHelper().fireUsbDeviceAttachedEvent( event );
+        fireDeviceAttachedEvent( event );
 	}
 
     /**
@@ -152,7 +152,7 @@ catch ( InterruptedException iE ) { }
     private void fireUsbDeviceDetachedEvent( UsbInfoList usbDevices )
 	{
 		UsbServicesEvent event = new UsbServicesEvent( this, usbDevices );
-        getTopologyHelper().fireUsbDeviceDetachedEvent( event );
+        fireDeviceDetachedEvent( event );
 	}
 
     //*************************************************************************

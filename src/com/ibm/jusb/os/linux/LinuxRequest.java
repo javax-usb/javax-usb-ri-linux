@@ -13,7 +13,7 @@ package com.ibm.jusb.os.linux;
  * Abstract class for Linux requests.
  * @author Dan Streetman
  */
-class LinuxRequest
+abstract class LinuxRequest
 {
 	/**
 	 * Get the type of this request.
@@ -33,7 +33,49 @@ class LinuxRequest
 	 */
 	public void setLinuxRequestProxy(LinuxRequestProxy proxy) { linuxRequestProxy = proxy; }
 
+	/** Wait until completed. */
+	public void waitUntilCompleted()
+	{
+		synchronized ( waitLock ) {
+			waitCount++;
+			while (!isCompleted()) {
+				try { waitLock.wait(); }
+				catch ( InterruptedException iE ) { }
+			}
+			waitCount--;
+		}
+	}
+
+	/** @return If this is completed. */
+	public boolean isCompleted() { return completed; }
+
+	/**
+	 * Set completed.
+	 * @param c If this is completed or not.
+	 */
+	public void setCompleted(boolean c)
+	{
+		completed = c;
+
+		if (completed)
+			notifyCompleted();
+	}
+
+	/** Notify waiteers of completion. */
+	public void notifyCompleted()
+	{
+		if (0 < waitCount) {
+			synchronized ( waitLock ) {
+				waitLock.notifyAll();
+			}
+		}		
+	}
+
 	private LinuxRequestProxy linuxRequestProxy = null;
+
+	private Object waitLock = new Object();
+	private int waitCount = 0;
+	private boolean completed = false;
 
 	public static final int LINUX_PIPE_REQUEST = 1;
 	public static final int LINUX_DCP_REQUEST = 2;

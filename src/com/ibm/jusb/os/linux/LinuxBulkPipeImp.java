@@ -20,21 +20,10 @@ import com.ibm.jusb.*;
 class LinuxBulkPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
-    public LinuxBulkPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
+    public LinuxBulkPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	//*************************************************************************
 	// Public methods
 
-	/** Submit a request natively */
-	public void submitNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeSubmitBulkRequest( request, getUsbPipeImp().getEndpointAddress() );
-	}
-
-	/** Complete a request natively */
-	public void completeNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeCompleteBulkRequest( request );
-	}
 
 }

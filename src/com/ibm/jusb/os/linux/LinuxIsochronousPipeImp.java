@@ -23,22 +23,10 @@ import com.ibm.jusb.*;
 class LinuxIsochronousPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
-    public LinuxIsochronousPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
+    public LinuxIsochronousPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	//*************************************************************************
 	// Public methods
-
-	/** Submit a request natively */
-	public void submitNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeSubmitIsochronousRequest( (LinuxIsochronousRequest)request, getUsbPipeImp().getEndpointAddress() );
-	}
-
-	/** Complete a request natively */
-	public void completeNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeCompleteIsochronousRequest( (LinuxIsochronousRequest)request );
-	}
 
 }
 

@@ -37,10 +37,18 @@ public class LinuxSetInterfaceRequest extends LinuxRequest
 	/** @param setting The interface setting */
 	public void setSetting( byte setting ) { interfaceSetting = UsbUtil.unsignedInt(setting); }
 
+	/** @return The error that occured, or 0 if none occurred. */
+	public int getError() { return errorNumber; }
+
+	/** @param error The number of the error that occurred. */
+	public void setError(int error) { errorNumber = error; }
+
 	//*************************************************************************
 	// Instance variables
 
 	private int interfaceNumber;
 	private int interfaceSetting;
+
+	private int errorNumber = 0;
 
 }

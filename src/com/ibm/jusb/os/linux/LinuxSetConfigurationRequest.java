@@ -31,8 +31,16 @@ public class LinuxSetConfigurationRequest extends LinuxRequest
 	/** @param config The configuration number */
 	public void setConfiguration( byte config ) { configuration = UsbUtil.unsignedInt(config); }
 
+	/** @return The error that occured, or 0 if none occurred. */
+	public int getError() { return errorNumber; }
+
+	/** @param error The number of the error that occurred. */
+	public void setError(int error) { errorNumber = error; }
+
 	//*************************************************************************
 	// Instance variables
 
 	private int configuration;
+
+	private int errorNumber = 0;
 }

@@ -43,8 +43,21 @@ class LinuxDeviceOsImp implements UsbDeviceOsImp
 	/** @param device The UsbDeviceImp for this */
 	public void setUsbDeviceImp( UsbDeviceImp device ) { usbDeviceImp = device; }
 
-	/** @return The LinuxDeviceProxy for this */
-	public LinuxDeviceProxy getLinuxDeviceProxy() { return linuxDeviceProxy; }
+	/**
+	 * Get the LinuxDeviceProxy.
+	 * <p>
+	 * This will start up the LinuxDeviceProxy if not running.
+	 * @return The LinuxDeviceProxy.
+	 * @exception UsbException If an UsbException occurred while starting the LinuxDeviceProxy.
+	 */
+	public LinuxDeviceProxy getLinuxDeviceProxy() throws UsbException
+	{
+		if (!linuxDeviceProxy.isRunning()) {
+			synchronized(linuxDeviceProxy) { linuxDeviceProxy.start(); }
+		}
+
+		return linuxDeviceProxy;
+	}
 
 	/** @param proxy The LinuxDeviceProxy */
 	public void setLinuxDeviceProxy(LinuxDeviceProxy proxy) { linuxDeviceProxy = proxy; }
@@ -52,35 +65,37 @@ class LinuxDeviceOsImp implements UsbDeviceOsImp
 	/** SyncSubmit a RequestImp */
 	public void syncSubmit( RequestImp request ) throws UsbException
 	{
+//FIXME - STUB
 throw new UsbException("STUB");
 	}
 
 	/** SyncSubmit a List */
 	public void syncSubmit( List list ) throws UsbException
 	{
+//FIXME - STUB
 throw new UsbException("STUB");
 	}
 
 	/** AsyncSubmit a RquestImp */
 	public void asyncSubmit( RequestImp request ) throws UsbException
 	{
+//FIXME - STUB
 throw new UsbException("STUB");
 	}
 
 	//**************************************************************************
 	// Package methods
 
-	/**
-	 * Submit a Request.
-	 * @param request The LinuxRequest.
-	 */
-	void submit(LinuxRequest request) { getLinuxDeviceProxy().submit(request); }
+	/** Submit a Request. */
+	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceProxy().submit(request); }
 
-	/**
-	 * Cancel a Request.
-	 * @param request The LinuxRequest.
-	 */
-	void cancel(LinuxRequest request) { getLinuxDeviceProxy().cancel(request); }
+	/** Cancel a Request. */
+	void cancel(LinuxRequest request)
+	{
+		/* Ignore proxy-starting exception, it should already be started */
+		try { getLinuxDeviceProxy().cancel(request); }
+		catch ( UsbException uE ) { }
+	}
 
 	//**************************************************************************
 	// Instance variables

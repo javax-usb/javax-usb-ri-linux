@@ -11,6 +11,7 @@ package com.ibm.jusb.os.linux;
 
 import javax.usb.*;
 
+import com.ibm.jusb.*;
 import com.ibm.jusb.util.*;
 
 /**
@@ -21,6 +22,9 @@ class LinuxDcpRequest extends LinuxRequest
 {
 	//*************************************************************************
 	// Public methods
+
+	/** @return The type of this request */
+	public int getType() { return LinuxRequest.LINUX_DCP_REQUEST; }
 
 	/** @return this request's data buffer */
 	public byte[] getData() { return dataBuffer; }

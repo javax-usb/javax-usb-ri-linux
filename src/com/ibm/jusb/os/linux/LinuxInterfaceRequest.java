@@ -27,16 +27,36 @@ class LinuxInterfaceRequest extends LinuxRequest
 	/** @param number The interface number */
 	public void setInterfaceNumber( byte number ) { interfaceNumber = number; }
 
-	/** @return If this is a claim request (true) or release request (false) */
-	public boolean isClaimRequest() { return claimRequest; }
+	/** @return The type of interface request */
+	public int getClaimType() { return claimType; }
 
-	/** @param claim If this is a claim request (true) or release request (false) */
-	public void setClaimRequest( boolean claim ) { claimRequest = claim; }
+	/** @param type The type of claim */
+	public void setClaimType(int type) { claimType = type; }
+
+	/** @param error The number of the error that occurred. */
+	public void setError(int error) { errorNumber = error; }
+
+	/** @return The error number, or 0 if no error occurred. */
+	public int getError() { return errorNumber; }
+
+	/** @return If the interface is claimed */
+	public boolean isClaimed() { return claimed; }
+
+	/** @param c If the interface is claimed */
+	public void setClaimed(boolean c) { claimed = c; }
 
 	//*************************************************************************
 	// Instance variables
 
 	private byte interfaceNumber;
 
-	private boolean claimRequest;
+	private int claimType = 0;
+
+	private int errorNumber = 0;
+
+	private boolean claimed = false;
+
+	public static final int INTERFACE_CLAIM = 1;
+	public static final int INTERFACE_RELEASE = 2;
+	public static final int INTERFACE_IS_CLAIMED = 3;
 }

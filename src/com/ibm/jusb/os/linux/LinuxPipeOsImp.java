@@ -102,9 +102,9 @@ throw new UsbException("Not implemented");
 	 */
 	public void asyncSubmit( UsbIrpImp irp ) throws UsbException
 	{
-		LinuxRequest request = usbIrpImpToLinuxRequest(irp);
+		LinuxPipeRequest request = usbIrpImpToLinuxPipeRequest(irp);
 
-		getInterfaceOsImp().submit(request);
+		getLinuxInterfaceOsImp().submit(request);
 
 		synchronized(inProgressList) {
 			inProgressList.add(request);
@@ -139,10 +139,10 @@ throw new UsbException("Not implemented");
 	 */
 	public void abortAllSubmissions()
 	{
-		LinuxRequest[] requests = null;
+		LinuxPipeRequest[] requests = null;
 
 		synchronized(inProgressList) {
-			requests = (LinuxRequest[])inProgressList.toArray();
+			requests = (LinuxPipeRequest[])inProgressList.toArray();
 			inProgressList.clear();
 		}
 
@@ -153,18 +153,6 @@ throw new UsbException("Not implemented");
 			requests[i].getUsbIrpImp().waitUntilCompleted();
 	}
 
-	/** Submit a request natively */
-	public abstract void submitNative( LinuxPipeRequest request );
-
-	/** Abort a request in progress */
-	public void abortNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeAbortPipeRequest( request );
-	}
-
-	/** Complete a request natively */
-	public abstract void completeNative( LinuxPipeRequest request );
-
     //*************************************************************************
     // Protected methods
 
@@ -174,19 +162,19 @@ throw new UsbException("Not implemented");
 	 */
 	protected void internalAsyncSubmit( UsbIrpImp irp ) throws UsbException
 	{
-		LinuxPipeRequest request = createLinuxPipeRequest( irp );
-
-		getLinuxInterfaceOsImp().submit(request);
+		getLinuxInterfaceOsImp().submit( usbIrpImpToLinuxPipeRequest(irp) );
 	}
 
 	/**
-	 * Create a LinuxRequest to wrap a UsbIrpImp.
+	 * Create a LinuxPipeRequest to wrap a UsbIrpImp.
 	 * @param usbIrpImp The UsbIrpImp.
-	 * @return A LinuxRequest for a UsbIrpImp.
+	 * @return A LinuxPipeRequest for a UsbIrpImp.
 	 */
-	protected LinuxRequest usbIrpImpToLinuxRequest(UsbIrpImp usbIrpImp)
+	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp)
 	{
-		LinuxRequest request = new 
+		LinuxPipeRequest request = new LinuxPipeRequest();
+		request.setUsbIrpImp(usbIrpImp);
+		return request;
 	}
 
     //*************************************************************************

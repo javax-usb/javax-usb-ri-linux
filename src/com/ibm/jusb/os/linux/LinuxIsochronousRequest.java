@@ -9,7 +9,9 @@ package com.ibm.jusb.os.linux;
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
-import javax.usb.UsbException;
+import java.util.*;
+
+import javax.usb.*;
 
 import com.ibm.jusb.*;
 import com.ibm.jusb.util.*;
@@ -47,11 +49,11 @@ class LinuxIsochronousRequest extends LinuxRequest
 	public void setError( int index, int error )
 	{
 //FIXME - improve message and/or set correct error number?
-		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMesage(error),error));
+		getUsbIrpImp(index).setUsbException(new UsbException(JavaxUsb.nativeGetErrorMessage(error),error));
 	}
 
 	/** @return The number of 'packets' */
-	public int getNumberOfPackets() { return size; }
+	public int getNumberOfPackets() { return usbIrpImps.size(); }
 
 	/** @return The UsbIrpImp of */
 	public UsbIrpImp getUsbIrpImp( int index ) { return (UsbIrpImp)usbIrpImps.get(index); }

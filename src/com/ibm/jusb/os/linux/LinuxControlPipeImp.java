@@ -23,22 +23,10 @@ import com.ibm.jusb.*;
 class LinuxControlPipeImp extends LinuxPipeOsImp
 {
 	/** Constructor */
-	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxDeviceProxy proxy ) { super(pipe,proxy); }
+	public LinuxControlPipeImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface ) { super(pipe,iface); }
 
 	//*************************************************************************
 	// Public methods
-
-	/** Submit a request natively */
-	public void submitNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeSubmitControlRequest( request, getUsbPipeImp().getEndpointAddress() );
-	}
-
-	/** Complete a request natively */
-	public void completeNative( LinuxPipeRequest request )
-	{
-		JavaxUsb.nativeCompleteControlRequest( request );
-	}
 
 	/**
 	 * Asynchronous submission using a UsbIrpImp.
@@ -72,13 +60,16 @@ class LinuxControlPipeImp extends LinuxPipeOsImp
 		/*
 		 * See linux/drivers/usb/devio.c in the kernel for the corresponding 'claim' check in the kernel.
 		 */
+//FIXME - enable this
+/*
 		if (RequestConst.REQUESTTYPE_RECIPIENT_INTERFACE == (data[0] & RequestConst.REQUESTTYPE_RECIPIENT_MASK)) {
-			if (!getLinuxDeviceProxy().isInterfaceClaimed( data[4] ))
+			if (!getLinuxInterfaceOsImp().isInterfaceClaimed( data[4] ))
 				throw new UsbException( "Interface not claimed" );
 		} else if (RequestConst.REQUESTTYPE_RECIPIENT_ENDPOINT == (data[0] & RequestConst.REQUESTTYPE_RECIPIENT_MASK)) {
-			if (!getLinuxDeviceProxy().isInterfaceClaimed( getInterfaceNumberForEndpointAddress( data[4] ) ))
+			if (!getLinuxInterfaceOsImp().isInterfaceClaimed( getInterfaceNumberForEndpointAddress( data[4] ) ))
 				throw new UsbException( "Interface not claimed" );
 		}
+*/
 	}
 
 	/** Get the number of the interface that 'owns' the specified endpoint */

@@ -51,33 +51,55 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** @param device The LinuxDeviceOsImp for this */
 	public void setLinuxDeviceOsImp( LinuxDeviceOsImp device ) { linuxDeviceOsImp = device; }
 
-	/**
-	 * Claim this interface.
-	 * @exception UsbException if the interface could not be claimed.
-	 */
+	/** Claim this interface. */
 	public void claim() throws UsbException
 	{
-		getLinuxDeviceProxy().claimInterface( getInterfaceNumber() );
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
+		request.setClaimType( LinuxInterfaceRequest.INTERFACE_CLAIM );
+		request.setInterfaceNumber(getInterfaceNumber());
+		submit(request);
+
+		request.waitUntilCompleted();
+
+		if (0 != request.getError())
+			throw new UsbException("Could not claim interface : " + JavaxUsb.nativeGetErrorMessage(request.getError()));
 	}
 
-	/**
-	 * Release this interface.
-	 * @exception UsbException if the interface could not be released.
-	 */
+	/** Release this interface. */
 	public void release()
 	{
-		getLinuxDeviceProxy().releaseInterface( getInterfaceNumber() );
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
+		request.setClaimType( LinuxInterfaceRequest.INTERFACE_RELEASE );
+		request.setInterfaceNumber(getInterfaceNumber());
+
+		try {
+			submit(request);
+		} catch ( UsbException uE ) {
+//FIXME - log this
+			return;
+		}
+
+		request.waitUntilCompleted();
 	}
 
-	/**
-	 * @return if this interface is claimed (in Java).
-	 */
+	/** @return if this interface is claimed. */
 	public boolean isClaimed()
 	{
-		return getLinuxDeviceProxy().isInterfaceClaimed( getInterfaceNumber() );
-	}
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest();
+		request.setClaimType( LinuxInterfaceRequest.INTERFACE_IS_CLAIMED );
+		request.setInterfaceNumber(getInterfaceNumber());
 
-	public LinuxDeviceProxy getLinuxDeviceProxy() { return getLinuxDeviceOsImp().getLinuxDeviceProxy(); }
+		try {
+			submit(request);
+		} catch ( UsbException uE ) {
+//FIXME - log this
+			return false;
+		}
+
+		request.waitUntilCompleted();
+
+		return request.isClaimed();
+	}
 
 	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceNumber(); }
 
@@ -88,7 +110,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	 * Submit a Request.
 	 * @param request The LinuxRequest.
 	 */
-	void submit(LinuxRequest request) { getLinuxDeviceOsImp().submit(request); }
+	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceOsImp().submit(request); }
 
 	/**
 	 * Cancel a Request.

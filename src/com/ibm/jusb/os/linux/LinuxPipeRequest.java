@@ -27,10 +27,20 @@ class LinuxPipeRequest extends LinuxRequest
 	public int getType() { return LinuxRequest.LINUX_PIPE_REQUEST; }
 
 	/** @return this request's data buffer */
-	public byte[] getData() { return getUsbIrpImp.getData(); }
+	public byte[] getData() { return getUsbIrpImp().getData(); }
 
 	/** @return if Short Packet Detection should be enabled */
 	public boolean getAcceptShortPacket() { return getUsbIrpImp().getAcceptShortPacket(); }
+
+	/** @param len The data's length. */
+	public void setDataLength(int len) { getUsbIrpImp().setDataLength(len); }
+
+	/** @param error The number of the error that occurred. */
+	public void setError(int error)
+	{
+//FIXME - improve error number handling
+		getUsbIrpImp().setUsbException(new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error),error));
+	}
 
 	/** @return the assocaited UsbIrpImp */
 	public UsbIrpImp getUsbIrpImp() { return usbIrpImp; }
