@@ -83,8 +83,14 @@ public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,
 		for (int i=0; i<requests.length; i++)
 			getLinuxInterfaceOsImp().cancel((LinuxPipeRequest)requests[i]);
 
-		for (int i=0; i<requests.length; i++)
-				((LinuxPipeRequest)requests[i]).waitUntilCompleted();
+		for (int i=0; i<requests.length; i++) {
+			LinuxPipeRequest lpR = (LinuxPipeRequest)requests[i];
+			lpR.waitUntilCompleted(ABORT_COMPLETION_TIMEOUT);
+			if (!lpR.isCompleted()) {
+				lpR.setError(ABORT_TIMEOUT_ERROR);
+				lpR.setCompleted(true);
+			}
+		}
 	}
 
 	/** @param request The LinuxRequest that completed. */
@@ -134,4 +140,7 @@ public class LinuxPipeOsImp extends DefaultUsbPipeOsImp implements UsbPipeOsImp,
 	protected byte endpointAddress = 0;
 
 	protected List inProgressList = new LinkedList();
+
+	protected static final int ABORT_TIMEOUT_ERROR = -2; /* -ENOENT in UNIX /usr/include/asm/errno.h */
+	protected static final long ABORT_COMPLETION_TIMEOUT = 500; /* half second */
 }

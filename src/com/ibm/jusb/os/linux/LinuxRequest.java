@@ -27,13 +27,18 @@ abstract class LinuxRequest
 	/** @param error The number of the error that occurred. */
 	public void setError(int error) { errorNumber = error; }
 
+	/** Wait forever until completed. */
+	public void waitUntilCompleted() { waitUntilCompleted(0); }
+
 	/** Wait until completed. */
-	public void waitUntilCompleted()
+	public void waitUntilCompleted(long timeout)
 	{
+		long start = System.currentTimeMillis();
+
 		if (!isCompleted()) {
 			synchronized ( waitLock ) {
 				waitCount++;
-				while (!isCompleted()) {
+				while (!isCompleted() && (0 < timeout) && (timeout > System.currentTimeMillis() - start)) {
 					try { waitLock.wait(1000); }
 					catch ( InterruptedException iE ) { }
 				}
