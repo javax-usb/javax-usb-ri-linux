@@ -8,10 +8,9 @@
  * http://oss.software.ibm.com/developerworks/opensource/license-cpl.html
  */
 
-#ifndef _JAVAUSBUTIL_H
-#define _JAVAUSBUTIL_H
+#ifndef _JAVAXUSBUTIL_H
+#define _JAVAXUSBUTIL_H
 
-#include "com_ibm_jusb_os_linux_JavaxUsb.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -27,8 +26,9 @@
 #include <signal.h>
 #include <pthread.h>
 #include <errno.h>
-#include <linux/usbdevice_fs.h>
-#include <linux/usb.h>
+
+#include "JavaxUsbKernel.h"
+#include "com_ibm_jusb_os_linux_JavaxUsb.h"
 
 #define MSG_OFF -1
 #define MSG_CRITICAL 0
@@ -48,16 +48,10 @@
 // you might as well exit cleanly, since you know exactly what the problem/exception is.
 #define EXIT_ON_EXCEPTION
 
-// Pick a way to determine active config.  The devices file generates bus traffic, which is BAD
-// when using non-queueing (up to 2.5.44) UHCI Host Controller Driver.
-// All or none may be used, attempts are in order, failure moves to the next one.
-// If none are defined (or all fail) then the result will be no configs active.
-#undef CONFIG_USE_DEVICES_FILE
-#define CONFIG_ALWAYS_ACTIVE
-
 #ifdef NO_DEBUG
 #	define dbg(lvl, args...)		do { } while(0)
 #else
+extern int msg_level;
 #	define dbg(lvl, args...)		do { if ( lvl <= msg_level ) printf( args ); } while(0)
 #endif /* NO_DEBUG */
 
@@ -74,7 +68,8 @@
 
 #define MAX_POLLING_ERRORS 64
 
-extern int msg_level;
+//******************************************************************************
+// Descriptor structs 
 
 struct jusb_device_descriptor {
 	__u8 bLength;
@@ -131,7 +126,8 @@ struct jusb_string_descriptor {
 	unsigned char bString[254];
 };
 
-/* Request methods */
+//******************************************************************************
+// Request methods
 
 int pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
 int dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
@@ -161,25 +157,34 @@ int complete_bulk_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct us
 int complete_interrupt_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
 int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, struct usbdevfs_urb *urb );
 
-/* Config method */
+//******************************************************************************
+// Config and Interface active checking methods
+
+// Pick a way to determine active config.
+// The devices file generates bus traffic, which is BAD when using non-queueing
+// (up to 2.5.44) UHCI Host Controller Driver.
+// The ioctl is the best way, but not available in all kernels.
+// All or none may be used, attempts are in order shown, failure moves to the next one.
+// If none are defined (or all fail) then the result will be no configs active.
+// Most people want at least the CONFIG_ALWAYS_ACTIVE define.
+#ifdef CAN_USE_GET_IOCTLS
+# define CONFIG_USE_GET_IOCTL
+#endif
+#undef CONFIG_USE_DEVICES_FILE
+#define CONFIG_ALWAYS_ACTIVE
+
+// Pick a way to determine active interface alternate setting.
+// Without the ioctl, there is NO way to determine it.
+// If this is not defined (or fails) then the result will be first setting is active.
+#ifdef CAN_USE_GET_IOCTLS
+# define INTERFACE_USE_GET_IOCTL
+#endif
 
 jboolean isConfigActive( int fd, unsigned char bus, unsigned char dev, unsigned char config );
+jboolean isInterfaceSettingActive( int fd, __u8 interface, __u8 setting );
 
-/* Utility methods */
-
-__u16 bcd( __u8 msb, __u8 lsb );
-
-int open_device( JNIEnv *env, jstring jkey, int oflag );
-
-int bus_node_to_name( int bus, int node, char *name );
-int get_busnum_from_name( const char *name );
-int get_devnum_from_name( const char *name );
-
-int select_dirent_dir( const struct dirent *dir );
-int select_dirent_reg( const struct dirent *reg );
-int select_dirent( const struct dirent *dir_ent, unsigned char type );
-
-void debug_urb( char *calling_method, struct usbdevfs_urb *urb );
+//******************************************************************************
+// Utility methods
 
 static inline void check_for_exception( JNIEnv *env ) 
 {
@@ -192,5 +197,90 @@ static inline void check_for_exception( JNIEnv *env )
 #endif
 }
 
-#endif /* _JAVAUSBUTIL_H */
+static inline __u16 bcd( __u8 msb, __u8 lsb ) 
+{
+    return ( (msb << 8) & 0xff00 ) | ( lsb & 0x00ff );
+}
+
+static inline int open_device( JNIEnv *env, jstring javaKey, int oflag ) 
+{
+    const char *node;
+    int filed;
+
+    node = (*env)->GetStringUTFChars( env, javaKey, NULL );
+    dbg( MSG_DEBUG1, "Opening node %s\n", node );
+    filed = open( node, oflag );
+    (*env)->ReleaseStringUTFChars( env, javaKey, node );
+    return filed;
+}
+
+static inline int bus_node_to_name( int bus, int node, char *name )
+{
+	sprintf( name, USBDEVFS_SPRINTF_NODE, bus, node );
+	return strlen( name );
+}
+
+static inline int get_busnum_from_name( const char *name )
+{
+	int bus, node;
+	if (1 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
+		return -1;
+	else return bus;
+}
+
+static inline int get_devnum_from_name( const char *name )
+{
+	int bus, node;
+	if (2 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
+		return -1;
+	else return node;
+}
+
+static inline int select_dirent( const struct dirent *dir_ent, unsigned char type ) 
+{
+	struct stat stbuf;
+	int n;
+
+	stat(dir_ent->d_name, &stbuf);
+	if ( 3 != strlen(dir_ent->d_name) || !(DTTOIF(type) & stbuf.st_mode) ) {
+		return 0;
+	}
+	errno = 0;
+	n = strtol( dir_ent->d_name, NULL, 10 );
+	if ( errno || n < 1 || n > 127 ) {
+		errno = 0;
+		return 0;
+	}
+	return 1;
+}
+
+static inline int select_dirent_dir( const struct dirent *dir ) { return select_dirent( dir, DT_DIR ); }
+
+static inline int select_dirent_reg( const struct dirent *reg ) { return select_dirent( reg, DT_REG ); }
+
+/**
+ * Debug a URB.
+ * @param calling_method The name of the calling method.
+ * @param urb The usbdevfs_urb.
+ */
+static inline void debug_urb( char *calling_method, struct usbdevfs_urb *urb )
+{
+	int i;
+
+	dbg( MSG_DEBUG3, "%s : URB endpoint = %x\n", calling_method, urb->endpoint );
+	dbg( MSG_DEBUG3, "%s : URB status = %d\n", calling_method, urb->status );
+	dbg( MSG_DEBUG3, "%s : URB signal = %d\n", calling_method, urb->signr );
+	dbg( MSG_DEBUG3, "%s : URB buffer length = %d\n", calling_method, urb->buffer_length );
+	dbg( MSG_DEBUG3, "%s : URB actual length = %d\n", calling_method, urb->actual_length );
+	if (urb->buffer) {
+		dbg( MSG_DEBUG3, "%s : URB data = ", calling_method );
+		for (i=0; i<urb->buffer_length; i++) dbg( MSG_DEBUG3, "%2.2x ", ((unsigned char *)urb->buffer)[i] );
+		dbg( MSG_DEBUG3, "\n" );
+	} else {
+		dbg( MSG_DEBUG3, "%s : URB data empty!\n", calling_method );
+	}
+
+}
+
+#endif /* _JAVAXUSBUTIL_H */
 

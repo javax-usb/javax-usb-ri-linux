@@ -20,9 +20,15 @@
  */
 int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
 {
-//FIXME - Linux USB is broken
+#ifdef INTERRUPT_USES_BULK
 	urb->type = USBDEVFS_URB_TYPE_BULK;
-	urb->flags |= USBDEVFS_URB_QUEUE_BULK;
+#ifdef QUEUE_BULK
+	urb->flags |= QUEUE_BULK;
+#endif
+#else
+	urb->type = USBDEVFS_URB_TYPE_INTERRUPT;
+#endif
+
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))

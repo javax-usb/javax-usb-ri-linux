@@ -21,7 +21,9 @@
 int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usbdevfs_urb *urb )
 {
 	urb->type = USBDEVFS_URB_TYPE_BULK;
-	urb->flags |= USBDEVFS_URB_QUEUE_BULK;
+#ifdef QUEUE_BULK
+	urb->flags |= QUEUE_BULK;
+#endif
 
 	errno = 0;
 	if (ioctl( fd, USBDEVFS_SUBMITURB, urb ))

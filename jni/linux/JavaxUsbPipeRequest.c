@@ -62,7 +62,7 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	urb->endpoint = (unsigned char)(*env)->CallByteMethod( env, linuxPipeRequest, getEndpointAddress );
 	urb->usercontext = linuxPipeRequest;
 	if (JNI_FALSE == acceptShortPacket)
-		urb->flags |= USBDEVFS_URB_DISABLE_SPD;
+		urb->flags |= NO_ACCEPT_SHORT_PACKET;
 
 	dbg( MSG_DEBUG2, "pipe_request : Submitting URB\n" );
 	debug_urb( "pipe_request", urb );

@@ -265,28 +265,3 @@ static void completeRequest( JNIEnv *env, jobject linuxRequest )
 
 	(*env)->CallVoidMethod( env, linuxRequest, setCompleted, JNI_TRUE );
 }
-
-/**
- * Debug a URB.
- * @param calling_method The name of the calling method.
- * @param urb The usbdevfs_urb.
- */
-inline void debug_urb( char *calling_method, struct usbdevfs_urb *urb )
-{
-	int i;
-
-	dbg( MSG_DEBUG3, "%s : URB endpoint = %x\n", calling_method, urb->endpoint );
-	dbg( MSG_DEBUG3, "%s : URB status = %d\n", calling_method, urb->status );
-	dbg( MSG_DEBUG3, "%s : URB signal = %d\n", calling_method, urb->signr );
-	dbg( MSG_DEBUG3, "%s : URB buffer length = %d\n", calling_method, urb->buffer_length );
-	dbg( MSG_DEBUG3, "%s : URB actual length = %d\n", calling_method, urb->actual_length );
-	if (urb->buffer) {
-		dbg( MSG_DEBUG3, "%s : URB data = ", calling_method );
-		for (i=0; i<urb->buffer_length; i++) dbg( MSG_DEBUG3, "%2.2x ", ((unsigned char *)urb->buffer)[i] );
-		dbg( MSG_DEBUG3, "\n" );
-	} else {
-		dbg( MSG_DEBUG3, "%s : URB data empty!\n", calling_method );
-	}
-
-}
-
