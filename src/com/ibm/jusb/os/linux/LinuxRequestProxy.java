@@ -71,16 +71,10 @@ abstract class LinuxRequestProxy
 	 */
 	private LinuxRequest getReadyRequest()
 	{
-		LinuxRequest request = null;
-
 		synchronized(readyList) {
-			try { request = (LinuxRequest)readyList.remove(0); }
+			try { return (LinuxRequest)readyList.remove(0); }
 			catch ( IndexOutOfBoundsException ioobE ) { return null; }
-	
-			inProgressList.add(request);
 		}
-
-		return request;
 	}
 
 	/**
@@ -95,19 +89,9 @@ abstract class LinuxRequestProxy
 		}
 	}
 
-	/**
-	 * Complete a Request.
-	 * @param request The LinuxRequest.
-	 */
-	private void completeRequest(LinuxRequest request)
-	{
-		inProgressList.remove(request);
-	}
-
 	//**************************************************************************
 	// Instance variables
 
 	private List readyList = new LinkedList();
 	private List cancelList = new LinkedList();
-	private List inProgressList = new LinkedList(); /* only proxy Thread touches, no sync required */
 }
