@@ -303,7 +303,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 	public static final String TOPOLOGY_UPDATE_DELAY_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateDelay";
 
 	/* Whether to use polling to wait for connect/disconnect notification */
-	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = false;
+	public static final boolean TOPOLOGY_UPDATE_USE_POLLING = true;
 	public static final String TOPOLOGY_UPDATE_USE_POLLING_KEY = "com.ibm.jusb.os.linux.LinuxUsbServices.topologyUpdateUsePolling";
 
 	/* This enables (or disables) JNI tracing of data. */
