@@ -157,15 +157,11 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 			device.getParentUsbPortImp().attachUsbDeviceImp(device);
 		}
 
-		if ( !disconnectedDevices.isEmpty() ) {
-			for (int i=0; i<disconnectedDevices.size(); i++)
-				listenerImp.usbDeviceDetached(new UsbServicesEvent(this, (UsbDevice)disconnectedDevices.get(i)));
-		}
+		for (int i=0; i<disconnectedDevices.size(); i++)
+			listenerImp.usbDeviceDetached(new UsbServicesEvent(this, (UsbDevice)disconnectedDevices.get(i)));
 
-		if ( !connectedDevices.isEmpty() ) {
-			for (int i=0; i<connectedDevices.size(); i++)
-				listenerImp.usbDeviceAttached(new UsbServicesEvent(this, (UsbDevice)connectedDevices.get(i)));
-		}
+		for (int i=0; i<connectedDevices.size(); i++)
+			listenerImp.usbDeviceAttached(new UsbServicesEvent(this, (UsbDevice)connectedDevices.get(i)));
 
 		synchronized (topologyLock) {
 			topologyLock.notifyAll();

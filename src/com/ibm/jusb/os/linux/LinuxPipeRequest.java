@@ -20,39 +20,46 @@ import com.ibm.jusb.util.*;
  */
 class LinuxPipeRequest extends LinuxRequest
 {
-	//*************************************************************************
-	// Public methods
+	/** Constructor. */
+	public LinuxPipeRequest(byte type, byte addr)
+	{
+		setPipeType(type);
+		setEndpointAddress(addr);
+	}
 
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_PIPE_REQUEST; }
 
 	/** @return this request's data buffer */
-	public byte[] getData() { return getUsbIrpImp().getData(); }
+	public byte[] getData() { return data; }
+
+	/** @return The offset of the data */
+	public int getOffset() { return offset; }
+
+	/** @return The length of the data */
+	public int getLength() { return length; }
 
 	/** @return if Short Packet Detection should be enabled */
-	public boolean getAcceptShortPacket() { return getUsbIrpImp().getAcceptShortPacket(); }
+	public boolean getAcceptShortPacket() { return shortPacket; }
 
 	/** @param len The actual length. */
-	public void setActualLength(int len) { getUsbIrpImp().setActualLength(len); }
+	public void setActualLength(int len) { actualLength = len; }
 
-	/** @param error The number of the error that occurred. */
-	public void setError(int error)
-	{
-//FIXME - improve error number handling
-		getUsbIrpImp().setUsbException(new UsbException("Error during submission : " + JavaxUsb.nativeGetErrorMessage(error)));
-	}
+	/** @param err The number of the error that occurred. */
+	public void setError(int err) { error = err; }
 
 	/** @return the assocaited UsbIrpImp */
 	public UsbIrpImp getUsbIrpImp() { return usbIrpImp; }
 
 	/** @param irp the assocaited UsbIrpImp */
-	public void setUsbIrpImp( UsbIrpImp irp ) { usbIrpImp = irp; }
-
-	/** @return the assocaited LinuxPipeOsImp */
-	public LinuxPipeOsImp getLinuxPipeOsImp() { return linuxPipeImp; }
-
-	/** @param pipe the assocaited LinuxPipeOsImp */
-	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
+	public void setUsbIrpImp( UsbIrpImp irp )
+	{
+		usbIrpImp = irp;
+		data = irp.getData();
+		offset = irp.getOffset();
+		length = irp.getLength();
+		shortPacket = irp.getAcceptShortPacket();
+	}
 
 	/** @return the address of the assocaited URB */
 	public int getUrbAddress() { return urbAddress; }
@@ -64,35 +71,47 @@ class LinuxPipeRequest extends LinuxRequest
 	public void setCompleted(boolean c)
 	{
 		if (c) {
-			getLinuxPipeOsImp().linuxPipeRequestCompleted(this);
+//FIXME - do this here?  in other Thread?  Also, handle errors better.
+			if (0 != error)
+				getUsbIrpImp().setUsbException( new UsbException("Error submitting IRP : " + JavaxUsb.nativeGetErrorMessage(error)) );
+			getUsbIrpImp().setActualLength(actualLength);
 			getUsbIrpImp().complete();
 		}
 
 		super.setCompleted(c);
 	}
 
-	//****************************************************************************
-	// Private methods
-
-	/** @return The type of pipe */
-	private int getPipeType()
+	/** @param type The pipe type. */
+	public void setPipeType(byte type)
 	{
-		switch (getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getType()) {
-		case UsbConst.ENDPOINT_TYPE_CONTROL: return PIPE_CONTROL;
-		case UsbConst.ENDPOINT_TYPE_BULK: return PIPE_BULK;
-		case UsbConst.ENDPOINT_TYPE_INTERRUPT: return PIPE_INTERRUPT;
-		case UsbConst.ENDPOINT_TYPE_ISOCHRONOUS: return PIPE_ISOCHRONOUS;
-		default: /* log */ return 0;
+		switch (type) {
+		case UsbConst.ENDPOINT_TYPE_CONTROL: pipeType = PIPE_CONTROL; break;
+		case UsbConst.ENDPOINT_TYPE_BULK: pipeType = PIPE_BULK; break;
+		case UsbConst.ENDPOINT_TYPE_INTERRUPT: pipeType = PIPE_INTERRUPT; break;
+		case UsbConst.ENDPOINT_TYPE_ISOCHRONOUS: pipeType = PIPE_ISOCHRONOUS; break;
+		default: /* log */
 		}
 	}
 
-	/** @return the endpoint address */
-	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointDescriptor().bEndpointAddress(); }
+	/** @param addr The endpoint address */
+	public void setEndpointAddress(byte addr) { epAddress = addr; }
 
-	//*************************************************************************
-	// Instance variables
+	/** @return The type of pipe */
+	public int getPipeType() { return pipeType; }
+
+	/** @return the endpoint address */
+	public byte getEndpointAddress() { return epAddress; }
 
 	private UsbIrpImp usbIrpImp = null;
+	private int pipeType = 0;
+	private byte epAddress = 0;
+
+	private byte[] data = null;
+	private int offset = 0;
+	private int length = 0;
+	private int actualLength = 0;
+	private boolean shortPacket = true;
+	private int error = 0;
 
 	private LinuxPipeOsImp linuxPipeImp = null;
 

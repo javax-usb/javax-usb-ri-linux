@@ -68,6 +68,11 @@ extern int msg_level;
 
 #define MAX_POLLING_ERRORS 64
 
+/* These must match the defines in JavaxUsb.java */
+#define SPEED_UNKNOWN 0
+#define SPEED_LOW 1
+#define SPEED_FULL 2
+
 //******************************************************************************
 // Descriptor structs 
 
@@ -130,15 +135,12 @@ struct jusb_string_descriptor {
 // Request methods
 
 int pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
-int dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
 int isochronous_request( JNIEnv *env, int fd, jobject linuxRequest );
 
 void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxRequest );
-void cancel_dcp_request( JNIEnv *env, int fd, jobject linuxRequest );
 void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxRequest );
 
 int complete_pipe_request( JNIEnv *env, jobject linuxRequest );
-int complete_dcp_request( JNIEnv *env, jobject linuxRequest );
 int complete_isochronous_request( JNIEnv *env, jobject linuxRequest );
 
 int set_configuration( JNIEnv *env, int fd, jobject linuxRequest );
@@ -160,25 +162,60 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
 //******************************************************************************
 // Config and Interface active checking methods
 
-// Pick a way to determine active config.
-// The devices file generates bus traffic, which is BAD when using non-queueing
-// (up to 2.5.44) UHCI Host Controller Driver.
-// The ioctl is the best way, but not available in all kernels.
-// All or none may be used, attempts are in order shown, failure moves to the next one.
-// If none are defined (or all fail) then the result will be no configs active.
-// Most people want at least the CONFIG_ALWAYS_ACTIVE define.
-#ifdef CAN_USE_GET_IOCTLS
-# define CONFIG_USE_GET_IOCTL
-#endif
-#undef CONFIG_USE_DEVICES_FILE
-#define CONFIG_ALWAYS_ACTIVE
+/* Pick a way to determine active config.
+ *
+ * Most of these generate bus traffic to one or more devices.
+ * This is BAD when using non-queueing (up to 2.5.44) UHCI Host Controller Driver,
+ * as it can interfere with other drivers and the results are unpredictable - ranging
+ * from nothing to complete loss of use of the device(s).
+ *
+ * CONFIG_SETTING_ASK_DEVICE:
+ * Asking the device directly is the best available way,
+ * as bus traffic is generated only for the specific device in question,
+ * and only 1 standard request.
+ *
+ * CONFIG_SETTING_USE_DEVICES_FILE:
+ * Reading/parsing the /proc/bus/usb/devices file generates bus traffic,
+ * by asking ALL connected devices for their 3 standard String-descriptors;
+ * Manufacturer, Product, and SerialNumber.  This is a lot of bus traffic and
+ * can cause problems with any or all connected devices (if using a non-queueing UHCI driver).
+ *
+ * CONFIG_SETTING_1_ALWAYS_ACTIVE:
+ * This does not communicate with the device at all, but always marks the first
+ * configuration (number 1, as configs must be numbered consecutively starting with 1)
+ * as active.  This should work for all devices, but will produce incorrect results
+ * for devices whose active configuration has been changed outside of the current javax.usb
+ * instance.
+ *
+ * All or none may be used, attempts are in order shown, failure moves to the next one.
+ * If none are defined (or all fail) then the result will be no configs active, i.e.
+ * the device will appear to be (but will not really be) in a Not Configured state.
+ *
+ * Most people want at least the CONFIG_1_ALWAYS_ACTIVE define, as it is always
+ * the last attempted and will do the right thing in many more cases than leaving the
+ * device to appear as Not Configured.
+ */
+#define CONFIG_SETTING_ASK_DEVICE
+#undef CONFIG_SETTING_USE_DEVICES_FILE
+#define CONFIG_SETTING_1_ALWAYS_ACTIVE
 
-// Pick a way to determine active interface alternate setting.
-// Without the ioctl, there is NO way to determine it.
-// If this is not defined (or fails) then the result will be first setting is active.
-#ifdef CAN_USE_GET_IOCTLS
-# define INTERFACE_USE_GET_IOCTL
-#endif
+/* Pick a way to determine active interface alternate setting.
+ *
+ * INTERFACE_SETTING_ASK_DEVICE:
+ * This directly asks the device in the same manner as above.  The only difference is,
+ * to communicate with an interface, the interface must be claimed;
+ * for a device that already has a driver (which is usually most devices)
+ * this will not work since the interface will already be claimed.
+ *
+ * INTERFACE_SETTING_USE_DEVICES_FILE:
+ * This uses the /proc/bus/usb/devices file in the same manner as above.
+ * However, until kernel 2.5.XX, the devices file does not provide active
+ * interface setting information, so this will fail on those kernels.
+ *
+ * If none are defined (or all fail) then the result will be first setting is active.
+ */
+#define INTERFACE_SETTING_ASK_DEVICE
+#undef INTERFACE_SETTING_USE_DEVICES_FILE
 
 jboolean isConfigActive( int fd, unsigned char bus, unsigned char dev, unsigned char config );
 jboolean isInterfaceSettingActive( int fd, __u8 interface, __u8 setting );

@@ -29,9 +29,8 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	int ret = 0, type, urbsize;
 
 	jclass LinuxPipeRequest, linuxPipeRequest = NULL;
-	jmethodID setUrbAddress, getData, getAcceptShortPacket, getEndpointAddress, getPipeType;
+	jmethodID setUrbAddress, getAcceptShortPacket, getEndpointAddress, getPipeType;
 	jboolean acceptShortPacket;
-	jbyteArray data = NULL;
 
 	linuxPipeRequest = (*env)->NewGlobalRef( env, linuxRequest );
 	LinuxPipeRequest = (*env)->GetObjectClass( env, linuxPipeRequest );
@@ -39,8 +38,6 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	getPipeType = (*env)->GetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
 	type = (*env)->CallIntMethod( env, linuxPipeRequest, getPipeType );
 	setUrbAddress = (*env)->GetMethodID( env, LinuxPipeRequest, "setUrbAddress", "(I)V" );
-	getData = (*env)->GetMethodID( env, LinuxPipeRequest, "getData", "()[B" );
-	data = (*env)->CallObjectMethod( env, linuxPipeRequest, getData );
 	getAcceptShortPacket = (*env)->GetMethodID( env, LinuxPipeRequest, "getAcceptShortPacket", "()Z" );
 	acceptShortPacket = (*env)->CallBooleanMethod( env, linuxPipeRequest, getAcceptShortPacket );
 	(*env)->DeleteLocalRef( env, LinuxPipeRequest );
@@ -57,8 +54,6 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 
 	memset(urb, 0, sizeof(*urb));
 
-	urb->buffer = (*env)->GetByteArrayElements( env, data, NULL );
-	urb->buffer_length = (*env)->GetArrayLength( env, data );
 	urb->endpoint = (unsigned char)(*env)->CallByteMethod( env, linuxPipeRequest, getEndpointAddress );
 	urb->usercontext = linuxPipeRequest;
 	if (JNI_FALSE == acceptShortPacket)
@@ -85,10 +80,8 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 end:
 	if (ret) {
 			if (linuxPipeRequest) (*env)->DeleteGlobalRef( env, linuxPipeRequest );
-			if (data && urb && urb->buffer) (*env)->ReleaseByteArrayElements( env, data, urb->buffer, 0 );
 			if (urb) free(urb);
 	}
-	if (data) (*env)->DeleteLocalRef( env, data );
 
 	return ret;
 }

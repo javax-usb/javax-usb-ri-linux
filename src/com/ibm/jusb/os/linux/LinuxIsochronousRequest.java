@@ -20,10 +20,10 @@ import com.ibm.jusb.util.*;
  * Special request for use on Isochronous pipes.
  * @author Dan Streetman
  */
-class LinuxIsochronousRequest extends LinuxRequest
+class LinuxIsochronousRequest extends LinuxPipeRequest
 {
-	//*************************************************************************
-	// Public methods
+	/** Constructor */
+	public LinuxIsochronousRequest(byte type, byte addr) { super(type,addr); }
 
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_ISOCHRONOUS_REQUEST; }
@@ -80,30 +80,6 @@ class LinuxIsochronousRequest extends LinuxRequest
 	/** @param list The List of UsbIrpImps */
 	public void setUsbIrpImps( List list ) { usbIrpImps = list; }
 
-	/** @return the assocaited LinuxPipeOsImp */
-	public LinuxPipeOsImp getLinuxPipeOsImp() { return linuxPipeImp; }
-
-	/** @param pipe the assocaited LinuxPipeOsImp */
-	public void setLinuxPipeOsImp( LinuxPipeOsImp pipe ) { linuxPipeImp = pipe; }
-
-	/** @return the address of the assocaited URB */
-	public int getUrbAddress() { return urbAddress; }
-
-	/** @param address the address of the assocaited URB */
-	public void setUrbAddress( int address ) { urbAddress = address; }
-
-	//*************************************************************************
-	// Private methods
-
-	/** @return the endpoint address */
-	private byte getEndpointAddress() { return getLinuxPipeOsImp().getUsbPipeImp().getUsbEndpoint().getEndpointDescriptor().bEndpointAddress(); }
-
-	//*************************************************************************
-	// Instance variables
-
 	private List usbIrpImps = null;
 
-	private LinuxPipeOsImp linuxPipeImp = null;
-
-	private int urbAddress = 0;
 }

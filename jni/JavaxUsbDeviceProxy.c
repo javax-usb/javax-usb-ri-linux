@@ -12,7 +12,7 @@
 
 /* These MUST match those defined in com/ibm/jusb/os/linux/LinuxRequest.java */
 #define LINUX_PIPE_REQUEST 1
-#define LINUX_DCP_REQUEST 2
+#define LINUX_CONTROL_REQUEST 2
 #define LINUX_SET_INTERFACE_REQUEST 3
 #define LINUX_SET_CONFIGURATION_REQUEST 4
 #define LINUX_CLAIM_INTERFACE_REQUEST 5
@@ -129,9 +129,9 @@ static void submitRequest( JNIEnv *env, int fd, jobject linuxRequest )
 		dbg(MSG_DEBUG1, "submitRequest : Submitting Pipe Request.\n");
 		err = pipe_request( env, fd, linuxRequest );
 		break;
-	case LINUX_DCP_REQUEST:
-		dbg(MSG_DEBUG1, "submitRequest : Submitting Dcp Request.\n");
-		err = dcp_request( env, fd, linuxRequest );
+	case LINUX_CONTROL_REQUEST:
+		dbg(MSG_DEBUG1, "submitRequest : Submitting Control Request.\n");
+		err = control_request( env, fd, linuxRequest );
 		break;
 	case LINUX_SET_INTERFACE_REQUEST:
 		dbg(MSG_DEBUG1, "submitRequest : Submitting SetInterface Request.\n");
@@ -198,8 +198,8 @@ static void cancelRequest( JNIEnv *env, int fd, jobject linuxRequest )
 	case LINUX_PIPE_REQUEST:
 		cancel_pipe_request( env, fd, linuxRequest );
 		break;
-	case LINUX_DCP_REQUEST:
-		cancel_dcp_request( env, fd, linuxRequest );
+	case LINUX_CONTROL_REQUEST:
+		cancel_control_request( env, fd, linuxRequest );
 		break;
 	case LINUX_SET_INTERFACE_REQUEST:
 	case LINUX_SET_CONFIGURATION_REQUEST:
@@ -241,8 +241,8 @@ static void completeRequest( JNIEnv *env, jobject linuxRequest )
 	case LINUX_PIPE_REQUEST:
 		err = complete_pipe_request( env, linuxRequest );
 		break;
-	case LINUX_DCP_REQUEST:
-		err = complete_dcp_request( env, linuxRequest );
+	case LINUX_CONTROL_REQUEST:
+		err = complete_control_request( env, linuxRequest );
 		break;
 	case LINUX_SET_INTERFACE_REQUEST:
 	case LINUX_SET_CONFIGURATION_REQUEST:

@@ -213,20 +213,24 @@ class JavaxUsb
 			endpointAddress, attributes, interval, maxPacketSize );
 
 		UsbEndpointImp ep = new UsbEndpointImp( iface, desc );
-		UsbPipeImp pipe = new UsbPipeImp( ep, null );
+		UsbPipeImp pipe = null;
 
 		LinuxInterfaceOsImp linuxInterfaceOsImp = (LinuxInterfaceOsImp)iface.getUsbInterfaceOsImp();
 		switch (ep.getType()) {
 		case UsbConst.ENDPOINT_TYPE_CONTROL:
-			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( pipe, linuxInterfaceOsImp ) );
+			pipe = new ControlUsbPipeImp( ep, null );
+			pipe.setUsbPipeOsImp( new LinuxControlPipeImp( (ControlUsbPipeImp)pipe, linuxInterfaceOsImp ) );
 			break;
 		case UsbConst.ENDPOINT_TYPE_BULK:
-			pipe.setUsbPipeOsImp( new LinuxBulkPipeImp( pipe, linuxInterfaceOsImp ) );
+			pipe = new UsbPipeImp( ep, null );
+			pipe.setUsbPipeOsImp( new LinuxPipeOsImp( pipe, linuxInterfaceOsImp ) );
 			break;
 		case UsbConst.ENDPOINT_TYPE_INTERRUPT:
-			pipe.setUsbPipeOsImp( new LinuxInterruptPipeImp( pipe, linuxInterfaceOsImp ) );
+			pipe = new UsbPipeImp( ep, null );
+			pipe.setUsbPipeOsImp( new LinuxPipeOsImp( pipe, linuxInterfaceOsImp ) );
 			break;
 		case UsbConst.ENDPOINT_TYPE_ISOCHRONOUS:
+			pipe = new UsbPipeImp( ep, null );
 			pipe.setUsbPipeOsImp( new LinuxIsochronousPipeImp( pipe, linuxInterfaceOsImp ) );
 			break;
 		default:
@@ -272,11 +276,17 @@ class JavaxUsb
 		switch (speed) {
 		case SPEED_LOW:
 			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_LOW);
+			break;
 		case SPEED_FULL:
 			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_FULL);
+			break;
+		case SPEED_UNKNOWN:
+			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_UNKNOWN);
+			break;
 		default:
 			/* log */
 			targetDevice.setSpeed(UsbConst.DEVICE_SPEED_UNKNOWN);
+			break;
 		}
 	}
 
@@ -308,6 +318,7 @@ class JavaxUsb
 
 	private static final String INVALID_MSG_LEVEL = "Invalid message level";
 
+	private static final int SPEED_UNKNOWN = 0;
 	private static final int SPEED_LOW = 1;
 	private static final int SPEED_FULL = 2;
 }

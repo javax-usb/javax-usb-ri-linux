@@ -31,7 +31,7 @@ import com.ibm.jusb.util.*;
  * </ul>
  * @author Dan Streetman
  */
-public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp
+public class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements UsbPipeOsImp,LinuxRequest.Completion
 {
 	/** Constructor */
 	public LinuxPipeOsImp( UsbPipeImp pipe, LinuxInterfaceOsImp iface )
@@ -40,14 +40,21 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 		setLinuxInterfaceOsImp(iface);
 	}
 
-    //*************************************************************************
-    // public methods
-
 	/** @return The UsbPipeImp for this */
 	public UsbPipeImp getUsbPipeImp() { return usbPipeImp; }
 
 	/** @param usbPipeImp The UsbPipeImp for this */
-	public void setUsbPipeImp( UsbPipeImp pipe ) { usbPipeImp = pipe; }
+	public void setUsbPipeImp( UsbPipeImp pipe )
+	{
+		usbPipeImp = pipe;
+
+		try {
+			pipeType = pipe.getUsbEndpointImp().getType();
+			endpointAddress = pipe.getUsbEndpointImp().getEndpointDescriptor().bEndpointAddress();
+		} catch ( NullPointerException npE ) {
+			/* wait 'til the UsbPipeImp is non-null */
+		}
+	}
 
 	/** @return The LinuxInterfaceOsImp */
 	public LinuxInterfaceOsImp getLinuxInterfaceOsImp() { return linuxInterfaceOsImp; }
@@ -102,24 +109,12 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 				((LinuxPipeRequest)requests[i]).waitUntilCompleted();
 	}
 
-    //*************************************************************************
-    // Protected methods
-
-	/** @param request The LinuxPipeRequest that completed. */
-	protected void linuxPipeRequestCompleted(LinuxPipeRequest request)
+	/** @param request The LinuxRequest that completed. */
+	public void linuxRequestComplete(LinuxRequest request)
 	{
 		synchronized (inProgressList) {
 			inProgressList.remove(request);
 		}
-	}
-
-	/**
-	 * Create and submit a LinuxRequest.
-	 * @param irp the UsbIrpImp to submit.
-	 */
-	protected void internalAsyncSubmit( UsbIrpImp irp ) throws UsbException
-	{
-		getLinuxInterfaceOsImp().submit( usbIrpImpToLinuxPipeRequest(irp) );
 	}
 
 	/**
@@ -129,17 +124,17 @@ public abstract class LinuxPipeOsImp extends AbstractUsbPipeOsImp implements Usb
 	 */
 	protected LinuxPipeRequest usbIrpImpToLinuxPipeRequest(UsbIrpImp usbIrpImp)
 	{
-		LinuxPipeRequest request = new LinuxPipeRequest();
-		request.setLinuxPipeOsImp(this);
+		LinuxPipeRequest request = new LinuxPipeRequest(pipeType,endpointAddress);
 		request.setUsbIrpImp(usbIrpImp);
+		request.setCompletion(this);
 		return request;
 	}
 
-    //*************************************************************************
-    // Instance variables
-
 	private UsbPipeImp usbPipeImp = null;
 	private LinuxInterfaceOsImp linuxInterfaceOsImp = null;
+
+	private byte pipeType = 0;
+	private byte endpointAddress = 0;
 
 	private List inProgressList = new LinkedList();
 }

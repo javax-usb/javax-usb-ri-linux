@@ -43,7 +43,16 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	public UsbInterfaceImp getUsbInterfaceImp() { return usbInterfaceImp; }
 
 	/** @param iface The UsbInterfaceImp for this */
-	public void setUsbInterfaceImp( UsbInterfaceImp iface ) { usbInterfaceImp = iface; }
+	public void setUsbInterfaceImp( UsbInterfaceImp iface )
+	{
+		usbInterfaceImp = iface;
+
+		try {
+			interfaceNumber = usbInterfaceImp.getInterfaceDescriptor().bInterfaceNumber();
+		} catch ( NullPointerException npE ) {
+			/* wait 'til usbInterfaceImp is non-null */
+		}
+	}
 
 	/** @return The LinuxDeviceOsImp for this */
 	public LinuxDeviceOsImp getLinuxDeviceOsImp() { return linuxDeviceOsImp; }
@@ -54,8 +63,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** Claim this interface. */
 	public void claim() throws UsbException
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxClaimInterfaceRequest();
-		request.setInterfaceNumber(getInterfaceNumber());
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxClaimInterfaceRequest(getInterfaceNumber());
 		submit(request);
 
 		request.waitUntilCompleted();
@@ -67,8 +75,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** Release this interface. */
 	public void release()
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxReleaseInterfaceRequest();
-		request.setInterfaceNumber(getInterfaceNumber());
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxReleaseInterfaceRequest(getInterfaceNumber());
 
 		try {
 			submit(request);
@@ -83,8 +90,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	/** @return if this interface is claimed. */
 	public boolean isClaimed()
 	{
-		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxIsClaimedInterfaceRequest();
-		request.setInterfaceNumber(getInterfaceNumber());
+		LinuxInterfaceRequest request = new LinuxInterfaceRequest.LinuxIsClaimedInterfaceRequest(getInterfaceNumber());
 
 		try {
 			submit(request);
@@ -103,10 +109,7 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 		return request.isClaimed();
 	}
 
-	public byte getInterfaceNumber() { return getUsbInterfaceImp().getInterfaceDescriptor().bInterfaceNumber(); }
-
-	//**************************************************************************
-	// Package methods
+	public byte getInterfaceNumber() { return interfaceNumber; }
 
 	/**
 	 * Submit a Request.
@@ -120,9 +123,8 @@ class LinuxInterfaceOsImp implements UsbInterfaceOsImp
 	 */
 	void cancel(LinuxRequest request) { getLinuxDeviceOsImp().cancel(request); }
 
-	//*************************************************************************
-	// Instance variables
+	protected UsbInterfaceImp usbInterfaceImp = null;
+	protected LinuxDeviceOsImp linuxDeviceOsImp = null;
 
-	public UsbInterfaceImp usbInterfaceImp = null;
-	public LinuxDeviceOsImp linuxDeviceOsImp = null;
+	private byte interfaceNumber = 0;
 }

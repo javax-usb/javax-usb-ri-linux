@@ -18,47 +18,20 @@ import com.ibm.jusb.util.*;
  * Interface for configuration-changing Requests.
  * @author Dan Streetman
  */
-public class LinuxSetConfigurationRequest extends LinuxRequest
+public class LinuxSetConfigurationRequest extends LinuxControlRequest
 {
-	//*************************************************************************
-	// Public methods
-
 	/** @return This request's type. */
 	public int getType() { return LinuxRequest.LINUX_SET_CONFIGURATION_REQUEST; }
 
 	/** @return The configuration number */
 	public int getConfiguration() { return configuration; }
 
-	/** @param config The configuration number */
-	public void setConfiguration( byte config ) { configuration = UsbUtil.unsignedInt(config); }
-
-	/** @return The error that occured, or 0 if none occurred. */
-	public int getError() { return errorNumber; }
-
-	/** @param error The number of the error that occurred. */
-	public void setError(int error) { errorNumber = error; }
-
-	/** @return The ControlUsbIrpImp */
-	public ControlUsbIrpImp getControlUsbIrpImp() { return controlUsbIrpImp; }
-
-	/** @param irp The ControlUsbIrpImp. */
-	public void setControlUsbIrpImp(ControlUsbIrpImp irp) { controlUsbIrpImp = irp; }
-
-	/** @param c If this is completed. */
-	public void setCompleted(boolean c)
+	/** @param irp The ControlUsbIrpImp */
+	public void setUsbIrpImp(ControlUsbIrpImp irp)
 	{
-		if (c)
-			getControlUsbIrpImp().complete();
+		super.setUsbIrpImp(irp);
+		configuration = UsbUtil.unsignedInt((byte)irp.wValue());
+	}
 
-		super.setCompleted(c);
-	}		
-
-	//*************************************************************************
-	// Instance variables
-
-	private ControlUsbIrpImp controlUsbIrpImp = null;
-
-	private int configuration;
-
-	private int errorNumber = 0;
+	private int configuration = 0;
 }

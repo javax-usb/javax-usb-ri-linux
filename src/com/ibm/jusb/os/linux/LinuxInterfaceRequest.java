@@ -15,8 +15,8 @@ package com.ibm.jusb.os.linux;
  */
 abstract class LinuxInterfaceRequest extends LinuxRequest
 {
-	//*************************************************************************
-	// Public methods
+	/** Constructor */
+	public LinuxInterfaceRequest(int ifnum) { setInterfaceNumber(ifnum); }
 
 	/** @return The interface number */
 	public int getInterfaceNumber() { return interfaceNumber; }
@@ -24,37 +24,32 @@ abstract class LinuxInterfaceRequest extends LinuxRequest
 	/** @param number The interface number */
 	public void setInterfaceNumber( int number ) { interfaceNumber = number; }
 
-	/** @param error The number of the error that occurred. */
-	public void setError(int error) { errorNumber = error; }
-
-	/** @return The error number, or 0 if no error occurred. */
-	public int getError() { return errorNumber; }
-
 	/** @return If the interface is claimed */
 	public boolean isClaimed() { return claimed; }
 
 	/** @param c If the interface is claimed */
 	public void setClaimed(boolean c) { claimed = c; }
 
-	//*************************************************************************
-	// Instance variables
-
-	private int interfaceNumber;
-
-	private int errorNumber = 0;
+	private int interfaceNumber = 0;
 
 	private boolean claimed = false;
 
-	//*************************************************************************
-	// Inner classes
-
 	public static class LinuxClaimInterfaceRequest extends LinuxInterfaceRequest
-	{ public int getType() { return LinuxRequest.LINUX_CLAIM_INTERFACE_REQUEST; } }
+	{
+		public LinuxClaimInterfaceRequest(int ifnum) { super(ifnum); }
+		public int getType() { return LinuxRequest.LINUX_CLAIM_INTERFACE_REQUEST; }
+	}
 
 	public static class LinuxIsClaimedInterfaceRequest extends LinuxInterfaceRequest
-	{ public int getType() { return LinuxRequest.LINUX_IS_CLAIMED_INTERFACE_REQUEST; } }
+	{
+		public LinuxIsClaimedInterfaceRequest(int ifnum) { super(ifnum); }
+		public int getType() { return LinuxRequest.LINUX_IS_CLAIMED_INTERFACE_REQUEST; }
+	}
 
 	public static class LinuxReleaseInterfaceRequest extends LinuxInterfaceRequest
-	{ public int getType() { return LinuxRequest.LINUX_RELEASE_INTERFACE_REQUEST; } }
+	{
+		public LinuxReleaseInterfaceRequest(int ifnum) { super(ifnum); }
+		public int getType() { return LinuxRequest.LINUX_RELEASE_INTERFACE_REQUEST; }
+	}
 
 }

@@ -33,8 +33,9 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	char *orig_dir = getcwd(NULL,0);
 
 	jclass LinuxUsbServices = (*env)->GetObjectClass( env, linuxUsbServices );
-	jfieldID usbRootHubImpID = (*env)->GetFieldID( env, LinuxUsbServices, "usbRootHubImp", "Lcom/ibm/jusb/UsbRootHubImp;" );
-	jobject rootHub = (*env)->GetObjectField( env, linuxUsbServices, usbRootHubImpID );
+	jmethodID getRootUsbHubImp = (*env)->GetMethodID( env, LinuxUsbServices, "getRootUsbHubImp", "()Lcom/ibm/jusb/UsbHubImp;" );
+	jobject rootHub = (*env)->CallObjectMethod( env, linuxUsbServices, getRootUsbHubImp );
+	(*env)->DeleteLocalRef( env, LinuxUsbServices );
 
 	if (chdir(USBDEVFS_PATH) || (0 > (busses = scandir(".", &buslist, select_dirent_dir, alphasort))) ) {
 		dbg( MSG_ERROR, "nativeTopologyUpdater : Could not access : %s\n", USBDEVFS_PATH );
@@ -70,8 +71,6 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	}
 	free(buslist);
 
-	(*env)->DeleteLocalRef( env, LinuxUsbServices );
-
 	if (rootHub) (*env)->DeleteLocalRef( env, rootHub );
 
 	if (orig_dir) {
@@ -86,7 +85,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	jobject parent, int parentport, jobject connectedDevices, jobject disconnectedDevices )
 {
 	int fd = 0, port, ncfg;
-	int devices = 0;
+	int devices = 0, speed = SPEED_UNKNOWN;
 	char node[4] = { 0, };
 	char *path = (char*)getcwd( NULL, 0 );
 	char *key = NULL;
@@ -96,13 +95,14 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	struct jusb_device_descriptor *dev_desc;
 
 	jobject device = NULL, existingDevice;
-	jstring speedString = NULL, keyString = NULL;
+	jstring keyString = NULL;
 
 	jclass LinuxUsbServices = (*env)->GetObjectClass( env, linuxUsbServices );
 	jmethodID createUsbHubImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbHubImp", "(Ljava/lang/String;I)Lcom/ibm/jusb/UsbHubImp;" );
 	jmethodID createUsbDeviceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "createUsbDeviceImp", "(Ljava/lang/String;)Lcom/ibm/jusb/UsbDeviceImp;" );
-	jmethodID configureUsbDeviceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbDeviceImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBBBBBBBBBSSSSLjava/lang/String;)V" );
+	jmethodID configureUsbDeviceImp = (*env)->GetStaticMethodID( env, JavaxUsb, "configureUsbDeviceImp", "(Lcom/ibm/jusb/UsbDeviceImp;BBBBBBBBBBSSSSI)V" );
 	jmethodID checkUsbDeviceImp = (*env)->GetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;ILcom/ibm/jusb/UsbDeviceImp;Ljava/util/List;Ljava/util/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
+	(*env)->DeleteLocalRef( env, LinuxUsbServices );
 
 	if (!path) {
 		dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get current directory!\n" );
@@ -155,7 +155,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	} else {
 	  dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Device speed is %s\n", (connectinfo->slow?"1.5 Mbps":"12 Mbps") );
 	}
-	speedString = (*env)->NewStringUTF( env, ( connectinfo->slow ? "1.5 Mbps" : "12 Mbps" ) );
+	speed = ( connectinfo->slow ? SPEED_LOW : SPEED_FULL );
 	free(connectinfo);
 	connectinfo = NULL;
 
@@ -164,9 +164,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 		dev_desc->bDeviceClass, dev_desc->bDeviceSubClass, dev_desc->bDeviceProtocol,
 		dev_desc->bMaxPacketSize0, dev_desc->iManufacturer, dev_desc->iProduct, dev_desc->iSerialNumber,
 		dev_desc->bNumConfigurations, dev_desc->idVendor, dev_desc->idProduct,
-		dev_desc->bcdDevice, dev_desc->bcdUSB, speedString );
-	(*env)->DeleteLocalRef( env, speedString );
-	speedString = NULL;
+		dev_desc->bcdDevice, dev_desc->bcdUSB, speed );
 
 	/* Build config descriptors */
 	for (ncfg=0; ncfg<dev_desc->bNumConfigurations; ncfg++) {
@@ -200,7 +198,6 @@ BUILD_DEVICE_EXIT:
 	if (usbioctl) free(usbioctl);
 	if (portinfo) free(portinfo);
 	if (keyString) (*env)->DeleteLocalRef( env, keyString );
-	if (speedString) (*env)->DeleteLocalRef( env, speedString );
 	if (path) free(path);
 	if (key) free(key);
 

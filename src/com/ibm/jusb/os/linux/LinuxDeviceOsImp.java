@@ -65,16 +65,19 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 	/** AsyncSubmit a ControlUsbIrpImp */
 	public void asyncSubmit( ControlUsbIrpImp controlUsbIrpImp ) throws UsbException
 	{
-		if (controlUsbIrpImp.isSetConfiguration())
-			submit(controlUsbIrpImpToLinuxSetConfigurationRequest(controlUsbIrpImp));
-		else if (controlUsbIrpImp.isSetInterface())
-			submit(controlUsbIrpImpToLinuxSetInterfaceRequest(controlUsbIrpImp));
-		else
-			submit(controlUsbIrpImpToLinuxDcpRequest(controlUsbIrpImp));
-	}
+		LinuxControlRequest request = null;
 
-	//**************************************************************************
-	// Package methods
+		if (controlUsbIrpImp.isSetConfiguration())
+			request = new LinuxSetConfigurationRequest();
+		else if (controlUsbIrpImp.isSetInterface())
+			request = new LinuxSetInterfaceRequest();
+		else
+			request = new LinuxControlRequest();
+
+		request.setUsbIrpImp(controlUsbIrpImp);
+
+		submit(request);
+	}
 
 	/** Submit a Request. */
 	void submit(LinuxRequest request) throws UsbException { getLinuxDeviceProxy().submit(request); }
@@ -86,40 +89,6 @@ class LinuxDeviceOsImp extends AbstractUsbDeviceOsImp implements UsbDeviceOsImp
 		try { getLinuxDeviceProxy().cancel(request); }
 		catch ( UsbException uE ) { }
 	}
-
-	//**************************************************************************
-	// Protected methods
-
-	/** Convert a ControlUsbIrpImp to a LinuxSetConfigurationRequest */
-	protected LinuxSetConfigurationRequest controlUsbIrpImpToLinuxSetConfigurationRequest(ControlUsbIrpImp controlUsbIrpImp)
-	{
-		LinuxSetConfigurationRequest configRequest = new LinuxSetConfigurationRequest();
-		configRequest.setConfiguration((byte)controlUsbIrpImp.wValue()); /* use only lower byte */
-		configRequest.setControlUsbIrpImp(controlUsbIrpImp);
-		return configRequest;
-	}
-
-	/** Convert a ControlUsbIrpImp to a LinuxSetInterfaceRequest */
-	protected LinuxSetInterfaceRequest controlUsbIrpImpToLinuxSetInterfaceRequest(ControlUsbIrpImp controlUsbIrpImp)
-	{
-		LinuxSetInterfaceRequest interfaceRequest = new LinuxSetInterfaceRequest();
-		interfaceRequest.setInterface(controlUsbIrpImp.wIndex());
-		interfaceRequest.setSetting(controlUsbIrpImp.wValue());
-		interfaceRequest.setControlUsbIrpImp(controlUsbIrpImp);
-		return interfaceRequest;
-	}
-
-	/** Convert a ControlUsbIrpImp to a LinuxDcpRequest */
-	protected LinuxDcpRequest controlUsbIrpImpToLinuxDcpRequest(ControlUsbIrpImp controlUsbIrpImp)
-	{
-		LinuxDcpRequest dcpRequest = new LinuxDcpRequest();
-		dcpRequest.setData(controlUsbIrpImp.getData());
-		dcpRequest.setControlUsbIrpImp(controlUsbIrpImp);
-		return dcpRequest;
-	}
-
-	//**************************************************************************
-	// Instance variables
 
 	private UsbDeviceImp usbDeviceImp = null;
 

@@ -21,22 +21,24 @@ abstract class LinuxRequest
 	 */
 	public abstract int getType();
 
-	/** 
-	 * Set the error that occurred.
-	 * @param The error that occcured.
-	 */
-	public abstract void setError(int error);
+	/** @return The error that occured, or 0 if none occurred. */
+	public int getError() { return errorNumber; }
+
+	/** @param error The number of the error that occurred. */
+	public void setError(int error) { errorNumber = error; }
 
 	/** Wait until completed. */
 	public void waitUntilCompleted()
 	{
-		synchronized ( waitLock ) {
-			waitCount++;
-			while (!isCompleted()) {
-				try { waitLock.wait(); }
-				catch ( InterruptedException iE ) { }
+		if (!isCompleted()) {
+			synchronized ( waitLock ) {
+				waitCount++;
+				while (!isCompleted()) {
+					try { waitLock.wait(1000); }
+					catch ( InterruptedException iE ) { }
+				}
+				waitCount--;
 			}
-			waitCount--;
 		}
 	}
 
@@ -51,8 +53,10 @@ abstract class LinuxRequest
 	{
 		completed = c;
 
-		if (completed)
+		if (completed) {
 			notifyCompleted();
+			executeCompletion();
+		}
 	}
 
 	/** Notify waiteers of completion. */
@@ -65,19 +69,40 @@ abstract class LinuxRequest
 		}		
 	}
 
+	/** Run the Completion. */
+	protected void executeCompletion()
+	{
+		try { getCompletion().linuxRequestComplete(this); }
+		catch ( NullPointerException npE ) { /* no Completion */ }
+		catch ( Exception e ) { /* log? */ }
+	}
+
+	/** @param The Completion. */
+	public void setCompletion(LinuxRequest.Completion c) { completion = c; }
+
+	/** @return The Completion */
+	public LinuxRequest.Completion getCompletion() { return completion; }
+
 	private LinuxRequestProxy linuxRequestProxy = null;
 
 	private Object waitLock = new Object();
 	private int waitCount = 0;
 	private boolean completed = false;
+	private int errorNumber = 0;
+
+	private LinuxRequest.Completion completion = null;
 
 	/* These MUST be the same as those defined in jni/linux/JavaxUsbDeviceProxy.c */
 	public static final int LINUX_PIPE_REQUEST = 1;
-	public static final int LINUX_DCP_REQUEST = 2;
+	public static final int LINUX_CONTROL_REQUEST = 2;
 	public static final int LINUX_SET_INTERFACE_REQUEST = 3;
 	public static final int LINUX_SET_CONFIGURATION_REQUEST = 4;
 	public static final int LINUX_CLAIM_INTERFACE_REQUEST = 5;
 	public static final int LINUX_IS_CLAIMED_INTERFACE_REQUEST = 6;
 	public static final int LINUX_RELEASE_INTERFACE_REQUEST = 7;
 	public static final int LINUX_ISOCHRONOUS_REQUEST = 8;
+
+	public static interface Completion
+	{ public void linuxRequestComplete(LinuxRequest request); }
+
 }
