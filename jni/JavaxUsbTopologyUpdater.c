@@ -138,7 +138,12 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 			dbg( MSG_ERROR, "nativeTopologyUpdater.build_device : Could not get portinfo from hub, error = %d\n", errno );
 			goto BUILD_DEVICE_EXIT;
 		} else {
+		  int p = 0;
 		  dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Device is hub with %d ports\n",portinfo->nports );
+		  dbg( MSG_DEBUG3, "nativeTopologyUpdater.build_device : Devices connected to hub are" );
+		  for (p=0; p<portinfo->nports; p++)
+			dbg( MSG_DEBUG3, " %d", portinfo->port[p] );
+		  dbg( MSG_DEBUG3, "\n" );
 		}
 		free(usbioctl);
 		usbioctl = NULL;
@@ -186,7 +191,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	if ((dev_desc->bDeviceClass == USB_CLASS_HUB) && portinfo)
 		for (port=0; port<(portinfo->nports); port++)
 			if (portinfo->port[port]) {
-				dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device attached to port %d\n", portinfo->port[port]);
+				dbg( MSG_DEBUG2, "nativeTopologyUpdater.build_device : Building device %d attached to port %d\n", portinfo->port[port], port);
 				devices += build_device( env, JavaxUsb, linuxUsbServices, bus, portinfo->port[port], device, port, connectedDevices, disconnectedDevices );
 			}
 
