@@ -34,11 +34,15 @@ abstract class LinuxRequest
 	public void waitUntilCompleted(long timeout)
 	{
 		long start = System.currentTimeMillis();
+		boolean use_timeout = 0 < timeout;
 
 		if (!isCompleted()) {
 			synchronized ( waitLock ) {
 				waitCount++;
-				while (!isCompleted() && (0 < timeout) && (timeout > System.currentTimeMillis() - start)) {
+				while (!isCompleted()) {
+					long elapsed = System.currentTimeMillis() - start;
+					if (use_timeout && (elapsed > timeout))
+						break;
 					try { waitLock.wait(1000); }
 					catch ( InterruptedException iE ) { }
 				}
