@@ -21,7 +21,7 @@ jboolean trace_xfer = JNI_TRUE;
 jboolean trace_urb = JNI_FALSE;
 int trace_level = LOG_CRITICAL;
 
-JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceData
+JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTracing
 (JNIEnv *env, jclass JavaxUsb, jboolean enable)
 {
 	tracing = enable;
