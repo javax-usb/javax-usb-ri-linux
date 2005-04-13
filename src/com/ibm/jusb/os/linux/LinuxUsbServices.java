@@ -324,7 +324,7 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)device.getUsbDeviceOsImp();
 		int config = JavaxUsb.nativeGetActiveConfigurationNumber(linuxDeviceOsImp);
 
-		if (0 < config)
+		if ((0 < config) && device.containsUsbConfiguration((byte)config))
 			device.setActiveUsbConfigurationNumber((byte)config);
 		else
 			return; /* either the device is unconfigured or there was an error, so we can't continue */
