@@ -324,10 +324,22 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 		LinuxDeviceOsImp linuxDeviceOsImp = (LinuxDeviceOsImp)device.getUsbDeviceOsImp();
 		int config = JavaxUsb.nativeGetActiveConfigurationNumber(linuxDeviceOsImp);
 
-		if ((0 < config) && device.containsUsbConfiguration((byte)config))
+		/* The device isn't configured. */
+		if (0 == config)
 			device.setActiveUsbConfigurationNumber((byte)config);
+
+		/* There was an error getting the active configuration, can't continue */
+//FIXME - log/trace
+		if (0 > config)
+			return;
+
+		/* Got the active configuration number, make sure it's valid, then set it */
+		if (device.containsUsbConfiguration((byte)config))
+			device.setActiveUsbConfigurationNumber((byte)config);
+		else if (1 == device.getUsbConfigurations().size()) /* the device told us a non-existent configuration was active, but it's only got one configuration, so we'll pick that */
+			device.setActiveUsbConfigurationNumber(((UsbConfiguration)device.getUsbConfigurations().get(0)).getUsbConfigurationDescriptor().bConfigurationValue());
 		else
-			return; /* either the device is unconfigured or there was an error, so we can't continue */
+			return; /* the device told us a non-existent configuration was active, and it has more than one to pick from, so we can't do anything. */
 
 		Iterator interfaces = device.getActiveUsbConfiguration().getUsbInterfaces().iterator();
 		while (interfaces.hasNext()) {
