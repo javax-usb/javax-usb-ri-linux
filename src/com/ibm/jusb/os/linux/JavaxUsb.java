@@ -99,6 +99,13 @@ class JavaxUsb
 	 */
 	static native void nativeSetTraceLevel(int level);
 
+	/**
+	 * Set the trace output.
+	 * @param output Where to output; 1=stdout, 2=stderr, 3=file.
+	 * @param filename The filename (ignored if output != 3).
+	 */
+	static native void nativeSetTraceOutput(int output, String filename);
+
 		//*********************************
 		// JavaxUsbTopologyUpdater methods
 

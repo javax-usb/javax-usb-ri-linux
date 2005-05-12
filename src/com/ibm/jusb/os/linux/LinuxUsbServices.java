@@ -91,6 +91,24 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 				JavaxUsb.nativeSetTracing(Boolean.valueOf(p.getProperty(TRACING)).booleanValue());
 		} catch ( Exception e ) { }
 
+		/* The JNI library can't default to stderr (it isn't a portable reference) so we pre-set it here. */
+		JavaxUsb.nativeSetTraceOutput(2, "");
+
+		try {
+			if (p.containsKey(TRACE_OUTPUT)) {
+				int output = Integer.decode(p.getProperty(TRACE_OUTPUT)).intValue();
+				String traceFilename = "";
+				if ((3 == output || 4 == output)) {
+					traceFilename = p.getProperty(TRACE_FILENAME);
+					if ((null == traceFilename) || ("".equals(traceFilename))) {
+						traceFilename = "";
+						output = 2;
+					}
+				}
+				JavaxUsb.nativeSetTraceOutput(output, traceFilename);
+			}
+		} catch ( Exception e ) { }
+
 //FIXME - the names of the tracers should be more generically processed
 		try {
 			if (p.containsKey(TRACE_DEFAULT))
@@ -397,6 +415,8 @@ public class LinuxUsbServices extends AbstractUsbServices implements UsbServices
 
 	/* These enables (or disables) JNI tracing of data. */
 	public static final String TRACING = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.tracing";
+	public static final String TRACE_OUTPUT = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_output";
+	public static final String TRACE_FILENAME = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_filename";
 	public static final String TRACE_LEVEL = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_level";
 	public static final String TRACE_DEFAULT = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_default";
 	public static final String TRACE_HOTPLUG = "com.ibm.jusb.os.linux.LinuxUsbServices.JNI.trace_hotplug";

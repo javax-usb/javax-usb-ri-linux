@@ -12,14 +12,16 @@
 
 #define JAVAXUSB_CLASSNAME "com/ibm/jusb/os/linux/JavaxUsb"
 
-static int fatalLogError = 0;
-
 jboolean tracing = JNI_TRUE;
 jboolean trace_default = JNI_TRUE;
 jboolean trace_hotplug = JNI_TRUE;
 jboolean trace_xfer = JNI_TRUE;
 jboolean trace_urb = JNI_FALSE;
 int trace_level = LOG_CRITICAL;
+FILE *trace_output = NULL;
+
+//FIXME - add parameter to modify this!!!
+jboolean trace_flush = JNI_TRUE;
 
 JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTracing
 (JNIEnv *env, jclass JavaxUsb, jboolean enable)
@@ -53,16 +55,37 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceLevel
 		trace_level = level;
 }
 
-static inline void log_fatal(char *msg)
+JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeSetTraceOutput
+(JNIEnv *env, jclass JavaxUsb, jint output, jstring filename)
 {
-	if (!fatalLogError) {
-		fatalLogError = 1;
-		fprintf(stderr, "Unable to log : %s\n", msg);
-	}
-}
+	switch (output) {
+		case 1:
+			trace_output = stdout;
+			break;
 
-void stderr_log(char *logname, int level, char *file, char *func, int line, char *msg)
-{
-	fprintf(stderr, "[%s](%d) %s.%s[%d] %s\n",logname,level,file,func,line,msg);
+		case 2:
+			trace_output = stderr;
+			break;
+
+		case 3:
+		case 4:
+			{
+				const char *name = (*env)->GetStringUTFChars( env, filename, NULL );
+				FILE *f = NULL;
+				const char *mode = (3 == output ? "w" : "a"); /* w = trunc, a = append */
+
+				if ((f = fopen(name, mode)))
+					trace_output = f;
+				else
+					log( LOG_ERROR, "Could not open file %s for JNI tracing : %s\n", name, strerror(errno) );
+
+				(*env)->ReleaseStringUTFChars( env, filename, name );
+			}
+			break;
+
+		default:
+			log( LOG_ERROR, "Invalid trace output setting %d\n", output );
+			break;
+	}
 }
 

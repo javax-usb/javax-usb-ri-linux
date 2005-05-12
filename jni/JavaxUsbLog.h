@@ -21,8 +21,10 @@ extern jboolean trace_hotplug;
 extern jboolean trace_xfer;
 extern jboolean trace_urb;
 extern int trace_level;
+extern FILE *trace_output;
+extern jboolean trace_flush;
 
-/* Log, currently only to stderr. */
+/* Log to trace_output FILE* (stderr by default). */
 #define log(level,args...) do { \
   if (!tracing || (trace_level < LOG_LEVEL(level))) break; \
   if (LOG_XFER_FLAG&level) log_xfer(level,args); \
@@ -74,7 +76,6 @@ extern int trace_level;
 
 #define log_default(level,args...) do { if (trace_default) log_named(level,"default",args); } while(0)
 
-/* log_named() should not be directly used */
 static char *log_oom = "Out of memory while logging!";
 #define DEFAULT_LOG_LEN 256
 #define OLD_GLIBC_MAX_LOG_LEN 1024 /* If glibc is 2.0 or lower, snprintf does not report needed length, so set this as max */
@@ -93,11 +94,16 @@ do { \
       buffer[((real_len < full_len-1 && 0 <= real_len) ? real_len : full_len-1)] = 0; \
     } \
   } \
-  stderr_log(logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
+  do_log(logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
   if (buf2) free(buf2); \
 } while (0)
 
-extern void stderr_log(char *logname, int level, char *file, char *func, int line, char *msg);
+#define do_log(logname, level, file, func, line, msg) do { \
+	if (trace_output) { \
+		fprintf(trace_output, "[%s](%d) %s.%s[%d] %s\n",logname,level,file,func,line,msg); \
+		if (JNI_TRUE == trace_flush) fflush(trace_output); \
+	} \
+} while(0)
 
 #endif /* _JAVAXUSBLOG_H */
 
