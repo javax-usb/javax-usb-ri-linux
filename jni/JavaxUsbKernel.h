@@ -37,10 +37,10 @@ struct javaxusb_usbdevfs_ctrltransfer {
 
 int getShortPacketFlag(int accept);
 
-int getIsochronousFlags(void);
-int getInterruptFlags(void);
-int getControlFlags(void);
-int getBulkFlags(void);
+int getIsochronousFlags(int flags);
+int getInterruptFlags(int flags);
+int getControlFlags(int flags);
+int getBulkFlags(int flags);
 
 int getIsochronousType(void);
 int getInterruptType(void);

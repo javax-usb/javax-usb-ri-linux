@@ -42,7 +42,7 @@ int interrupt_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struc
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
 	urb->type = getInterruptType();
-	urb->flags |= getInterruptFlags();
+	urb->flags = getInterruptFlags(urb->flags);
 
 	debug_urb( env, "interrupt_pipe_request", urb );
 

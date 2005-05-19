@@ -44,7 +44,7 @@ int isochronous_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, str
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
 	urb->type = getIsochronousType();
-	urb->flags |= getIsochronousFlags();
+	urb->flags = getIsochronousFlags(urb->flags);
 	urb->number_of_packets = 1;
 	urb->iso_frame_desc[0].length = urb->buffer_length;
 
@@ -155,7 +155,7 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	urb->type = getIsochronousType();
 	urb->usercontext = CheckedNewGlobalRef( env, linuxIsochronousRequest );
 	urb->endpoint = (unsigned char)CheckedCallByteMethod( env, linuxIsochronousRequest, getEndpointAddress );
-	urb->flags |= getIsochronousFlags();
+	urb->flags = getIsochronousFlags(urb->flags);
 
 	log( LOG_XFER_OTHER, "Submitting URB" );
 	debug_urb( env, "isochronous_request", urb );

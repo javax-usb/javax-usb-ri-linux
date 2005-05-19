@@ -72,12 +72,15 @@ static int getQueueBulkFlag(void)
  */
 int getShortPacketFlag(int accept) { return ( accept ? 0 : NO_ACCEPT_SHORT_PACKET ); }
 
-int getIsochronousFlags(void) { return USBDEVFS_URB_ISO_ASAP; }
-int getControlFlags(void) { return 0; }
-int getBulkFlags(void) { return getQueueBulkFlag(); }
-int getInterruptFlags(void)
+/* This sets/clears flags as appropriate to the transfer type.
+ * The parameter is the existing flags, the return is the modified flags.
+ */
+int getIsochronousFlags(int flags) { return (~NO_ACCEPT_SHORT_PACKET & (USBDEVFS_URB_ISO_ASAP | flags)); }
+int getControlFlags(int flags) { return flags; }
+int getBulkFlags(int flags) { return getQueueBulkFlag() | flags; }
+int getInterruptFlags(int flags)
 {
-	return (INTERRUPT_USES_BULK_LAST_KERNEL_VERSION >= getKernelVersion() ? getBulkFlags() : 0);
+	return ((INTERRUPT_USES_BULK_LAST_KERNEL_VERSION >= getKernelVersion()) ? (getBulkFlags(flags)) : flags);
 }
 
 // These #defined values have never changed name

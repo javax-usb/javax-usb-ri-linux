@@ -42,7 +42,7 @@ int bulk_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest, struct usb
 	CheckedGetByteArrayRegion( env, data, offset, urb->buffer_length, urb->buffer );
 
 	urb->type = getBulkType();
-	urb->flags |= getBulkFlags();
+	urb->flags = getBulkFlags(urb->flags);
 
 	debug_urb( env, "bulk_pipe_request", urb );
 

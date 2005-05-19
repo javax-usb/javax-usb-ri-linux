@@ -52,7 +52,7 @@ int control_pipe_request( JNIEnv *env, int fd, jobject linuxControlRequest, stru
 	urb->buffer_length += 8;
 
 	urb->type = getControlType();
-	urb->flags |= getControlFlags();
+	urb->flags = getControlFlags(urb->flags);
 
 	debug_urb( env, "control_pipe_request", urb );
 
