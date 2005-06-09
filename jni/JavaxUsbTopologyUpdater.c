@@ -38,7 +38,12 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	jobject rootHub = CheckedCallObjectMethod( env, linuxUsbServices, getRootUsbHubImp );
 	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
-	if (!rootHub) {
+	if (0 > (*env)->EnsureLocalCapacity(env, 40)) {
+		log( LOG_CRITICAL, "Could not reserve enough local references, Out of Memory!\n");
+		return -ENOMEM;
+	}
+
+ 	if (!rootHub) {
 		log( LOG_ERROR, "Could not get rootHub!\n");
 		return -EINVAL;
 	}
