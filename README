@@ -46,4 +46,3 @@ or edit a startup script to remount it with the devmode option.
 NOTE that by changing the permissions of this filesystem to 666 you are allowing ANYONE on
 your system full access to all of your USB devices.  To improve security you should set the
 permissions more restrictive and give read-write access to only a specific user or specific group.
-
