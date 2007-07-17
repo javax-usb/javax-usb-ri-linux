@@ -19,7 +19,7 @@ static int kernel_version = 0;
 
 // This is defined only in 2.4 kernels.
 #define QUEUE_BULK 0x10
-#define QUEUE_BULK_LAST_KERNEL_VERSION KERNEL_VERSION(2,4,99)
+#define QUEUE_BULK_LAST_KERNEL_VERSION KERNEL_VERSION(2,4,29)
 
 // 2.4 USB subsystems do not allow queued interrupt transfers but do allow (encourage?) interrupt-using-bulk
 #define INTERRUPT_USES_BULK_LAST_KERNEL_VERSION KERNEL_VERSION(2,4,99)
