@@ -47,4 +47,9 @@ int getInterruptType(void);
 int getControlType(void);
 int getBulkType(void);
 
+char *usbdevfs_path();
+char *usbdevfs_devices_filename();
+char *usbdevfs_sscanf_node();
+char *usbdevfs_sprintf_node();
+
 #endif /* _JAVAX_USB_KERNEL_H */

@@ -49,18 +49,18 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyUpdater
 	}
 
 	errno = 0;
-	if (0 > (busses = scandir(USBDEVFS_PATH, &buslist, select_usbfs, alphasort)) ) {
-		log( LOG_ERROR, "Could not access %s : %s", USBDEVFS_PATH, strerror(errno) );
+	if (0 > (busses = scandir(usbdevfs_path(), &buslist, select_usbfs, alphasort)) ) {
+		log( LOG_ERROR, "Could not access %s : %s", usbdevfs_path(), strerror(errno) );
 		return -errno;
 	}
 
 	for (port=0; port<busses; port++) {
 		struct dirent **devlist = NULL;
 		int bus, hcAddress, devs;
-		int busdir_len = strlen(USBDEVFS_PATH) + strlen(buslist[port]->d_name) + 2;
+		int busdir_len = strlen(usbdevfs_path()) + strlen(buslist[port]->d_name) + 2;
 		char busdir[busdir_len];
 
-		sprintf(busdir, "%s/%s", USBDEVFS_PATH, buslist[port]->d_name);
+		sprintf(busdir, "%s/%s", usbdevfs_path(), buslist[port]->d_name);
 		bus = atoi( buslist[port]->d_name );
 
 		errno = 0;
@@ -97,7 +97,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	struct usbdevfs_hub_portinfo *portinfo = NULL;
 	struct usbdevfs_connectinfo *connectinfo = NULL;
 	struct jusb_device_descriptor *dev_desc = NULL;
-	int node_len = strlen(USBDEVFS_PATH) + 1 + 3 + 1 + 3 + 1;
+	int node_len = strlen(usbdevfs_path()) + 1 + 3 + 1 + 3 + 1;
 	char node[node_len];
 
 	jobject device = NULL, existingDevice = NULL;
@@ -110,7 +110,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	jmethodID checkUsbDeviceImp = CheckedGetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;ILcom/ibm/jusb/UsbDeviceImp;Ljava/util/List;Ljava/util/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
 	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
-	sprintf(node, "%s/%03d/%03d", USBDEVFS_PATH, (0xff&bus), (0xff&dev));
+	sprintf(node, "%s/%03d/%03d", usbdevfs_path(), (0xff&bus), (0xff&dev));
 
 	keyString = CheckedNewStringUTF( env, node );
 

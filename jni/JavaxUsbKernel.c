@@ -91,3 +91,53 @@ int getInterruptType(void)
 {
 	return (INTERRUPT_USES_BULK_LAST_KERNEL_VERSION >= getKernelVersion() ? getBulkType() : USBDEVFS_URB_TYPE_INTERRUPT);
 }
+
+
+// These are probably not the best way to determine where the usbfs is but it's simple.
+
+#define USBDEVFS_PATH_OLD "/proc/bus/usb"
+#define USBDEVFS_DEVICES_OLD "/proc/bus/usb/devices"
+#define USBDEVFS_SPRINTF_NODE_OLD "/proc/bus/usb/%3.03d/%3.03d"
+#define USBDEVFS_SSCANF_NODE_OLD "/proc/bus/usb/%3d/%3d"
+
+#define USBDEVFS_PATH_NEW "/dev/bus/usb"
+#define USBDEVFS_DEVICES_NEW "/dev/bus/usb/devices"
+#define USBDEVFS_SPRINTF_NODE_NEW "/dev/bus/usb/%3.03d/%3.03d"
+#define USBDEVFS_SSCANF_NODE_NEW "/dev/bus/usb/%3d/%3d"
+
+char *usbdevfs_path()
+{
+	struct stat buf;
+	if ((0 == stat(USBDEVFS_PATH_NEW, &buf)) && S_ISDIR(buf.st_mode))
+		return USBDEVFS_PATH_NEW;
+	else
+		return USBDEVFS_PATH_OLD;
+}
+
+char *usbdevfs_devices_filename()
+{
+	struct stat buf;
+	if (0 == stat(USBDEVFS_DEVICES_NEW, &buf))
+		return USBDEVFS_DEVICES_NEW;
+	else
+		return USBDEVFS_DEVICES_OLD;
+}
+
+char *usbdevfs_sscanf_node()
+{
+	struct stat buf;
+	if ((0 == stat(USBDEVFS_PATH_NEW, &buf)) && S_ISDIR(buf.st_mode))
+		return USBDEVFS_SSCANF_NODE_NEW;
+	else
+		return USBDEVFS_SSCANF_NODE_OLD;
+}
+
+char *usbdevfs_sprintf_node()
+{
+	struct stat buf;
+	if ((0 == stat(USBDEVFS_PATH_NEW, &buf)) && S_ISDIR(buf.st_mode))
+		return USBDEVFS_SPRINTF_NODE_NEW;
+	else
+		return USBDEVFS_SPRINTF_NODE_OLD;
+}
+

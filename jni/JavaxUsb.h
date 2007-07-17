@@ -34,13 +34,6 @@
 /* Need to include this last or gcc will give warnings */
 #include "JavaxUsbKernel.h"
 
-#define USBDEVFS_PATH            "/proc/bus/usb"
-#define USBDEVFS_DEVICES         "/proc/bus/usb/devices"
-#define USBDEVFS_DRIVERS         "/proc/bus/usb/drivers"
-
-#define USBDEVFS_SPRINTF_NODE    "/proc/bus/usb/%3.03d/%3.03d"
-#define USBDEVFS_SSCANF_NODE     "/proc/bus/usb/%3d/%3d"
-
 #define MAX_LINE_LENGTH 255
 #define MAX_KEY_LENGTH 255
 #define MAX_PATH_LENGTH 255
@@ -222,14 +215,14 @@ static inline int open_device( JNIEnv *env, jstring javaKey, int oflag )
 
 static inline int bus_node_to_name( int bus, int node, char *name )
 {
-	sprintf( name, USBDEVFS_SPRINTF_NODE, bus, node );
+	sprintf( name, usbdevfs_sprintf_node(), bus, node );
 	return strlen( name );
 }
 
 static inline int get_busnum_from_name( const char *name )
 {
 	int bus, node;
-	if (1 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
+	if (1 > (sscanf( name, usbdevfs_sscanf_node(), &bus, &node )))
 		return -1;
 	else return bus;
 }
@@ -245,7 +238,7 @@ static inline int get_busnum_from_jname( JNIEnv *env, jstring jname )
 static inline int get_devnum_from_name( const char *name )
 {
 	int bus, node;
-	if (2 > (sscanf( name, USBDEVFS_SSCANF_NODE, &bus, &node )))
+	if (2 > (sscanf( name, usbdevfs_sscanf_node(), &bus, &node )))
 		return -1;
 	else return node;
 }

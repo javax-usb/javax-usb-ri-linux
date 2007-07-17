@@ -27,9 +27,9 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeTopologyListene
 	jmethodID topologyChange = CheckedGetMethodID( env, LinuxUsbServices, "topologyChange", "()V" );
 
 	errno = 0;
-	descriptor = open( USBDEVFS_DEVICES, O_RDONLY, 0 );
+	descriptor = open( usbdevfs_devices_filename(), O_RDONLY, 0 );
 	if ( 0 >= descriptor ) {
-		log( LOG_HOTPLUG_CRITICAL, "Could not open %s", USBDEVFS_DEVICES );
+		log( LOG_HOTPLUG_CRITICAL, "Could not open %s", usbdevfs_devices_filename() );
 		error = errno;
 		goto TOPOLOGY_LISTENER_CLEANUP;
 	}

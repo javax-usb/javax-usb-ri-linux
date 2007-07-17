@@ -37,20 +37,20 @@ static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned cha
 #define cfgstr "Cfg#=%2d"
 
 	errno = 0;
-	if (!(file = fopen(USBDEVFS_DEVICES, "r"))) {
-		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+	if (!(file = fopen(usbdevfs_devices_filename(), "r"))) {
+		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", usbdevfs_devices_filename(), strerror(errno) );
 		ret = -errno
 		goto end;
 	}
 
-	log( LOG_HOTPLUG_OTHER, "Checking %s", USBDEVFS_DEVICES );
+	log( LOG_HOTPLUG_OTHER, "Checking %s", usbdevfs_devices_filename() );
 
 	while (1) {
 		memset(line, 0, LINELEN);
 
 		errno = 0;
 		if (0 > (len = getline(&line, &linelen, file))) {
-			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", usbdevfs_devices_filename(), strerror(errno) );
 			ret = -errno;
 			break;
 		}
@@ -114,20 +114,20 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 #define setstr "Alt=%2d"
 
 	errno = 0;
-	if (!(file = fopen(USBDEVFS_DEVICES, "r"))) {
-		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+	if (!(file = fopen(usbdevfs_devices_filename(), "r"))) {
+		log( LOG_HOTPLUG_ERROR, "Could not open %s : %s", usbdevfs_devices_filename(), strerror(errno) );
 		ret = -errno;
 		goto end;
 	}
 
-	log( LOG_HOTPLUG_OTHER, "Checking %s", USBDEVFS_DEVICES );
+	log( LOG_HOTPLUG_OTHER, "Checking %s", usbdevfs_devices_filename() );
 
 	while (1) {
 		memset(line, 0, LINELEN);
 
 		errno = 0;
 		if (0 > (len = getline(&line, &linelen, file))) {
-			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", USBDEVFS_DEVICES, strerror(errno) );
+			log( LOG_HOTPLUG_ERROR, "Could not read from %s : %s", usbdevfs_devices_filename(), strerror(errno) );
 			ret = -errno;
 			break;
 		}
@@ -276,9 +276,9 @@ int getActiveConfig( JNIEnv *env, int fd, unsigned char bus, unsigned char dev )
 #endif
 #ifdef CONFIG_SETTING_USE_DEVICES_FILE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Getting active config using %s.", USBDEVFS_DEVICES );
+		log( LOG_HOTPLUG_OTHER, "Getting active config using %s.", usbdevfs_devices_filename() );
 		ret = config_use_devices_file( env, bus, dev );
-		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", USBDEVFS_DEVICES, ret, 0>ret ? " (failure)" : "" );
+		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", usbdevfs_devices_filename(), ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 #ifdef CONFIG_SETTING_1_ALWAYS_ACTIVE
@@ -304,9 +304,9 @@ int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned 
 #endif
 #ifdef INTERFACE_SETTING_USE_DEVICES_FILE
 	if (0 > ret) {
-		log( LOG_HOTPLUG_OTHER, "Getting active interface %d setting using %s.", interface, USBDEVFS_DEVICES );
+		log( LOG_HOTPLUG_OTHER, "Getting active interface %d setting using %s.", interface, usbdevfs_devices_filename() );
 		ret = interface_use_devices_file( env, bus, dev, interface );
-		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", USBDEVFS_DEVICES, ret, 0>ret ? " (failure)" : "" );
+		log( LOG_HOTPLUG_OTHER, "%s returned %d%s.", usbdevfs_devices_filename(), ret, 0>ret ? " (failure)" : "" );
 	}
 #endif
 
