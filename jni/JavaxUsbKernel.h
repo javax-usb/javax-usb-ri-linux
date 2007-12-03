@@ -13,9 +13,10 @@
 
 //******************************************************************************
 // Kernel-specific
+
 #include <sys/utsname.h>
 #include <linux/usbdevice_fs.h>
-#include <linux/usb/ch9.h>
+#include <linux/usb.h>
 
 // The names of this struct's fields change from 2.4 to 2.6.
 // But it's binary compatible, so let's just define it here.
