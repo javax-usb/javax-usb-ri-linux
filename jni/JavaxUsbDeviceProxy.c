@@ -32,7 +32,6 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 {
 	int fd = 0;
 	struct usbdevfs_urb *urb;
-	int loop_count = 0;
 
 	jclass LinuxDeviceProxy;
 	jobject linuxRequest;
@@ -63,12 +62,7 @@ JNIEXPORT void JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeDeviceProxy
 
 	/* run forever...? */
 	while (1) {
-		/* FIXME - stop using polling! */
-		if ( loop_count > 20 ) {
-			usleep( 10000 );
-			loop_count = 0;
-		}
-		loop_count ++;
+		usleep( 1000 ); // Sleep 1 ms to avoid too much polling
 
 		if (JNI_TRUE == CheckedCallBooleanMethod( env, linuxDeviceProxy, isRequestWaiting )) {
 			if ((linuxRequest = CheckedCallObjectMethod( env, linuxDeviceProxy, getReadyRequest ))) {
