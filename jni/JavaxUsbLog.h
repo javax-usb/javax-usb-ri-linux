@@ -94,7 +94,7 @@ do { \
       buffer[((real_len < full_len-1 && 0 <= real_len) ? real_len : full_len-1)] = 0; \
     } \
   } \
-  do_log(logname,(LOG_LEVEL_MASK&level),__FILE__,__FUNCTION__,__LINE__,buffer); \
+  do_log(logname,(LOG_LEVEL_MASK&level),__FILE__,__func__,__LINE__,buffer); \
   if (buf2) free(buf2); \
 } while (0)
 
