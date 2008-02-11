@@ -102,8 +102,8 @@ int getInterruptType(void)
 
 #define USBDEVFS_PATH_NEW "/dev/bus/usb"
 #define USBDEVFS_DEVICES_NEW "/dev/bus/usb/devices"
-#define USBDEVFS_SPRINTF_NODE_NEW "/dev/bus/usb/%3.03d/%3.03d"
-#define USBDEVFS_SSCANF_NODE_NEW "/dev/bus/usb/%3d/%3d"
+#define USBDEVFS_SPRINTF_NODE_NEW "/dev/bus/usb/%d/%d"
+#define USBDEVFS_SSCANF_NODE_NEW "/dev/bus/usb/%d/%d"
 
 char *usbdevfs_path()
 {

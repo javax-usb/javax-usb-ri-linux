@@ -32,6 +32,7 @@
 
 //FIXME - implement
 #define CheckedCallObjectMethod(env,object,method,args...) (*env)->CallObjectMethod(env,object,method,##args)
+#define CheckedCallLongMethod(env,object,method,args...) (*env)->CallLongMethod(env,object,method,##args)
 #define CheckedCallIntMethod(env,object,method,args...) (*env)->CallIntMethod(env,object,method,##args)
 #define CheckedCallShortMethod(env,object,method,args...) (*env)->CallShortMethod(env,object,method,##args)
 #define CheckedCallByteMethod(env,object,method,args...) (*env)->CallByteMethod(env,object,method,##args)
@@ -45,6 +46,7 @@
 
 //FIXME - implement
 #define CheckedCallStaticObjectMethod(env,class,method,args...) (*env)->CallStaticObjectMethod(env,class,method,##args)
+#define CheckedCallStaticLongMethod(env,class,method,args...) (*env)->CallStaticLongMethod(env,class,method,##args)
 #define CheckedCallStaticIntMethod(env,class,method,args...) (*env)->CallStaticIntMethod(env,class,method,##args)
 #define CheckedCallStaticShortMethod(env,class,method,args...) (*env)->CallStaticShortMethod(env,class,method,##args)
 #define CheckedCallStaticByteMethod(env,class,method,args...) (*env)->CallStaticByteMethod(env,class,method,##args)

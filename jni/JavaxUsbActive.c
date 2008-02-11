@@ -91,7 +91,7 @@ end:
 #endif /* CONFIG_SETTING_USE_DEVICES_FILE */
 
 #ifdef INTERFACE_SETTING_USE_DEVICES_FILE
-static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev, __u8 interface )
+static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned char dev, unsigned char interface )
 {
 	FILE *file = NULL;
 #define LINELEN 1024
@@ -185,7 +185,7 @@ static int config_ask_device( JNIEnv *env, int fd )
 {
 	int ret = 0;
 
-	struct javaxusb_usbdevfs_ctrltransfer *ctrl = NULL;
+	struct usbdevfs_ctrltransfer *ctrl = NULL;
 	unsigned char *actconfig = NULL;
 
 	if (!(ctrl = malloc(sizeof(*ctrl))) || !(actconfig = malloc(1))) {
@@ -196,7 +196,7 @@ static int config_ask_device( JNIEnv *env, int fd )
 
 	*actconfig = 0;
 
-	ctrl->bmRequestType = (__u8)0x80;
+	ctrl->bmRequestType = (unsigned char)0x80;
 	ctrl->bRequest = 0x08;
 	ctrl->wValue = 0x00;
 	ctrl->wIndex = 0x00;
@@ -223,7 +223,7 @@ CONFIG_ASK_DEVICE_END:
 
 #ifdef INTERFACE_SETTING_ASK_DEVICE
 #define INTERFACE_ASK_DEVICE_TIMEOUT 500 /* ms */
-static int interface_ask_device( JNIEnv *env, int fd, __u8 interface )
+static int interface_ask_device( JNIEnv *env, int fd, unsigned char interface )
 {
 	int ret = 0;
 
@@ -238,7 +238,7 @@ static int interface_ask_device( JNIEnv *env, int fd, __u8 interface )
 
 	*actsetting = 0;
 
-	ctrl->bmRequestType = (__u8)0x81;
+	ctrl->bmRequestType = (unsigned char)0x81;
 	ctrl->bRequest = 0x0a;
 	ctrl->wValue = 0x00;
 	ctrl->wIndex = interface;
@@ -291,7 +291,7 @@ int getActiveConfig( JNIEnv *env, int fd, unsigned char bus, unsigned char dev )
 	return ret;
 }
 
-int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface )
+int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, unsigned char interface )
 {
 	int ret = -1; /* -1 = failure  */
 
@@ -383,7 +383,7 @@ JNIEXPORT jint JNICALL Java_com_ibm_jusb_os_linux_JavaxUsb_nativeGetActiveInterf
 	busnum = (unsigned char)get_busnum_from_jname( env, jname );
 	devnum = (unsigned char)get_devnum_from_jname( env, jname );
 
-	settingNumber = getActiveInterfaceSetting( env, fd, busnum, devnum, (__u8)interfaceNumber );
+	settingNumber = getActiveInterfaceSetting( env, fd, busnum, devnum, (unsigned char)interfaceNumber );
 
 	close(fd);
 	(*env)->DeleteLocalRef( env, jname );

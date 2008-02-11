@@ -62,10 +62,10 @@ class LinuxPipeRequest extends LinuxRequest
 	}
 
 	/** @return the address of the assocaited URB */
-	public int getUrbAddress() { return urbAddress; }
+	public long getUrbAddress() { return urbAddress; }
 
 	/** @param address the address of the assocaited URB */
-	public void setUrbAddress( int address ) { urbAddress = address; }
+	public void setUrbAddress( long address ) { urbAddress = address; }
 
 	/** @param c If this is completed or not */
 	public void setCompleted(boolean c)
@@ -120,7 +120,7 @@ class LinuxPipeRequest extends LinuxRequest
 
 	private LinuxPipeOsImp linuxPipeImp = null;
 
-	private int urbAddress = 0;
+	private long urbAddress = 0;
 
 	/* These MUST match those defined in jni/linux/JavaxUsbRequest.c */
 	private static final int PIPE_CONTROL = 1;

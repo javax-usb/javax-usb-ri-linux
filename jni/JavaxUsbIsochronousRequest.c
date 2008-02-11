@@ -122,7 +122,7 @@ int isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRequest )
 	getAcceptShortPacket = CheckedGetMethodID( env, LinuxIsochronousRequest, "getAcceptShortPacket", "()Z" );
 	getTotalLength = CheckedGetMethodID( env, LinuxIsochronousRequest, "getTotalLength", "()I" );
 	size = CheckedGetMethodID( env, LinuxIsochronousRequest, "size", "()I" );
-	setUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(I)V" );
+	setUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "setUrbAddress", "(J)V" );
 	getEndpointAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getEndpointAddress", "()B" );
 	npackets = (unsigned int)CheckedCallIntMethod( env, linuxIsochronousRequest, size );
 	bufsize = (unsigned int)CheckedCallIntMethod( env, linuxIsochronousRequest, getTotalLength );
@@ -197,12 +197,12 @@ void cancel_isochronous_request( JNIEnv *env, int fd, jobject linuxIsochronousRe
 	jmethodID getUrbAddress;
 
 	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
-	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
+	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()J" );
 	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
 	log( LOG_XFER_OTHER, "Canceling URB" );
 
-	urb = (struct usbdevfs_urb *)CheckedCallIntMethod( env, linuxIsochronousRequest, getUrbAddress );
+	urb = (struct usbdevfs_urb *)CheckedCallLongMethod( env, linuxIsochronousRequest, getUrbAddress );
 
 	if (!urb) {
 		log( LOG_XFER_ERROR, "No URB to cancel" );
@@ -229,10 +229,10 @@ int complete_isochronous_request( JNIEnv *env, jobject linuxIsochronousRequest )
 	jmethodID getUrbAddress;
 
 	LinuxIsochronousRequest = CheckedGetObjectClass( env, linuxIsochronousRequest );
-	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()I" );
+	getUrbAddress = CheckedGetMethodID( env, LinuxIsochronousRequest, "getUrbAddress", "()J" );
 	CheckedDeleteLocalRef( env, LinuxIsochronousRequest );
 
-	if (!(urb = (struct usbdevfs_urb*)CheckedCallIntMethod( env, linuxIsochronousRequest, getUrbAddress ))) {
+	if (!(urb = (struct usbdevfs_urb*)CheckedCallLongMethod( env, linuxIsochronousRequest, getUrbAddress ))) {
 		log( LOG_XFER_ERROR, "No URB to complete!" );
 		return -EINVAL;
 	}

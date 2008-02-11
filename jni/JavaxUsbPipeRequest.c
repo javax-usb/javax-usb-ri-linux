@@ -38,7 +38,7 @@ int pipe_request( JNIEnv *env, int fd, jobject linuxRequest )
 	getEndpointAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getEndpointAddress", "()B" );
 	getPipeType = CheckedGetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
 	type = CheckedCallIntMethod( env, linuxPipeRequest, getPipeType );
-	setUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "setUrbAddress", "(I)V" );
+	setUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "setUrbAddress", "(J)V" );
 	getAcceptShortPacket = CheckedGetMethodID( env, LinuxPipeRequest, "getAcceptShortPacket", "()Z" );
 	acceptShortPacket = CheckedCallBooleanMethod( env, linuxPipeRequest, getAcceptShortPacket );
 	CheckedDeleteLocalRef( env, LinuxPipeRequest );
@@ -101,11 +101,11 @@ int complete_pipe_request( JNIEnv *env, jobject linuxPipeRequest )
 
 	LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
 	getPipeType = CheckedGetMethodID( env, LinuxPipeRequest, "getPipeType", "()I" );
-	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
+	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()J" );
 	type = CheckedCallIntMethod( env, linuxPipeRequest, getPipeType );
 	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
-	if (!(urb = (struct usbdevfs_urb*)CheckedCallIntMethod( env, linuxPipeRequest, getUrbAddress ))) {
+	if (!(urb = (struct usbdevfs_urb*)CheckedCallLongMethod( env, linuxPipeRequest, getUrbAddress ))) {
 		log( LOG_XFER_ERROR, "No URB to complete." );
 		return -EINVAL;
 	}
@@ -142,12 +142,12 @@ void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest )
 	jmethodID getUrbAddress;
 
 	LinuxPipeRequest = CheckedGetObjectClass( env, linuxPipeRequest );
-	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()I" );
+	getUrbAddress = CheckedGetMethodID( env, LinuxPipeRequest, "getUrbAddress", "()J" );
 	CheckedDeleteLocalRef( env, LinuxPipeRequest );
 
 	log( LOG_XFER_REQUEST, "Canceling URB." );
 
-	urb = (struct usbdevfs_urb *)CheckedCallIntMethod( env, linuxPipeRequest, getUrbAddress );
+	urb = (struct usbdevfs_urb *)CheckedCallLongMethod( env, linuxPipeRequest, getUrbAddress );
 
 	if (!urb) {
 		log( LOG_XFER_ERROR, "No URB to cancel." );
@@ -156,5 +156,5 @@ void cancel_pipe_request( JNIEnv *env, int fd, jobject linuxPipeRequest )
 
 	errno = 0;
 	if (0 > (ioctl( fd, USBDEVFS_DISCARDURB, urb )))
-		log( LOG_XFER_ERROR, "Could not unlink urb %#x (error %d)", (unsigned int)urb, -errno );
+		log( LOG_XFER_ERROR, "Could not unlink urb %p (error %d)", urb, -errno );
 }

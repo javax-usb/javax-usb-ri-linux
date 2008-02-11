@@ -49,57 +49,57 @@
 // Descriptor structs 
 
 struct jusb_device_descriptor {
-	__u8 bLength;
-	__u8 bDescriptorType;
-	__u16 bcdUSB;
-	__u8 bDeviceClass;
-	__u8 bDeviceSubClass;
-	__u8 bDeviceProtocol;
-	__u8 bMaxPacketSize0;
-	__u16 idVendor;
-	__u16 idProduct;
-	__u16 bcdDevice;
-	__u8 iManufacturer;
-	__u8 iProduct;
-	__u8 iSerialNumber;
-	__u8 bNumConfigurations;
+	unsigned char bLength;
+	unsigned char bDescriptorType;
+	unsigned short bcdUSB;
+	unsigned char bDeviceClass;
+	unsigned char bDeviceSubClass;
+	unsigned char bDeviceProtocol;
+	unsigned char bMaxPacketSize0;
+	unsigned short idVendor;
+	unsigned short idProduct;
+	unsigned short bcdDevice;
+	unsigned char iManufacturer;
+	unsigned char iProduct;
+	unsigned char iSerialNumber;
+	unsigned char bNumConfigurations;
 };
 
 struct jusb_config_descriptor {
-	__u8 bLength;
-	__u8 bDescriptorType;
-	__u16 wTotalLength;
-	__u8 bNumInterfaces;
-	__u8 bConfigurationValue;
-	__u8 iConfiguration;
-	__u8 bmAttributes;
-	__u8 bMaxPower;
+	unsigned char bLength;
+	unsigned char bDescriptorType;
+	unsigned short wTotalLength;
+	unsigned char bNumInterfaces;
+	unsigned char bConfigurationValue;
+	unsigned char iConfiguration;
+	unsigned char bmAttributes;
+	unsigned char bMaxPower;
 };
 
 struct jusb_interface_descriptor {
-	__u8 bLength;
-	__u8 bDescriptorType;
-	__u8 bInterfaceNumber;
-	__u8 bAlternateSetting;
-	__u8 bNumEndpoints;
-	__u8 bInterfaceClass;
-	__u8 bInterfaceSubClass;
-	__u8 bInterfaceProtocol;
-	__u8 iInterface;
+	unsigned char bLength;
+	unsigned char bDescriptorType;
+	unsigned char bInterfaceNumber;
+	unsigned char bAlternateSetting;
+	unsigned char bNumEndpoints;
+	unsigned char bInterfaceClass;
+	unsigned char bInterfaceSubClass;
+	unsigned char bInterfaceProtocol;
+	unsigned char iInterface;
 };
 
 struct jusb_endpoint_descriptor {
-	__u8 bLength;
-	__u8 bDescriptorType;
-	__u8 bEndpointAddress;
-	__u8 bmAttributes;
-	__u16 wMaxPacketSize;
-	__u8 bInterval;
+	unsigned char bLength;
+	unsigned char bDescriptorType;
+	unsigned char bEndpointAddress;
+	unsigned char bmAttributes;
+	unsigned short wMaxPacketSize;
+	unsigned char bInterval;
 };
 
 struct jusb_string_descriptor {
-	__u8 bLength;
-	__u8 bDescriptorType;
+	unsigned char bLength;
+	unsigned char bDescriptorType;
 	unsigned char bString[254];
 };
 
@@ -190,12 +190,12 @@ int complete_isochronous_pipe_request( JNIEnv *env, jobject linuxPipeRequest, st
 #undef INTERFACE_SETTING_USE_DEVICES_FILE
 
 int getActiveConfig( JNIEnv *env, int fd, unsigned char bus, unsigned char dev );
-int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, __u8 interface );
+int getActiveInterfaceSetting( JNIEnv *env, int fd, unsigned char bus, unsigned char dev, unsigned char interface );
 
 //******************************************************************************
 // Utility methods
 
-static inline __u16 bcd( __u8 msb, __u8 lsb ) 
+static inline unsigned short bcd( unsigned char msb, unsigned char lsb ) 
 {
     return ( (msb << 8) & 0xff00 ) | ( lsb & 0x00ff );
 }

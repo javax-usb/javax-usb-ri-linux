@@ -110,7 +110,7 @@ static inline int build_device( JNIEnv *env, jclass JavaxUsb, jobject linuxUsbSe
 	jmethodID checkUsbDeviceImp = CheckedGetMethodID( env, LinuxUsbServices, "checkUsbDeviceImp", "(Lcom/ibm/jusb/UsbHubImp;ILcom/ibm/jusb/UsbDeviceImp;Ljava/util/List;Ljava/util/List;)Lcom/ibm/jusb/UsbDeviceImp;" );
 	CheckedDeleteLocalRef( env, LinuxUsbServices );
 
-	sprintf(node, "%s/%03d/%03d", usbdevfs_path(), (0xff&bus), (0xff&dev));
+	sprintf(node, usbdevfs_sprintf_node(), (0xff&bus), (0xff&dev));
 
 	keyString = CheckedNewStringUTF( env, node );
 
@@ -347,9 +347,7 @@ static int select_usbfs(const struct dirent *entry)
 	 * Hope that doesn't change.
 	 */
 	int n = atoi(entry->d_name);
-	/* If the number conversion of the name is 1-999 and the name is 3 characters long (exactly),
-	 * it's (hopefully) ok.  Technically, the number should be no larger than 127, but let's not get
-	 * unnecessarily picky.
+	/* If the number conversion of the name is 1-999, it's (hopefully) ok.
 	 */
-	return (0 < n) && (n < 1000) && (3 == strlen(entry->d_name));
+	return (0 < n) && (n < 1000);
 }
