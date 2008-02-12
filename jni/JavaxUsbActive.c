@@ -18,7 +18,7 @@ static int config_use_devices_file( JNIEnv *env, unsigned char bus, unsigned cha
 {
 	FILE *file = NULL;
 #define LINELEN 1024
-	size_t linelen, len;
+	ssize_t linelen, len;
 	char *line = NULL, busstr[32], devstr[32];
 	int in_dev = 0;
 	int ret = -1;
@@ -95,7 +95,7 @@ static int interface_use_devices_file( JNIEnv *env, unsigned char bus, unsigned 
 {
 	FILE *file = NULL;
 #define LINELEN 1024
-	size_t linelen, len;
+	ssize_t linelen, len;
 	char *line = NULL, busstr[32], devstr[32], cfgstr[32], ifstr[32];
 	int in_dev = 0, in_cfg = 0;
 	int ret = -1;
