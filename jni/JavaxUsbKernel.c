@@ -102,8 +102,12 @@ int getInterruptType(void)
 
 #define USBDEVFS_PATH_NEW "/dev/bus/usb"
 #define USBDEVFS_DEVICES_NEW "/dev/bus/usb/devices"
-#define USBDEVFS_SPRINTF_NODE_NEW "/dev/bus/usb/%d/%d"
-#define USBDEVFS_SSCANF_NODE_NEW "/dev/bus/usb/%d/%d"
+#define USBDEVFS_SPRINTF_NODE_NEW1 "/dev/bus/usb/%3.03d/%3.03d"
+#define USBDEVFS_SPRINTF_NODE_NEW2 "/dev/bus/usb/%d/%d"
+#define USBDEVFS_SSCANF_NODE_NEW1 "/dev/bus/usb/%3d/%3d"
+#define USBDEVFS_SSCANF_NODE_NEW2 "/dev/bus/usb/%d/%d"
+#define USBDEVFS_CHECK_NODE_NEW1 "/dev/bus/usb/001/001"
+#define USBDEVFS_CHECK_NODE_NEW2 "/dev/bus/usb/1/1"
 
 char *usbdevfs_path()
 {
@@ -126,8 +130,10 @@ char *usbdevfs_devices_filename()
 char *usbdevfs_sscanf_node()
 {
 	struct stat buf;
-	if ((0 == stat(USBDEVFS_PATH_NEW, &buf)) && S_ISDIR(buf.st_mode))
-		return USBDEVFS_SSCANF_NODE_NEW;
+	if ((0 == stat(USBDEVFS_CHECK_NODE_NEW1, &buf)))
+		return USBDEVFS_SSCANF_NODE_NEW1;
+	else if ((0 == stat(USBDEVFS_CHECK_NODE_NEW2, &buf)))
+		return USBDEVFS_SSCANF_NODE_NEW2;
 	else
 		return USBDEVFS_SSCANF_NODE_OLD;
 }
@@ -135,8 +141,10 @@ char *usbdevfs_sscanf_node()
 char *usbdevfs_sprintf_node()
 {
 	struct stat buf;
-	if ((0 == stat(USBDEVFS_PATH_NEW, &buf)) && S_ISDIR(buf.st_mode))
-		return USBDEVFS_SPRINTF_NODE_NEW;
+	if ((0 == stat(USBDEVFS_CHECK_NODE_NEW1, &buf)))
+		return USBDEVFS_SPRINTF_NODE_NEW1;
+	else if ((0 == stat(USBDEVFS_CHECK_NODE_NEW2, &buf)))
+		return USBDEVFS_SPRINTF_NODE_NEW2;
 	else
 		return USBDEVFS_SPRINTF_NODE_OLD;
 }
