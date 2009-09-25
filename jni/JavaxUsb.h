@@ -263,6 +263,7 @@ static inline void debug_urb( JNIEnv *env, char *calling_method, struct usbdevfs
 		return;
 
 //FIXME - add device number and/or other dev info
+	log( LOG_URB_METADATA, "%s : URB address = %p", calling_method, urb );
 	log( LOG_URB_METADATA, "%s : URB endpoint = %x status = %d signal = %x", calling_method, urb->endpoint, urb->status, urb->signr );
 	log( LOG_URB_METADATA, "%s : URB buffer length = %d actual length = %d", calling_method, urb->buffer_length, urb->actual_length );
 
