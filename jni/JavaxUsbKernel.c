@@ -33,12 +33,13 @@ static void setKernelVersion(void)
 		int num[3], i;
 
 		for (i=0; i<3; i++) {
-			errno = 0;
-			if (!(num[i] = strtol(p, &p, 0))) {
-				log(LOG_ERROR, "Could not parse release string %s : %s", name.release, strerror(errno));
-				break;
-			} else {
-				p++;
+		  			errno = 0;
+ 			if (((int)*p < '0') || ((int)*p > '9')) {
+		  				log(LOG_ERROR, "Could not parse release string %s : %s", name.release, strerror(errno));
+		  				break;
+		  			} else {
+                        num[i] = strtol(p, &p,0);
+		  				p++;
 			}
 		}
 		if (3 == i) {
