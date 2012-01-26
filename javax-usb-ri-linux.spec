@@ -1,8 +1,7 @@
 Summary: javax.usb Linux Implementation
 Name: javax-usb-ri-linux
-Version: 1.0.1
+Version: 1.0.3
 Release: 1
-Copyright: (c)Copyright International Business Machines Corporation 2001. All rights reserved.
 Group: System Environment/Libraries
 %description
 Linux implementation of the javax.usb API using the Common Reference Implementation.
