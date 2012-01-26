@@ -1,7 +1,7 @@
 package com.ibm.jusb.os.linux;
 
 /**
- * Copyright (c) 1999 - 2001, International Business Machines Corporation.
+ * Copyright (c) 1999 - 2001,2008 International Business Machines Corporation.
  * All Rights Reserved.
  *
  * This software is provided and licensed under the terms and conditions
@@ -24,14 +24,14 @@ public class Version
 	}
 
 	public static final String LINUX_API_VERSION = "1.0.0";
-	public static final String LINUX_IMP_VERSION = "1.0.3-CVS";
+	public static final String LINUX_IMP_VERSION = "1.0.3";
 	public static final String LINUX_IMP_DESCRIPTION =
 		 "JSR80 : javax.usb"
 		+"\n"
-		+"\n"+"Implementation for the Linux kernel (2.4/2.6).\n"
+		+"\n"+"Implementation for the Linux kernel (2.4/2.6/3.0).\n"
 		+"\n"
 		+"\n"+"*"
-		+"\n"+"* Copyright (c) 1999 - 2001, International Business Machines Corporation."
+		+"\n"+"* Copyright (c) 1999 - 2001,2008 International Business Machines Corporation."
 		+"\n"+"* All Rights Reserved."
 		+"\n"+"*"
 		+"\n"+"* This software is provided and licensed under the terms and conditions"
